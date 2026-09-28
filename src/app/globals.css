@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f4f1ea;
+  --foreground: #1c1917;
+  --accent: #c2410c;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  min-height: 100dvh;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  min-height: 44px;
+}
