@@ -1,15 +1,29 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { getPublicSupabaseEnv, hasPublicSupabaseEnv } from "@data/supabase/env";
+
+function copyCookies(from: NextResponse, to: NextResponse) {
+  from.cookies.getAll().forEach((cookie) => {
+    to.cookies.set(cookie);
+  });
+  return to;
+}
+
+function isPublicPath(pathname: string) {
+  return (
+    pathname === "/login" ||
+    pathname === "/signup" ||
+    pathname.startsWith("/api/health")
+  );
+}
 
 export async function updateSupabaseSession(request: NextRequest) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!url || !anonKey) {
+  if (!hasPublicSupabaseEnv()) {
     return NextResponse.next({ request });
   }
 
   let response = NextResponse.next({ request });
+  const { url, anonKey } = getPublicSupabaseEnv();
 
   const supabase = createServerClient(url, anonKey, {
     cookies: {
@@ -28,6 +42,26 @@ export async function updateSupabaseSession(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { pathname } = request.nextUrl;
+  const publicPath = isPublicPath(pathname);
+
+  if (!user && !publicPath) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = "/login";
+    loginUrl.search = "";
+    return copyCookies(response, NextResponse.redirect(loginUrl));
+  }
+
+  if (user && (pathname === "/login" || pathname === "/signup")) {
+    const homeUrl = request.nextUrl.clone();
+    homeUrl.pathname = "/";
+    homeUrl.search = "";
+    return copyCookies(response, NextResponse.redirect(homeUrl));
+  }
+
   return response;
 }

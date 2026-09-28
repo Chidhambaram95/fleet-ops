@@ -1,12 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
-import type { Session, SupabaseClient } from "@supabase/supabase-js";
-import {
-  signInWithEmail,
-  signOut,
-  signUpWithEmail,
-} from "@data/auth/email";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import { hasPublicSupabaseEnv } from "@data/supabase/env";
 import {
@@ -41,66 +35,18 @@ export function DailyLedger() {
       <p className="rounded-2xl bg-white px-4 py-6 text-stone-700 shadow-sm">
         Add <code className="text-sm">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
         <code className="text-sm">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to{" "}
-        <code className="text-sm">.env.local</code>, then apply the SQL
-        migrations.
+        <code className="text-sm">.env.local</code>.
       </p>
     );
   }
 
-  return <DailyLedgerSession />;
+  return <DailyLedgerBoard />;
 }
 
-function DailyLedgerSession() {
-  const client = useMemo(() => createBrowserSupabaseClient(), []);
-  const [session, setSession] = useState<Session | null | undefined>(undefined);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    client.auth.getSession().then(({ data }) => {
-      if (!cancelled) {
-        setSession(data.session);
-      }
-    });
-
-    const {
-      data: { subscription },
-    } = client.auth.onAuthStateChange((_event, next) => {
-      setSession(next);
-    });
-
-    return () => {
-      cancelled = true;
-      subscription.unsubscribe();
-    };
-  }, [client]);
-
-  if (session === undefined) {
-    return <p className="px-1 py-6 text-stone-600">Loading today’s ledger…</p>;
-  }
-
-  if (!session) {
-    return <AuthPanel client={client} />;
-  }
-
-  return (
-    <DailyLedgerBoard
-      client={client}
-      email={session.user.email ?? "Signed in"}
-    />
-  );
-}
-
-function DailyLedgerBoard({
-  client,
-  email,
-}: {
-  client: SupabaseClient;
-  email: string;
-}) {
+function DailyLedgerBoard() {
   const repo = useMemo(
-    () => createSupabaseOperationsRepository(client),
-    [client],
+    () => createSupabaseOperationsRepository(createBrowserSupabaseClient()),
+    [],
   );
   const [date, setDate] = useState(todayInIst);
   const [kind, setKind] = useState<EntryKind>("income");
@@ -249,17 +195,6 @@ function DailyLedgerBoard({
         </button>
       </header>
 
-      <div className="flex items-center justify-between gap-2 text-sm text-stone-600">
-        <span className="truncate">{email}</span>
-        <button
-          type="button"
-          className="shrink-0 text-stone-500"
-          onClick={() => void signOut(client)}
-        >
-          Sign out
-        </button>
-      </div>
-
       <section className="grid grid-cols-3 gap-2">
         <SummaryCard label="In" value={formatInr(fleetTotals.incomeInr)} />
         <SummaryCard label="Out" value={formatInr(fleetTotals.expenseInr)} />
@@ -273,6 +208,8 @@ function DailyLedgerBoard({
       {loading ? (
         <p className="text-sm text-stone-600">Fetching buses and cash…</p>
       ) : null}
+
+      {error ? <p className="text-sm text-red-700">{error}</p> : null}
 
       <section className="flex flex-col gap-2">
         {buses.map((bus) => {
@@ -300,9 +237,9 @@ function DailyLedgerBoard({
             </button>
           );
         })}
-        {!loading && buses.length === 0 ? (
+        {!loading && buses.length === 0 && !error ? (
           <p className="rounded-2xl bg-white px-3 py-4 text-stone-600 shadow-sm">
-            No buses yet. Apply migration 0002 so the three TN buses are seeded.
+            No buses yet. Confirm the buses table is seeded in Supabase.
           </p>
         ) : null}
       </section>
@@ -368,8 +305,6 @@ function DailyLedgerBoard({
           />
         </label>
 
-        {error ? <p className="text-sm text-red-700">{error}</p> : null}
-
         <button
           type="submit"
           disabled={saving || loading || !busId}
@@ -419,92 +354,6 @@ function DailyLedgerBoard({
         )}
       </section>
     </div>
-  );
-}
-
-function AuthPanel({ client }: { client: SupabaseClient }) {
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [info, setInfo] = useState("");
-
-  async function onSubmit(event: FormEvent) {
-    event.preventDefault();
-    setBusy(true);
-    setError("");
-    setInfo("");
-    try {
-      if (mode === "signin") {
-        await signInWithEmail(client, email.trim(), password);
-      } else {
-        await signUpWithEmail(client, email.trim(), password);
-        setInfo("Account created. Confirm email if your project requires it, then sign in.");
-      }
-    } catch (authError) {
-      setError(messageFromUnknown(authError));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <form
-      onSubmit={(event) => void onSubmit(event)}
-      className="flex flex-col gap-3 rounded-2xl bg-white p-4 shadow-sm"
-    >
-      <p className="text-xs font-medium uppercase tracking-wide text-orange-800">
-        Daily cash
-      </p>
-      <h1 className="text-lg font-semibold">Sign in to log collections</h1>
-      <p className="text-sm text-stone-600">
-        Entries save to your fleet database. Use the same login on phone and desk.
-      </p>
-      <label className="flex flex-col gap-1 text-sm font-medium">
-        Email
-        <input
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          className="rounded-xl border border-stone-200 bg-stone-50 px-3 text-base font-normal"
-          required
-        />
-      </label>
-      <label className="flex flex-col gap-1 text-sm font-medium">
-        Password
-        <input
-          type="password"
-          autoComplete={mode === "signin" ? "current-password" : "new-password"}
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          minLength={6}
-          className="rounded-xl border border-stone-200 bg-stone-50 px-3 text-base font-normal"
-          required
-        />
-      </label>
-      {error ? <p className="text-sm text-red-700">{error}</p> : null}
-      {info ? <p className="text-sm text-stone-700">{info}</p> : null}
-      <button
-        type="submit"
-        disabled={busy}
-        className="rounded-xl bg-orange-700 px-4 text-base font-semibold text-white disabled:opacity-60"
-      >
-        {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
-      </button>
-      <button
-        type="button"
-        className="text-sm text-stone-600"
-        onClick={() => {
-          setMode(mode === "signin" ? "signup" : "signin");
-          setError("");
-          setInfo("");
-        }}
-      >
-        {mode === "signin" ? "Need an account? Sign up" : "Have an account? Sign in"}
-      </button>
-    </form>
   );
 }
 

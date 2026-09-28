@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getAuthenticatedUserId } from "@data/auth/session";
 import type { DailyEntry, NewDailyEntry } from "@domain/operations/types";
 import {
   mapBus,
@@ -46,14 +47,7 @@ export class SupabaseOperationsRepository implements OperationsRepository {
       throw new Error("Amount must be a whole rupee greater than 0.");
     }
 
-    const {
-      data: { user },
-      error: userError,
-    } = await this.client.auth.getUser();
-    throwIfError(userError);
-    if (!user) {
-      throw new Error("Sign in to save cash entries.");
-    }
+    const createdBy = await getAuthenticatedUserId(this.client);
 
     const { data, error } = await this.client
       .from("daily_entries")
@@ -64,7 +58,7 @@ export class SupabaseOperationsRepository implements OperationsRepository {
         category: input.category,
         amount_inr: amountInr,
         note: input.note.trim(),
-        created_by: user.id,
+        created_by: createdBy,
       })
       .select(
         "id, bus_id, entry_date, kind, category, amount_inr, note, created_at",
