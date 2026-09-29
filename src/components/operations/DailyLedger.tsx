@@ -335,10 +335,14 @@ function DailyLedgerBoard() {
           >
             ‹
           </button>
-          <label className="flex min-w-0 flex-1 flex-col items-center gap-1">
-            <span className="text-lg font-semibold tracking-tight text-stone-900">
+          <label className="relative flex h-11 min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border border-stone-200 bg-stone-50 px-3">
+            <span
+              aria-hidden="true"
+              className="truncate text-base font-semibold tracking-tight text-stone-900"
+            >
               {displayDate(date)}
             </span>
+            <CalendarIcon />
             <input
               type="date"
               value={date}
@@ -348,7 +352,7 @@ function DailyLedgerBoard() {
                   setDate(event.target.value);
                 }
               }}
-              className="h-11 w-full rounded-xl border border-stone-200 bg-stone-50 px-3 text-center text-sm font-medium text-stone-700"
+              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
               aria-label="Select date"
             />
           </label>
@@ -630,6 +634,26 @@ function ScanIcon() {
       <path d="M20 16v2a2 2 0 0 1-2 2h-2" />
       <path d="M8 20H6a2 2 0 0 1-2-2v-2" />
       <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-4 w-4 shrink-0 text-stone-500"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M8 3v4" />
+      <path d="M16 3v4" />
+      <path d="M3 10h18" />
     </svg>
   );
 }
