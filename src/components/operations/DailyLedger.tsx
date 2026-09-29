@@ -432,7 +432,6 @@ function DailyLedgerBoard() {
             <input
               type="file"
               accept="image/*"
-              capture="environment"
               disabled={scanning}
               className="sr-only"
               onChange={(event) => {

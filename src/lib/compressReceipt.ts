@@ -1,4 +1,4 @@
-const MAX_EDGE = 1280;
+const MAX_EDGE = 1200;
 const JPEG_QUALITY = 0.7;
 
 export async function compressReceipt(

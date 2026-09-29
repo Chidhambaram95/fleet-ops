@@ -1,9 +1,24 @@
 import { google } from "@ai-sdk/google";
-import { generateText, Output } from "ai";
+import { generateObject } from "ai";
 import { NextResponse } from "next/server";
 import { receiptSchema } from "@domain/operations/receipt";
 
 const MAX_IMAGE_CHARS = 1_500_000;
+
+const models = [
+  "gemini-3.8-flash",
+  "gemini-3.5-flash-lite",
+  "gemini-3.6-flash",
+] as const;
+
+const receiptPrompt = [
+  "Read this Indian bus-fleet expense receipt.",
+  "amount is the total in rupees.",
+  "date is the receipt date as YYYY-MM-DD.",
+  "category is Diesel for fuel, Toll for tolls, Maintenance for repairs or service, Batta for crew allowance, and Other otherwise.",
+  "liters is the fuel volume when the receipt shows it, otherwise null.",
+  "vendorName is the pump or shop name when it is visible, otherwise null.",
+].join(" ");
 
 export async function POST(request: Request) {
   if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
@@ -31,45 +46,43 @@ export async function POST(request: Request) {
     );
   }
 
-  try {
-    const result = await generateText({
-      model: google("gemini-3.8-flash"),
-      output: Output.object({
+  for (const [index, modelName] of models.entries()) {
+    try {
+      const result = await generateObject({
+        model: google(modelName),
         schema: receiptSchema,
-        name: "receipt",
-        description: "Expense receipt fields for a bus fleet ledger",
-      }),
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: [
-                "Read this Indian bus-fleet expense receipt.",
-                "amount is the total in rupees.",
-                "date is the receipt date as YYYY-MM-DD.",
-                "category is Diesel for fuel, Toll for tolls, Maintenance for repairs or service, Batta for crew allowance, and Other otherwise.",
-                "liters is the fuel volume when the receipt shows it, otherwise null.",
-                "vendorName is the pump or shop name when it is visible, otherwise null.",
-              ].join(" "),
-            },
-            {
-              type: "file",
-              mediaType: image.mediaType,
-              data: { type: "data", data: image.base64 },
-            },
-          ],
-        },
-      ],
-    });
-
-    return NextResponse.json(result.output);
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Could not read that receipt.";
-    return NextResponse.json({ error: message }, { status: 502 });
+        schemaName: "receipt",
+        schemaDescription: "Expense receipt fields for a bus fleet ledger",
+        maxRetries: 0,
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: receiptPrompt },
+              {
+                type: "file",
+                mediaType: image.mediaType,
+                data: image.base64,
+              },
+            ],
+          },
+        ],
+      });
+      return NextResponse.json(result.object);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Could not read that receipt.";
+      console.error(message);
+      if (index === models.length - 1) {
+        return NextResponse.json({ error: message }, { status: 502 });
+      }
+    }
   }
+
+  return NextResponse.json(
+    { error: "Could not read that receipt." },
+    { status: 502 },
+  );
 }
 
 function readImage(
