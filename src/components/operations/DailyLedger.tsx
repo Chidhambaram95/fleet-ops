@@ -14,6 +14,7 @@ import {
   settlementFilename,
   whatsAppSendUrl,
 } from "@domain/operations/settlementExport";
+import { expenseFromReceipt, receiptSchema } from "@domain/operations/receipt";
 import {
   displayDate,
   formatInr,
@@ -30,6 +31,7 @@ import type {
   ExpenseCategory,
   IncomeCategory,
 } from "@domain/operations/types";
+import { compressReceipt } from "@/lib/compressReceipt";
 import { downloadTextFile } from "@/lib/downloadTextFile";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 
@@ -67,6 +69,7 @@ function DailyLedgerBoard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [scanning, setScanning] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -209,6 +212,55 @@ function DailyLedgerBoard() {
       settlementCsv({ buses, entries }),
       "text/csv;charset=utf-8",
     );
+  }
+
+  async function scanReceipt(file: File) {
+    setScanning(true);
+    setError("");
+    try {
+      const image = await compressReceipt(file);
+      const response = await fetch("/api/parse-receipt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image: image.base64,
+          mediaType: image.mediaType,
+        }),
+      });
+      const payload: unknown = await response.json();
+      if (!response.ok) {
+        const message =
+          payload &&
+          typeof payload === "object" &&
+          "error" in payload &&
+          typeof payload.error === "string"
+            ? payload.error
+            : "Could not read that receipt.";
+        setError(message);
+        return;
+      }
+      const parsed = receiptSchema.safeParse(payload);
+      if (!parsed.success) {
+        setError("The receipt reading did not match the expected fields.");
+        return;
+      }
+      const expense = expenseFromReceipt(parsed.data);
+      if (Number(expense.amount) <= 0) {
+        setError("The receipt amount was not a usable rupee value.");
+        return;
+      }
+      setKind("expense");
+      setCategory(expense.category);
+      setAmount(expense.amount);
+      setNote(expense.note);
+      if (expense.date <= todayInIst()) {
+        setDate(expense.date);
+      }
+    } catch (scanError) {
+      setError(messageFromUnknown(scanError));
+    } finally {
+      setScanning(false);
+    }
   }
 
   function sendToOperator() {
@@ -373,6 +425,27 @@ function DailyLedgerBoard() {
           </KindButton>
         </div>
 
+        {kind === "expense" ? (
+          <label className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-stone-200 bg-stone-50 px-3 text-sm font-semibold text-stone-800 active:bg-stone-200">
+            <ScanIcon />
+            {scanning ? "Reading receipt…" : "Scan receipt"}
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              disabled={scanning}
+              className="sr-only"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                if (file) {
+                  void scanReceipt(file);
+                }
+              }}
+            />
+          </label>
+        ) : null}
+
         <div className="flex flex-wrap gap-2">
           {categories.map((item) => (
             <button
@@ -491,6 +564,27 @@ function SummaryCard({
         {value}
       </p>
     </div>
+  );
+}
+
+function ScanIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-4 w-4 shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4 8V6a2 2 0 0 1 2-2h2" />
+      <path d="M16 4h2a2 2 0 0 1 2 2v2" />
+      <path d="M20 16v2a2 2 0 0 1-2 2h-2" />
+      <path d="M8 20H6a2 2 0 0 1-2-2v-2" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
   );
 }
 
