@@ -9,8 +9,15 @@ import {
   INCOME_CATEGORIES,
 } from "@domain/operations/catalog";
 import {
+  formatWhatsAppSettlement,
+  settlementCsv,
+  settlementFilename,
+  whatsAppSendUrl,
+} from "@domain/operations/settlementExport";
+import {
   displayDate,
   formatInr,
+  isTodayInIst,
   shiftDate,
   todayInIst,
   totalsByBus,
@@ -23,6 +30,7 @@ import type {
   ExpenseCategory,
   IncomeCategory,
 } from "@domain/operations/types";
+import { downloadTextFile } from "@/lib/downloadTextFile";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 
 function messageFromUnknown(error: unknown) {
@@ -63,20 +71,40 @@ function DailyLedgerBoard() {
   useEffect(() => {
     let cancelled = false;
 
-    async function load() {
-      setLoading(true);
-      setError("");
+    async function loadBuses() {
       try {
-        const [nextBuses, nextEntries] = await Promise.all([
-          repo.listBuses(),
-          repo.listEntriesByDate(date),
-        ]);
+        const nextBuses = await repo.listBuses();
         if (cancelled) {
           return;
         }
         setBuses(nextBuses);
-        setEntries(nextEntries);
         setBusId((current) => current || nextBuses[0]?.id || "");
+      } catch (loadError) {
+        if (!cancelled) {
+          setError(messageFromUnknown(loadError));
+        }
+      }
+    }
+
+    void loadBuses();
+    return () => {
+      cancelled = true;
+    };
+  }, [repo]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadEntriesForDate() {
+      setLoading(true);
+      setError("");
+      setEntries([]);
+      try {
+        const nextEntries = await repo.listEntriesByDate(date);
+        if (cancelled) {
+          return;
+        }
+        setEntries(nextEntries);
       } catch (loadError) {
         if (!cancelled) {
           setError(messageFromUnknown(loadError));
@@ -88,7 +116,7 @@ function DailyLedgerBoard() {
       }
     }
 
-    void load();
+    void loadEntriesForDate();
     return () => {
       cancelled = true;
     };
@@ -168,40 +196,119 @@ function DailyLedgerBoard() {
     }
   }
 
+  const netTone =
+    fleetTotals.netInr > 0
+      ? "positive"
+      : fleetTotals.netInr < 0
+        ? "negative"
+        : "neutral";
+
+  function downloadCsv() {
+    downloadTextFile(
+      settlementFilename(date),
+      settlementCsv({ buses, entries }),
+      "text/csv;charset=utf-8",
+    );
+  }
+
+  function sendToOperator() {
+    const phone = process.env.NEXT_PUBLIC_MANAGER_PHONE ?? "";
+    const url = whatsAppSendUrl({
+      text: formatWhatsAppSettlement({ date, buses, entries }),
+      phone,
+      userAgent: navigator.userAgent,
+    });
+    window.open(url, "_blank");
+  }
+
   return (
     <div className="flex flex-col gap-5 pb-8">
-      <header className="flex items-center justify-between gap-2">
-        <button
-          type="button"
-          className="rounded-xl bg-white px-3 text-lg font-semibold shadow-sm"
-          onClick={() => setDate((current) => shiftDate(current, -1))}
-          aria-label="Previous day"
-        >
-          ‹
-        </button>
-        <div className="text-center">
-          <p className="text-xs font-medium uppercase tracking-wide text-orange-800">
-            Daily cash
-          </p>
-          <h1 className="text-lg font-semibold">{displayDate(date)}</h1>
+      <section className="rounded-2xl border border-stone-200 bg-white p-3 shadow-sm">
+        <p className="text-center text-[11px] font-semibold uppercase tracking-[0.14em] text-orange-800">
+          Daily summary
+        </p>
+        <div className="mt-3 flex items-center gap-2">
+          <button
+            type="button"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-stone-200 bg-stone-50 text-xl font-semibold text-stone-800"
+            onClick={() => setDate((current) => shiftDate(current, -1))}
+            aria-label="Previous day"
+          >
+            ‹
+          </button>
+          <label className="flex min-w-0 flex-1 flex-col items-center gap-1">
+            <span className="text-lg font-semibold tracking-tight text-stone-900">
+              {displayDate(date)}
+            </span>
+            <input
+              type="date"
+              value={date}
+              max={todayInIst()}
+              onChange={(event) => {
+                if (event.target.value) {
+                  setDate(event.target.value);
+                }
+              }}
+              className="h-11 w-full rounded-xl border border-stone-200 bg-stone-50 px-3 text-center text-sm font-medium text-stone-700"
+              aria-label="Select date"
+            />
+          </label>
+          <button
+            type="button"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-stone-200 bg-stone-50 text-xl font-semibold text-stone-800 disabled:opacity-40"
+            onClick={() => setDate((current) => shiftDate(current, 1))}
+            disabled={isTodayInIst(date)}
+            aria-label="Next day"
+          >
+            ›
+          </button>
         </div>
-        <button
-          type="button"
-          className="rounded-xl bg-white px-3 text-lg font-semibold shadow-sm"
-          onClick={() => setDate((current) => shiftDate(current, 1))}
-          aria-label="Next day"
-        >
-          ›
-        </button>
-      </header>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            disabled={loading}
+            onClick={downloadCsv}
+            className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-stone-200 bg-stone-50 px-2 py-2 text-center text-[11px] font-semibold leading-tight text-stone-800 active:bg-stone-200 disabled:opacity-40"
+          >
+            <DownloadIcon />
+            Download CSV
+          </button>
+          <button
+            type="button"
+            disabled={loading}
+            onClick={sendToOperator}
+            className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-2 py-2 text-center text-[11px] font-semibold leading-tight text-emerald-950 active:bg-emerald-100 disabled:opacity-40"
+          >
+            <SendIcon />
+            Send to operator
+          </button>
+        </div>
+        {!isTodayInIst(date) ? (
+          <button
+            type="button"
+            className="mt-2 w-full text-sm font-medium text-orange-800"
+            onClick={() => setDate(todayInIst())}
+          >
+            Jump to today
+          </button>
+        ) : null}
+      </section>
 
       <section className="grid grid-cols-3 gap-2">
-        <SummaryCard label="In" value={formatInr(fleetTotals.incomeInr)} />
-        <SummaryCard label="Out" value={formatInr(fleetTotals.expenseInr)} />
         <SummaryCard
-          label="Net"
+          label="Total Income"
+          value={formatInr(fleetTotals.incomeInr)}
+          tone="income"
+        />
+        <SummaryCard
+          label="Total Expense"
+          value={formatInr(fleetTotals.expenseInr)}
+          tone="expense"
+        />
+        <SummaryCard
+          label="Net Profit"
           value={formatInr(fleetTotals.netInr)}
-          emphasize
+          tone={netTone}
         />
       </section>
 
@@ -316,7 +423,7 @@ function DailyLedgerBoard() {
 
       <section className="flex flex-col gap-2">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-600">
-          Today’s entries
+          Entries · {displayDate(date)}
         </h2>
         {entries.length === 0 ? (
           <p className="rounded-2xl bg-white px-3 py-4 text-stone-600 shadow-sm">
@@ -360,21 +467,67 @@ function DailyLedgerBoard() {
 function SummaryCard({
   label,
   value,
-  emphasize = false,
+  tone,
 }: {
   label: string;
   value: string;
-  emphasize?: boolean;
+  tone: "income" | "expense" | "positive" | "negative" | "neutral";
 }) {
+  const valueClass =
+    tone === "income" || tone === "positive"
+      ? "text-emerald-700"
+      : tone === "expense" || tone === "negative"
+        ? "text-red-700"
+        : "text-stone-900";
+
   return (
-    <div
-      className={`rounded-2xl px-2 py-3 text-center shadow-sm ${
-        emphasize ? "bg-stone-900 text-white" : "bg-white"
-      }`}
-    >
-      <p className="text-xs uppercase tracking-wide opacity-70">{label}</p>
-      <p className="mt-1 text-sm font-semibold leading-tight">{value}</p>
+    <div className="rounded-2xl border border-stone-200 bg-white px-2 py-3 text-center shadow-sm">
+      <p className="text-[10px] font-semibold uppercase tracking-wide text-stone-500">
+        {label}
+      </p>
+      <p
+        className={`mt-1 text-[13px] font-semibold leading-tight tracking-tight ${valueClass}`}
+      >
+        {value}
+      </p>
     </div>
+  );
+}
+
+function DownloadIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-4 w-4 shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 3v12" />
+      <path d="m7 11 5 5 5-5" />
+      <path d="M5 21h14" />
+    </svg>
+  );
+}
+
+function SendIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      className="h-4 w-4 shrink-0"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M22 2 11 13" />
+      <path d="m22 2-7 20-4-9-9-4 20-7z" />
+    </svg>
   );
 }
 

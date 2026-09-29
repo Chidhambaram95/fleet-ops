@@ -66,3 +66,7 @@ export function displayDate(date: string): string {
     month: "short",
   }).format(new Date(year, month - 1, day));
 }
+
+export function isTodayInIst(date: string, now = new Date()): boolean {
+  return date === todayInIst(now);
+}
