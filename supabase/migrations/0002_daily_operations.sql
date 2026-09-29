@@ -1,14 +1,20 @@
--- Daily bus cash (income / expense). Apply after profiles exist.
+-- Daily bus cash (income / expense). Apply after organizations exist.
+-- Buses and entries are visible only inside an organization the caller belongs to.
 
 create table public.buses (
   id uuid primary key default gen_random_uuid(),
-  registration_number text not null unique,
+  organization_id uuid not null references public.organizations (id) on delete cascade,
+  registration_number text not null,
   route_label text not null,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  unique (organization_id, registration_number)
 );
+
+create index buses_organization_id_idx on public.buses (organization_id);
 
 create table public.daily_entries (
   id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.organizations (id) on delete cascade,
   bus_id uuid not null references public.buses (id) on delete cascade,
   entry_date date not null,
   kind text not null check (kind in ('income', 'expense')),
@@ -29,62 +35,54 @@ create table public.daily_entries (
   )
 );
 
+create index daily_entries_organization_id_idx
+  on public.daily_entries (organization_id);
 create index daily_entries_date_idx on public.daily_entries (entry_date desc);
-
-insert into public.buses (id, registration_number, route_label)
-values
-  (
-    '7c1a9b20-4d3e-4f81-9a12-000000000001',
-    'TN 01 N 4521',
-    'MTC contract — CMBT'
-  ),
-  (
-    '7c1a9b20-4d3e-4f81-9a12-000000000002',
-    'TN 38 AQ 2198',
-    'Coimbatore local'
-  ),
-  (
-    '7c1a9b20-4d3e-4f81-9a12-000000000003',
-    'TN 43 EF 4410',
-    'Ooty tourist'
-  )
-on conflict (registration_number) do nothing;
 
 alter table public.buses enable row level security;
 alter table public.daily_entries enable row level security;
 
-create policy "Authenticated users can read buses"
+create policy "Members can read buses"
   on public.buses for select
   to authenticated
-  using (true);
+  using (public.is_org_member(organization_id));
 
-create policy "Managers can write buses"
-  on public.buses for all
+create policy "Members can insert buses"
+  on public.buses for insert
   to authenticated
-  using (
-    exists (
-      select 1 from public.profiles
-      where id = auth.uid() and role in ('admin', 'fleet_manager')
-    )
-  );
+  with check (public.is_org_member(organization_id));
 
-create policy "Crew and managers can read entries"
+create policy "Members can update buses"
+  on public.buses for update
+  to authenticated
+  using (public.is_org_member(organization_id))
+  with check (public.is_org_member(organization_id));
+
+create policy "Members can delete buses"
+  on public.buses for delete
+  to authenticated
+  using (public.is_org_member(organization_id));
+
+create policy "Members can read entries"
   on public.daily_entries for select
   to authenticated
-  using (true);
+  using (public.is_org_member(organization_id));
 
-create policy "Crew and managers can insert entries"
+create policy "Members can insert entries"
   on public.daily_entries for insert
   to authenticated
-  with check (created_by = auth.uid());
+  with check (
+    public.is_org_member(organization_id)
+    and created_by = auth.uid()
+  );
 
-create policy "Owners and managers can delete entries"
+create policy "Members can update entries"
+  on public.daily_entries for update
+  to authenticated
+  using (public.is_org_member(organization_id))
+  with check (public.is_org_member(organization_id));
+
+create policy "Members can delete entries"
   on public.daily_entries for delete
   to authenticated
-  using (
-    created_by = auth.uid()
-    or exists (
-      select 1 from public.profiles
-      where id = auth.uid() and role in ('admin', 'fleet_manager')
-    )
-  );
+  using (public.is_org_member(organization_id));

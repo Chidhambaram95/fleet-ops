@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { getActiveOrganizationId } from "@data/auth/session";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import { hasPublicSupabaseEnv } from "@data/supabase/env";
 import {
@@ -54,10 +55,12 @@ export function DailyLedger() {
 }
 
 function DailyLedgerBoard() {
+  const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const repo = useMemo(
-    () => createSupabaseOperationsRepository(createBrowserSupabaseClient()),
-    [],
+    () => createSupabaseOperationsRepository(supabase),
+    [supabase],
   );
+  const [organizationId, setOrganizationId] = useState("");
   const [date, setDate] = useState(todayInIst);
   const [kind, setKind] = useState<EntryKind>("income");
   const [busId, setBusId] = useState("");
@@ -74,9 +77,36 @@ function DailyLedgerBoard() {
   useEffect(() => {
     let cancelled = false;
 
+    async function loadOrganization() {
+      try {
+        const id = await getActiveOrganizationId(supabase);
+        if (!cancelled) {
+          setOrganizationId(id);
+        }
+      } catch (loadError) {
+        if (!cancelled) {
+          setError(messageFromUnknown(loadError));
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadOrganization();
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase]);
+
+  useEffect(() => {
+    if (!organizationId) {
+      return;
+    }
+
+    let cancelled = false;
+
     async function loadBuses() {
       try {
-        const nextBuses = await repo.listBuses();
+        const nextBuses = await repo.listBuses(organizationId);
         if (cancelled) {
           return;
         }
@@ -93,9 +123,13 @@ function DailyLedgerBoard() {
     return () => {
       cancelled = true;
     };
-  }, [repo]);
+  }, [repo, organizationId]);
 
   useEffect(() => {
+    if (!organizationId) {
+      return;
+    }
+
     let cancelled = false;
 
     async function loadEntriesForDate() {
@@ -103,7 +137,7 @@ function DailyLedgerBoard() {
       setError("");
       setEntries([]);
       try {
-        const nextEntries = await repo.listEntriesByDate(date);
+        const nextEntries = await repo.listEntriesByDate(organizationId, date);
         if (cancelled) {
           return;
         }
@@ -123,7 +157,7 @@ function DailyLedgerBoard() {
     return () => {
       cancelled = true;
     };
-  }, [repo, date]);
+  }, [repo, organizationId, date]);
 
   const fleetTotals = useMemo(() => totalsForEntries(entries), [entries]);
   const busTotals = useMemo(
@@ -139,6 +173,10 @@ function DailyLedgerBoard() {
 
   async function saveEntry() {
     const amountInr = Math.round(Number(amount));
+    if (!organizationId) {
+      setError("You are not a member of an organization.");
+      return;
+    }
     if (!busId) {
       setError("Pick a bus.");
       return;
@@ -166,7 +204,7 @@ function DailyLedgerBoard() {
     setNote("");
 
     try {
-      const saved = await repo.addEntry({
+      const saved = await repo.addEntry(organizationId, {
         busId,
         date,
         kind,
@@ -188,11 +226,15 @@ function DailyLedgerBoard() {
   }
 
   async function removeEntry(id: string) {
+    if (!organizationId) {
+      setError("You are not a member of an organization.");
+      return;
+    }
     const previous = entries;
     setEntries((current) => current.filter((entry) => entry.id !== id));
     setError("");
     try {
-      await repo.removeEntry(id);
+      await repo.removeEntry(organizationId, id);
     } catch (removeError) {
       setEntries(previous);
       setError(messageFromUnknown(removeError));
@@ -218,11 +260,16 @@ function DailyLedgerBoard() {
     setScanning(true);
     setError("");
     try {
+      if (!organizationId) {
+        setError("You are not a member of an organization.");
+        return;
+      }
       const image = await compressReceipt(file);
       const response = await fetch("/api/parse-receipt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          organizationId,
           image: image.base64,
           mediaType: image.mediaType,
         }),

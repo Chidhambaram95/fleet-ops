@@ -1,7 +1,13 @@
 import { google } from "@ai-sdk/google";
 import { generateObject } from "ai";
 import { NextResponse } from "next/server";
+import {
+  isOrganizationId,
+  requireOrganizationMember,
+  SessionError,
+} from "@data/auth/session";
 import { receiptSchema } from "@domain/operations/receipt";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const MAX_IMAGE_CHARS = 1_500_000;
 
@@ -21,18 +27,35 @@ const receiptPrompt = [
 ].join(" ");
 
 export async function POST(request: Request) {
-  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-    return NextResponse.json(
-      { error: "Add GOOGLE_GENERATIVE_AI_API_KEY to .env.local." },
-      { status: 500 },
-    );
-  }
-
   let body: unknown;
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Send a receipt photo." }, { status: 400 });
+  }
+
+  const organizationId = readOrganizationId(body);
+  if (!organizationId) {
+    return NextResponse.json({ error: "Choose an organization." }, { status: 400 });
+  }
+
+  try {
+    const supabase = await createServerSupabaseClient();
+    await requireOrganizationMember(supabase, organizationId);
+  } catch (error) {
+    if (error instanceof SessionError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    const message =
+      error instanceof Error ? error.message : "Could not verify the session.";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+
+  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+    return NextResponse.json(
+      { error: "Add GOOGLE_GENERATIVE_AI_API_KEY to .env.local." },
+      { status: 500 },
+    );
   }
 
   const image = readImage(body);
@@ -83,6 +106,16 @@ export async function POST(request: Request) {
     { error: "Could not read that receipt." },
     { status: 502 },
   );
+}
+
+function readOrganizationId(body: unknown): string | null {
+  if (!body || typeof body !== "object" || !("organizationId" in body)) {
+    return null;
+  }
+  const organizationId = body.organizationId;
+  return typeof organizationId === "string" && isOrganizationId(organizationId)
+    ? organizationId
+    : null;
 }
 
 function readImage(

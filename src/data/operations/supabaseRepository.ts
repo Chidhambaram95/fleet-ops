@@ -18,22 +18,24 @@ function throwIfError(error: { message: string } | null) {
 export class SupabaseOperationsRepository implements OperationsRepository {
   constructor(private readonly client: SupabaseClient) {}
 
-  async listBuses() {
+  async listBuses(organizationId: string) {
     const { data, error } = await this.client
       .from("buses")
       .select("id, registration_number, route_label")
+      .eq("organization_id", organizationId)
       .order("registration_number", { ascending: true });
 
     throwIfError(error);
     return ((data ?? []) as BusRow[]).map(mapBus);
   }
 
-  async listEntriesByDate(date: string) {
+  async listEntriesByDate(organizationId: string, date: string) {
     const { data, error } = await this.client
       .from("daily_entries")
       .select(
         "id, bus_id, entry_date, kind, category, amount_inr, note, created_at",
       )
+      .eq("organization_id", organizationId)
       .eq("entry_date", date)
       .order("created_at", { ascending: false });
 
@@ -41,10 +43,22 @@ export class SupabaseOperationsRepository implements OperationsRepository {
     return ((data ?? []) as DailyEntryRow[]).map(mapDailyEntry);
   }
 
-  async addEntry(input: NewDailyEntry): Promise<DailyEntry> {
+  async addEntry(organizationId: string, input: NewDailyEntry): Promise<DailyEntry> {
     const amountInr = Math.round(input.amountInr);
     if (!Number.isFinite(amountInr) || amountInr <= 0) {
       throw new Error("Amount must be a whole rupee greater than 0.");
+    }
+
+    const { data: bus, error: busError } = await this.client
+      .from("buses")
+      .select("id")
+      .eq("id", input.busId)
+      .eq("organization_id", organizationId)
+      .maybeSingle();
+
+    throwIfError(busError);
+    if (!bus) {
+      throw new Error("That bus is not in this organization.");
     }
 
     const createdBy = await getAuthenticatedUserId(this.client);
@@ -52,6 +66,7 @@ export class SupabaseOperationsRepository implements OperationsRepository {
     const { data, error } = await this.client
       .from("daily_entries")
       .insert({
+        organization_id: organizationId,
         bus_id: input.busId,
         entry_date: input.date,
         kind: input.kind,
@@ -72,8 +87,12 @@ export class SupabaseOperationsRepository implements OperationsRepository {
     return mapDailyEntry(data as DailyEntryRow);
   }
 
-  async removeEntry(id: string) {
-    const { error } = await this.client.from("daily_entries").delete().eq("id", id);
+  async removeEntry(organizationId: string, id: string) {
+    const { error } = await this.client
+      .from("daily_entries")
+      .delete()
+      .eq("organization_id", organizationId)
+      .eq("id", id);
     throwIfError(error);
   }
 }
