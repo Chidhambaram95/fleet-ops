@@ -16,10 +16,14 @@ import {
 } from "./mappers";
 import type { OperationsRepository, TeamRepository } from "./repository";
 
-function throwIfError(error: { message: string } | null) {
+function throwIfError(error: { message: string; code?: string } | null) {
   if (error) {
     throw new Error(error.message);
   }
+}
+
+function isDuplicate(error: { message: string; code?: string }) {
+  return error.code === "23505" || error.message.toLowerCase().includes("duplicate");
 }
 
 type MemberRow = {
@@ -70,11 +74,42 @@ export class SupabaseOperationsRepository
       .select("id, registration_number, route_label")
       .single();
 
+    if (error && isDuplicate(error)) {
+      throw new Error("A bus with that registration number already exists.");
+    }
     throwIfError(error);
     if (!data) {
       throw new Error("Could not add that bus.");
     }
     return mapBus(data as BusRow);
+  }
+
+  async updateBus(organizationId: string, busId: string, input: NewBus): Promise<Bus> {
+    const registrationNumber = input.registrationNumber.trim();
+    const routeLabel = input.routeLabel.trim();
+    if (!registrationNumber || !routeLabel) {
+      throw new Error("Registration number and route are required.");
+    }
+
+    const { data, error } = await this.client
+      .from("buses")
+      .update({
+        registration_number: registrationNumber,
+        route_label: routeLabel,
+      })
+      .eq("organization_id", organizationId)
+      .eq("id", busId)
+      .select("id, registration_number, route_label");
+
+    if (error && isDuplicate(error)) {
+      throw new Error("A bus with that registration number already exists.");
+    }
+    throwIfError(error);
+    const row = data?.[0];
+    if (!row) {
+      throw new Error("Could not update that bus.");
+    }
+    return mapBus(row as BusRow);
   }
 
   async deleteBus(organizationId: string, busId: string) {
@@ -209,6 +244,29 @@ export class SupabaseOperationsRepository
         busId: buses.get(member.user_id) ?? null,
       };
     });
+  }
+
+  async addOrganizationMember(organizationId: string, userId: string, role: UserRole) {
+    if (!isUserRole(role)) {
+      throw new Error("Choose a valid role.");
+    }
+
+    const { data, error } = await this.client
+      .from("organization_members")
+      .insert({
+        organization_id: organizationId,
+        user_id: userId,
+        role,
+      })
+      .select("user_id");
+
+    if (error && isDuplicate(error)) {
+      throw new Error("That person is already in this organization.");
+    }
+    throwIfError(error);
+    if (!data?.length) {
+      throw new Error("Could not add that member.");
+    }
   }
 
   async updateMemberRole(organizationId: string, userId: string, role: UserRole) {

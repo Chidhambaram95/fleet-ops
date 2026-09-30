@@ -9,6 +9,7 @@ import type { Bus, DailyEntry, NewBus, NewDailyEntry } from "@domain/operations/
 export type OperationsRepository = {
   listBuses: (organizationId: string) => Promise<Bus[]>;
   createBus: (organizationId: string, input: NewBus) => Promise<Bus>;
+  updateBus: (organizationId: string, busId: string, input: NewBus) => Promise<Bus>;
   deleteBus: (organizationId: string, busId: string) => Promise<void>;
   listEntriesByDate: (organizationId: string, date: string) => Promise<DailyEntry[]>;
   addEntry: (organizationId: string, input: NewDailyEntry) => Promise<DailyEntry>;
@@ -17,6 +18,11 @@ export type OperationsRepository = {
 
 export type TeamRepository = {
   getOrganizationMembers: (organizationId: string) => Promise<OrganizationMember[]>;
+  addOrganizationMember: (
+    organizationId: string,
+    userId: string,
+    role: UserRole,
+  ) => Promise<void>;
   updateMemberRole: (
     organizationId: string,
     userId: string,

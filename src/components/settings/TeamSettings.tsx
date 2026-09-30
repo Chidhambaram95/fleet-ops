@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   assignCrewToBusAction,
+  createMemberAction,
   updateMemberRoleAction,
 } from "@/app/(app)/settings/team/actions";
 import type { Bus } from "@domain/operations/types";
@@ -34,6 +35,25 @@ export function TeamSettings({
   );
   const [pendingId, setPendingId] = useState("");
   const [error, setError] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [newRole, setNewRole] = useState<UserRole>("crew");
+  const [newBusId, setNewBusId] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  const memberKey = members.map((member) => member.userId).join(",");
+
+  useEffect(() => {
+    setRoles(
+      Object.fromEntries(members.map((member) => [member.userId, member.role])),
+    );
+    setBusIds(
+      Object.fromEntries(
+        members.map((member) => [member.userId, member.busId ?? ""]),
+      ),
+    );
+  }, [memberKey, members]);
 
   async function saveRole(
     userId: string,
@@ -82,16 +102,115 @@ export function TeamSettings({
     }
   }
 
+  async function addMember() {
+    setAdding(true);
+    setError("");
+    const result = await createMemberAction({
+      displayName,
+      email,
+      password,
+      role: newRole,
+      busId: newBusId,
+    });
+    setAdding(false);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    setDisplayName("");
+    setEmail("");
+    setPassword("");
+    setNewRole("crew");
+    setNewBusId("");
+    router.refresh();
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-lg font-semibold">Team</h1>
         <p className="text-sm text-stone-600">
-          Admins manage roles. Crew members need one assigned vehicle.
+          Add a person, then set their role. Crew members need one assigned vehicle.
         </p>
       </div>
 
       {error ? <p className="text-sm text-red-700">{error}</p> : null}
+
+      <form
+        className="flex flex-col gap-2 rounded-2xl bg-white p-3 shadow-sm"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void addMember();
+        }}
+      >
+        <p className="text-sm font-semibold">Add user</p>
+        <input
+          value={displayName}
+          onChange={(event) => setDisplayName(event.target.value)}
+          placeholder="Name"
+          aria-label="Name"
+          autoComplete="off"
+          className="rounded-xl border border-stone-200 bg-stone-50 px-3 text-base font-normal"
+        />
+        <input
+          type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="Email"
+          aria-label="Email"
+          autoComplete="off"
+          className="rounded-xl border border-stone-200 bg-stone-50 px-3 text-base font-normal"
+        />
+        <input
+          type="password"
+          value={password}
+          onChange={(event) => setPassword(event.target.value)}
+          placeholder="Temporary password"
+          aria-label="Temporary password"
+          autoComplete="new-password"
+          className="rounded-xl border border-stone-200 bg-stone-50 px-3 text-base font-normal"
+        />
+        <label className="flex flex-col gap-1 text-sm font-medium">
+          Role
+          <select
+            value={newRole}
+            onChange={(event) => setNewRole(event.target.value as UserRole)}
+            className="rounded-xl border border-stone-200 bg-stone-50 px-2 text-sm"
+          >
+            {USER_ROLES.map((option) => (
+              <option key={option} value={option}>
+                {ROLE_LABELS[option]}
+              </option>
+            ))}
+          </select>
+        </label>
+        {newRole === "crew" ? (
+          <label className="flex flex-col gap-1 text-sm font-medium">
+            Vehicle
+            <select
+              value={newBusId}
+              onChange={(event) => setNewBusId(event.target.value)}
+              className="rounded-xl border border-stone-200 bg-stone-50 px-2 text-sm"
+            >
+              <option value="">
+                {buses.length === 0 ? "No buses yet" : "Assign a vehicle"}
+              </option>
+              {buses.map((bus) => (
+                <option key={bus.id} value={bus.id}>
+                  {bus.registrationNumber}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        <button
+          type="submit"
+          disabled={adding}
+          className="rounded-xl bg-stone-900 px-4 text-sm font-semibold text-white disabled:opacity-60"
+        >
+          {adding ? "Adding…" : "Add user"}
+        </button>
+      </form>
 
       <div className="overflow-x-auto rounded-2xl bg-white shadow-sm">
         <table className="w-full text-left text-sm">

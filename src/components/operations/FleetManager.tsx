@@ -20,6 +20,9 @@ export function FleetManager() {
   const [buses, setBuses] = useState<Bus[]>([]);
   const [registrationNumber, setRegistrationNumber] = useState("");
   const [routeLabel, setRouteLabel] = useState("");
+  const [editingId, setEditingId] = useState("");
+  const [editRegistration, setEditRegistration] = useState("");
+  const [editRoute, setEditRoute] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -80,6 +83,39 @@ export function FleetManager() {
     }
   }
 
+  function startEdit(bus: Bus) {
+    setEditingId(bus.id);
+    setEditRegistration(bus.registrationNumber);
+    setEditRoute(bus.routeLabel);
+    setError("");
+  }
+
+  async function saveEdit(id: string) {
+    if (!organizationId) {
+      return;
+    }
+    setSaving(true);
+    setError("");
+    try {
+      const updated = await repo.updateBus(organizationId, id, {
+        registrationNumber: editRegistration,
+        routeLabel: editRoute,
+      });
+      setBuses((current) =>
+        current
+          .map((bus) => (bus.id === id ? updated : bus))
+          .sort((left, right) =>
+            left.registrationNumber.localeCompare(right.registrationNumber),
+          ),
+      );
+      setEditingId("");
+    } catch (editError) {
+      setError(messageFromUnknown(editError));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function deleteBus(id: string, registration: string) {
     if (!organizationId) {
       return;
@@ -103,7 +139,7 @@ export function FleetManager() {
       <div>
         <h1 className="text-lg font-semibold">Manage fleet</h1>
         <p className="text-sm text-stone-600">
-          Add a vehicle or remove one from the organization.
+          Add a vehicle, update its details, or remove it from the organization.
         </p>
       </div>
 
@@ -145,19 +181,69 @@ export function FleetManager() {
         {buses.map((bus) => (
           <article
             key={bus.id}
-            className="flex items-center justify-between gap-3 rounded-2xl bg-white px-3 py-3 shadow-sm"
+            className="flex flex-col gap-3 rounded-2xl bg-white px-3 py-3 shadow-sm"
           >
-            <div className="min-w-0">
-              <p className="font-semibold">{bus.registrationNumber}</p>
-              <p className="text-sm text-stone-600">{bus.routeLabel}</p>
-            </div>
-            <button
-              type="button"
-              className="shrink-0 rounded-xl bg-stone-100 px-3 text-sm font-medium text-stone-700"
-              onClick={() => void deleteBus(bus.id, bus.registrationNumber)}
-            >
-              Delete bus
-            </button>
+            {editingId === bus.id ? (
+              <form
+                className="flex flex-col gap-2"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void saveEdit(bus.id);
+                }}
+              >
+                <input
+                  value={editRegistration}
+                  onChange={(event) => setEditRegistration(event.target.value)}
+                  aria-label="Registration number"
+                  className="rounded-xl border border-stone-200 bg-stone-50 px-3 text-base font-normal"
+                />
+                <input
+                  value={editRoute}
+                  onChange={(event) => setEditRoute(event.target.value)}
+                  aria-label="Route"
+                  className="rounded-xl border border-stone-200 bg-stone-50 px-3 text-base font-normal"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={saving || !editRegistration.trim() || !editRoute.trim()}
+                    className="rounded-xl bg-stone-900 px-3 text-sm font-semibold text-white disabled:opacity-60"
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-xl bg-stone-100 px-3 text-sm font-medium text-stone-700"
+                    onClick={() => setEditingId("")}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-semibold">{bus.registrationNumber}</p>
+                  <p className="text-sm text-stone-600">{bus.routeLabel}</p>
+                </div>
+                <div className="flex shrink-0 gap-2">
+                  <button
+                    type="button"
+                    className="rounded-xl bg-stone-100 px-3 text-sm font-medium text-stone-800"
+                    onClick={() => startEdit(bus)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-xl bg-stone-100 px-3 text-sm font-medium text-stone-700"
+                    onClick={() => void deleteBus(bus.id, bus.registrationNumber)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            )}
           </article>
         ))}
         {!loading && buses.length === 0 && !error ? (
