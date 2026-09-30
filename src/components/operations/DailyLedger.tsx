@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { getActiveOrganizationId } from "@data/auth/session";
+import { getActiveMembership } from "@data/auth/session";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import { hasPublicSupabaseEnv } from "@data/supabase/env";
 import {
@@ -32,6 +32,7 @@ import type {
   ExpenseCategory,
   IncomeCategory,
 } from "@domain/operations/types";
+import type { UserRole } from "@domain/rbac/roles";
 import { compressReceipt } from "@/lib/compressReceipt";
 import { downloadTextFile } from "@/lib/downloadTextFile";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
@@ -61,6 +62,8 @@ function DailyLedgerBoard() {
     [supabase],
   );
   const [organizationId, setOrganizationId] = useState("");
+  const [role, setRole] = useState<UserRole | null>(null);
+  const [assignedBusId, setAssignedBusId] = useState("");
   const [date, setDate] = useState(todayInIst);
   const [kind, setKind] = useState<EntryKind>("income");
   const [busId, setBusId] = useState("");
@@ -79,9 +82,25 @@ function DailyLedgerBoard() {
 
     async function loadOrganization() {
       try {
-        const id = await getActiveOrganizationId(supabase);
-        if (!cancelled) {
-          setOrganizationId(id);
+        const membership = await getActiveMembership(supabase);
+        if (cancelled) {
+          return;
+        }
+        setOrganizationId(membership.organizationId);
+        setRole(membership.role);
+        if (membership.role === "crew") {
+          const assignment = await repo.getCrewAssignment(
+            membership.organizationId,
+            membership.userId,
+          );
+          if (cancelled) {
+            return;
+          }
+          const busId = assignment?.busId ?? "";
+          setAssignedBusId(busId);
+          if (busId) {
+            setBusId(busId);
+          }
         }
       } catch (loadError) {
         if (!cancelled) {
@@ -95,7 +114,7 @@ function DailyLedgerBoard() {
     return () => {
       cancelled = true;
     };
-  }, [supabase]);
+  }, [supabase, repo]);
 
   useEffect(() => {
     if (!organizationId) {
@@ -111,7 +130,12 @@ function DailyLedgerBoard() {
           return;
         }
         setBuses(nextBuses);
-        setBusId((current) => current || nextBuses[0]?.id || "");
+        setBusId((current) => {
+          if (role === "crew") {
+            return assignedBusId || current;
+          }
+          return current || nextBuses[0]?.id || "";
+        });
       } catch (loadError) {
         if (!cancelled) {
           setError(messageFromUnknown(loadError));
@@ -123,7 +147,7 @@ function DailyLedgerBoard() {
     return () => {
       cancelled = true;
     };
-  }, [repo, organizationId]);
+  }, [repo, organizationId, role, assignedBusId]);
 
   useEffect(() => {
     if (!organizationId) {
@@ -165,6 +189,10 @@ function DailyLedgerBoard() {
     [buses, entries],
   );
   const categories = kind === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+  const crewLocked = role === "crew";
+  const visibleBuses = crewLocked
+    ? buses.filter((bus) => bus.id === assignedBusId)
+    : buses;
 
   function onKindChange(next: EntryKind) {
     setKind(next);
@@ -177,8 +205,12 @@ function DailyLedgerBoard() {
       setError("You are not a member of an organization.");
       return;
     }
-    if (!busId) {
-      setError("Pick a bus.");
+    if (!busId || (role === "crew" && busId !== assignedBusId)) {
+      setError(
+        role === "crew"
+          ? "You can only log cash for your assigned vehicle."
+          : "Pick a bus.",
+      );
       return;
     }
     if (!Number.isFinite(amountInr) || amountInr <= 0) {
@@ -422,14 +454,15 @@ function DailyLedgerBoard() {
       {error ? <p className="text-sm text-red-700">{error}</p> : null}
 
       <section className="flex flex-col gap-2">
-        {buses.map((bus) => {
+        {visibleBuses.map((bus) => {
           const totals = busTotals.get(bus.id);
           return (
             <button
               key={bus.id}
               type="button"
+              disabled={crewLocked}
               onClick={() => setBusId(bus.id)}
-              className={`rounded-2xl border px-3 py-3 text-left shadow-sm ${
+              className={`rounded-2xl border px-3 py-3 text-left shadow-sm disabled:opacity-100 ${
                 busId === bus.id
                   ? "border-orange-700 bg-orange-50"
                   : "border-transparent bg-white"
@@ -447,9 +480,11 @@ function DailyLedgerBoard() {
             </button>
           );
         })}
-        {!loading && buses.length === 0 && !error ? (
+        {!loading && visibleBuses.length === 0 && !error ? (
           <p className="rounded-2xl bg-white px-3 py-4 text-stone-600 shadow-sm">
-            No buses yet. Confirm the buses table is seeded in Supabase.
+            {crewLocked
+              ? "No vehicle is assigned to you yet."
+              : "No buses yet."}
           </p>
         ) : null}
       </section>
@@ -495,6 +530,30 @@ function DailyLedgerBoard() {
             />
           </label>
         ) : null}
+
+        <label className="flex flex-col gap-1 text-sm font-medium">
+          Vehicle
+          <select
+            value={busId}
+            disabled={crewLocked || loading || visibleBuses.length === 0}
+            onChange={(event) => setBusId(event.target.value)}
+            className="rounded-xl border border-stone-200 bg-stone-50 px-3 text-base font-normal disabled:opacity-70"
+          >
+            {visibleBuses.length === 0 ? (
+              <option value="">No vehicle</option>
+            ) : null}
+            {visibleBuses.map((bus) => (
+              <option key={bus.id} value={bus.id}>
+                {bus.registrationNumber} · {bus.routeLabel}
+              </option>
+            ))}
+          </select>
+          {crewLocked ? (
+            <span className="text-xs font-normal text-stone-500">
+              Locked to your assigned vehicle.
+            </span>
+          ) : null}
+        </label>
 
         <div className="flex flex-wrap gap-2">
           {categories.map((item) => (
@@ -554,7 +613,8 @@ function DailyLedgerBoard() {
           </p>
         ) : (
           entries.map((entry) => {
-            const bus = buses.find((item) => item.id === entry.busId);
+            const bus = visibleBuses.find((item) => item.id === entry.busId) ??
+              buses.find((item) => item.id === entry.busId);
             return (
               <article
                 key={entry.id}
@@ -571,13 +631,15 @@ function DailyLedgerBoard() {
                     {entry.note ? ` · ${entry.note}` : ""}
                   </p>
                 </div>
-                <button
-                  type="button"
-                  className="text-sm text-stone-500"
-                  onClick={() => void removeEntry(entry.id)}
-                >
-                  Undo
-                </button>
+                {role === "admin" || role === "manager" ? (
+                  <button
+                    type="button"
+                    className="text-sm text-stone-500"
+                    onClick={() => void removeEntry(entry.id)}
+                  >
+                    Undo
+                  </button>
+                ) : null}
               </article>
             );
           })

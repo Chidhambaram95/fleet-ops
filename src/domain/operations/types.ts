@@ -20,6 +20,11 @@ export type Bus = {
   routeLabel: string;
 };
 
+export type NewBus = {
+  registrationNumber: string;
+  routeLabel: string;
+};
+
 export type DailyEntry = {
   id: string;
   busId: string;
