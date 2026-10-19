@@ -4,9 +4,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   assignCrewToBusAction,
-  createMemberAction,
+  cancelInviteAction,
+  createInviteAction,
   updateMemberRoleAction,
 } from "@/app/(app)/settings/team/actions";
+import { InviteShare } from "@/components/admin/InviteShare";
+import type { PendingInvite } from "@domain/companies/types";
 import type { Bus } from "@domain/operations/types";
 import {
   ROLE_LABELS,
@@ -18,10 +21,14 @@ import {
 export function TeamSettings({
   members,
   buses,
+  invites,
+  companyName,
   currentUserId,
 }: {
   members: OrganizationMember[];
   buses: Bus[];
+  invites: PendingInvite[];
+  companyName: string;
   currentUserId: string;
 }) {
   const router = useRouter();
@@ -36,8 +43,8 @@ export function TeamSettings({
   const [pendingId, setPendingId] = useState("");
   const [error, setError] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [fresh, setFresh] = useState<{ token: string; name: string; whatsapp: string } | null>(null);
   const [newRole, setNewRole] = useState<UserRole>("crew");
   const [newBusId, setNewBusId] = useState("");
   const [adding, setAdding] = useState(false);
@@ -105,23 +112,32 @@ export function TeamSettings({
   async function addMember() {
     setAdding(true);
     setError("");
-    const result = await createMemberAction({
+    const result = await createInviteAction({
       displayName,
-      email,
-      password,
+      whatsappNumber: whatsapp,
       role: newRole,
       busId: newBusId,
     });
     setAdding(false);
+    if (result.error || !result.token) {
+      setError(result.error ?? "Could not create the invite.");
+      return;
+    }
+    setFresh({ token: result.token, name: displayName.trim(), whatsapp });
+    setDisplayName("");
+    setWhatsapp("");
+    setNewRole("crew");
+    setNewBusId("");
+    router.refresh();
+  }
+
+  async function cancel(inviteId: string) {
+    setError("");
+    const result = await cancelInviteAction(inviteId);
     if (result.error) {
       setError(result.error);
       return;
     }
-    setDisplayName("");
-    setEmail("");
-    setPassword("");
-    setNewRole("crew");
-    setNewBusId("");
     router.refresh();
   }
 
@@ -130,7 +146,7 @@ export function TeamSettings({
       <div>
         <h1 className="text-lg font-semibold">Team</h1>
         <p className="text-sm text-stone-600">
-          Add a person, then set their role. Crew members need one assigned vehicle.
+          Invite a person on WhatsApp, then set their role. Crew members need one assigned vehicle.
         </p>
       </div>
 
@@ -143,7 +159,7 @@ export function TeamSettings({
           void addMember();
         }}
       >
-        <p className="text-sm font-semibold">Add user</p>
+        <p className="text-sm font-semibold">Invite someone</p>
         <input
           value={displayName}
           onChange={(event) => setDisplayName(event.target.value)}
@@ -153,21 +169,12 @@ export function TeamSettings({
           className="rounded-xl border border-stone-200 bg-stone-50 px-3 text-base font-normal"
         />
         <input
-          type="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          placeholder="Email"
-          aria-label="Email"
+          value={whatsapp}
+          onChange={(event) => setWhatsapp(event.target.value)}
+          placeholder="WhatsApp number"
+          aria-label="WhatsApp number"
+          inputMode="tel"
           autoComplete="off"
-          className="rounded-xl border border-stone-200 bg-stone-50 px-3 text-base font-normal"
-        />
-        <input
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          placeholder="Temporary password"
-          aria-label="Temporary password"
-          autoComplete="new-password"
           className="rounded-xl border border-stone-200 bg-stone-50 px-3 text-base font-normal"
         />
         <label className="flex flex-col gap-1 text-sm font-medium">
@@ -208,9 +215,50 @@ export function TeamSettings({
           disabled={adding}
           className="rounded-xl bg-stone-900 px-4 text-sm font-semibold text-white disabled:opacity-60"
         >
-          {adding ? "Adding…" : "Add user"}
+          {adding ? "Creating…" : "Create invite"}
         </button>
       </form>
+
+      {fresh ? (
+        <section className="flex flex-col gap-2 rounded-2xl bg-indigo-50 p-3">
+          <p className="text-sm font-semibold">Invite ready for {fresh.name}</p>
+          <InviteShare
+            token={fresh.token}
+            company={companyName}
+            name={fresh.name}
+            whatsappNumber={fresh.whatsapp}
+          />
+        </section>
+      ) : null}
+
+      {invites.length > 0 ? (
+        <section className="flex flex-col gap-2 rounded-2xl bg-white p-3 shadow-sm">
+          <p className="text-sm font-semibold">Waiting to join</p>
+          {invites.map((invite) => (
+            <div key={invite.id} className="flex flex-col gap-2 border-t border-stone-100 pt-2">
+              <p className="text-sm">
+                <span className="font-medium">{invite.displayName || "Invited person"}</span>{" "}
+                <span className="text-stone-500">· {ROLE_LABELS[invite.role as UserRole] ?? invite.role}</span>
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <InviteShare
+                  token={invite.token}
+                  company={companyName}
+                  name={invite.displayName}
+                  whatsappNumber={invite.whatsappNumber}
+                />
+                <button
+                  type="button"
+                  onClick={() => void cancel(invite.id)}
+                  className="rounded-xl px-3 text-sm font-medium text-stone-600"
+                >
+                  Cancel invite
+                </button>
+              </div>
+            </div>
+          ))}
+        </section>
+      ) : null}
 
       <div className="overflow-x-auto rounded-2xl bg-white shadow-sm">
         <table className="w-full text-left text-sm">

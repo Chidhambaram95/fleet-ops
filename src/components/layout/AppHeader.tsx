@@ -12,11 +12,13 @@ export function AppHeader({
   email,
   displayName,
   role,
+  isSuperAdmin = false,
 }: {
   organizationName: string;
   email: string;
   displayName: string;
   role: UserRole | null;
+  isSuperAdmin?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -90,7 +92,7 @@ export function AppHeader({
                 <div
                   id={manageId}
                   role="menu"
-                  className="absolute left-0 top-full z-30 mt-1 w-44 overflow-hidden rounded-xl border border-stone-200 bg-white py-1 shadow-lg"
+                  className="absolute left-0 top-full z-30 mt-1 w-48 overflow-hidden rounded-xl border border-stone-200 bg-white py-1 shadow-lg"
                 >
                   <Link
                     href="/fleet"
@@ -105,6 +107,13 @@ export function AppHeader({
                     className="flex items-center px-3 text-sm font-medium text-stone-800 hover:bg-stone-50"
                   >
                     Manage Team
+                  </Link>
+                  <Link
+                    href="/settings/company"
+                    role="menuitem"
+                    className="flex items-center px-3 text-sm font-medium text-stone-800 hover:bg-stone-50"
+                  >
+                    Company settings
                   </Link>
                 </div>
               ) : null}
@@ -138,6 +147,15 @@ export function AppHeader({
                 role="menu"
                 className="absolute right-0 top-full z-30 mt-1 w-36 overflow-hidden rounded-xl border border-stone-200 bg-white py-1 shadow-lg"
               >
+                {isSuperAdmin ? (
+                  <Link
+                    href="/admin/companies"
+                    role="menuitem"
+                    className="flex items-center px-3 text-sm font-medium text-stone-800 hover:bg-stone-50"
+                  >
+                    Super-admin
+                  </Link>
+                ) : null}
                 <button
                   type="button"
                   role="menuitem"

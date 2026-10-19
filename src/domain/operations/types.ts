@@ -14,15 +14,29 @@ export type ExpenseCategory =
   | "repair"
   | "other";
 
+export type BusKind = "town" | "omni" | "tour";
+export type SeatLayout = "" | "seater" | "sleeper";
+
 export type Bus = {
   id: string;
   registrationNumber: string;
   routeLabel: string;
+  busType: BusKind;
+  seats: number | null;
+  seatLayout: SeatLayout;
+  permitType: string;
+  runsWith: string;
 };
 
 export type NewBus = {
   registrationNumber: string;
+  /** Town buses need a route; Omni and Tour buses can leave it empty. */
   routeLabel: string;
+  busType?: BusKind;
+  seats?: number | null;
+  seatLayout?: SeatLayout;
+  permitType?: string;
+  runsWith?: string;
 };
 
 export type DailyEntry = {

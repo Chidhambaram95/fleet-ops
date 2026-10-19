@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AuthForm } from "@/components/auth/AuthForm";
 
 export const metadata: Metadata = {
-  title: "Create account · Fleet Ops",
+  title: "Join · Fleet Ops",
 };
 
 export default function SignupPage() {
@@ -12,17 +11,14 @@ export default function SignupPage() {
       <p className="text-xs font-medium uppercase tracking-wide text-orange-800">
         Fleet Ops
       </p>
-      <h1 className="text-2xl font-semibold leading-tight">Create account</h1>
+      <h1 className="text-2xl font-semibold leading-tight">Join by invite</h1>
       <p className="text-sm text-stone-600">
-        Use a work email. You’ll need it on every device.
+        Accounts are created from an invite link. Ask your company admin to send
+        you one on WhatsApp, then open it on this phone.
       </p>
-      <AuthForm mode="signup" />
-      <p className="text-center text-sm text-stone-600">
-        Already have an account?{" "}
-        <Link href="/login" className="font-medium text-orange-800">
-          Sign in
-        </Link>
-      </p>
+      <Link href="/login" className="font-medium text-orange-800">
+        Back to sign in
+      </Link>
     </section>
   );
 }

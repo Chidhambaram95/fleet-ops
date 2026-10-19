@@ -3,8 +3,151 @@
 import { useEffect, useMemo, useState } from "react";
 import { getActiveMembership } from "@data/auth/session";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
-import type { Bus } from "@domain/operations/types";
+import { BUS_TYPES, BUS_TYPE_LABELS } from "@domain/companies/types";
+import { PERMIT_TYPES, SEAT_LAYOUTS } from "@domain/operations/catalog";
+import type { Bus, BusKind, NewBus, SeatLayout } from "@domain/operations/types";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
+
+const inputClass =
+  "rounded-xl border border-stone-200 bg-stone-50 px-3 text-base font-normal";
+
+type BusForm = {
+  registrationNumber: string;
+  routeLabel: string;
+  busType: BusKind;
+  seats: string;
+  seatLayout: SeatLayout;
+  permitType: string;
+  runsWith: string;
+};
+
+const EMPTY_FORM: BusForm = {
+  registrationNumber: "",
+  routeLabel: "",
+  busType: "town",
+  seats: "",
+  seatLayout: "",
+  permitType: "",
+  runsWith: "",
+};
+
+function formFromBus(bus: Bus): BusForm {
+  return {
+    registrationNumber: bus.registrationNumber,
+    routeLabel: bus.routeLabel,
+    busType: bus.busType,
+    seats: bus.seats ? String(bus.seats) : "",
+    seatLayout: bus.seatLayout,
+    permitType: bus.permitType,
+    runsWith: bus.runsWith,
+  };
+}
+
+function toNewBus(form: BusForm): NewBus {
+  const seats = Number(form.seats);
+  return {
+    registrationNumber: form.registrationNumber,
+    routeLabel: form.routeLabel,
+    busType: form.busType,
+    seats: Number.isInteger(seats) && seats > 0 ? seats : null,
+    seatLayout: form.seatLayout,
+    permitType: form.permitType,
+    runsWith: form.runsWith,
+  };
+}
+
+function isComplete(form: BusForm) {
+  return (
+    Boolean(form.registrationNumber.trim()) &&
+    (form.busType !== "town" || Boolean(form.routeLabel.trim()))
+  );
+}
+
+function BusFields({
+  form,
+  onChange,
+}: {
+  form: BusForm;
+  onChange: (next: BusForm) => void;
+}) {
+  const set = <K extends keyof BusForm>(key: K, value: BusForm[K]) =>
+    onChange({ ...form, [key]: value });
+  return (
+    <>
+      <input
+        value={form.registrationNumber}
+        onChange={(event) => set("registrationNumber", event.target.value)}
+        placeholder="Registration number"
+        aria-label="Registration number"
+        className={inputClass}
+      />
+      <label className="flex flex-col gap-1 text-sm font-medium">
+        Bus type
+        <select
+          value={form.busType}
+          onChange={(event) => set("busType", event.target.value as BusKind)}
+          className={inputClass}
+        >
+          {BUS_TYPES.map((type) => (
+            <option key={type} value={type}>
+              {BUS_TYPE_LABELS[type]}
+            </option>
+          ))}
+        </select>
+      </label>
+      <input
+        value={form.routeLabel}
+        onChange={(event) => set("routeLabel", event.target.value)}
+        placeholder={form.busType === "town" ? "Route" : "Route (optional)"}
+        aria-label="Route"
+        className={inputClass}
+      />
+      <div className="grid grid-cols-2 gap-2">
+        <input
+          value={form.seats}
+          onChange={(event) => set("seats", event.target.value.replace(/\D/g, ""))}
+          placeholder="Seats"
+          aria-label="Seats"
+          inputMode="numeric"
+          className={inputClass}
+        />
+        <select
+          value={form.seatLayout}
+          onChange={(event) => set("seatLayout", event.target.value as SeatLayout)}
+          aria-label="Seater or sleeper"
+          className={inputClass}
+        >
+          <option value="">Seater or sleeper</option>
+          {SEAT_LAYOUTS.map((layout) => (
+            <option key={layout.id} value={layout.id}>
+              {layout.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <select
+        value={form.permitType}
+        onChange={(event) => set("permitType", event.target.value)}
+        aria-label="Permit type"
+        className={inputClass}
+      >
+        <option value="">Permit type</option>
+        {PERMIT_TYPES.map((permit) => (
+          <option key={permit} value={permit}>
+            {permit}
+          </option>
+        ))}
+      </select>
+      <input
+        value={form.runsWith}
+        onChange={(event) => set("runsWith", event.target.value)}
+        placeholder="Runs with (another bus, optional)"
+        aria-label="Runs with"
+        className={inputClass}
+      />
+    </>
+  );
+}
 
 function messageFromUnknown(error: unknown) {
   return error instanceof Error ? error.message : "Something went wrong.";
@@ -18,11 +161,9 @@ export function FleetManager() {
   );
   const [organizationId, setOrganizationId] = useState("");
   const [buses, setBuses] = useState<Bus[]>([]);
-  const [registrationNumber, setRegistrationNumber] = useState("");
-  const [routeLabel, setRouteLabel] = useState("");
+  const [form, setForm] = useState<BusForm>(EMPTY_FORM);
   const [editingId, setEditingId] = useState("");
-  const [editRegistration, setEditRegistration] = useState("");
-  const [editRoute, setEditRoute] = useState("");
+  const [editForm, setEditForm] = useState<BusForm>(EMPTY_FORM);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -65,17 +206,13 @@ export function FleetManager() {
     setSaving(true);
     setError("");
     try {
-      const created = await repo.createBus(organizationId, {
-        registrationNumber,
-        routeLabel,
-      });
+      const created = await repo.createBus(organizationId, toNewBus(form));
       setBuses((current) =>
         [...current, created].sort((left, right) =>
           left.registrationNumber.localeCompare(right.registrationNumber),
         ),
       );
-      setRegistrationNumber("");
-      setRouteLabel("");
+      setForm(EMPTY_FORM);
     } catch (addError) {
       setError(messageFromUnknown(addError));
     } finally {
@@ -85,8 +222,7 @@ export function FleetManager() {
 
   function startEdit(bus: Bus) {
     setEditingId(bus.id);
-    setEditRegistration(bus.registrationNumber);
-    setEditRoute(bus.routeLabel);
+    setEditForm(formFromBus(bus));
     setError("");
   }
 
@@ -97,10 +233,7 @@ export function FleetManager() {
     setSaving(true);
     setError("");
     try {
-      const updated = await repo.updateBus(organizationId, id, {
-        registrationNumber: editRegistration,
-        routeLabel: editRoute,
-      });
+      const updated = await repo.updateBus(organizationId, id, toNewBus(editForm));
       setBuses((current) =>
         current
           .map((bus) => (bus.id === id ? updated : bus))
@@ -153,23 +286,10 @@ export function FleetManager() {
         }}
       >
         <p className="text-sm font-semibold">Add bus</p>
-        <input
-          value={registrationNumber}
-          onChange={(event) => setRegistrationNumber(event.target.value)}
-          placeholder="Registration number"
-          aria-label="Registration number"
-          className="rounded-xl border border-stone-200 bg-stone-50 px-3 text-base font-normal"
-        />
-        <input
-          value={routeLabel}
-          onChange={(event) => setRouteLabel(event.target.value)}
-          placeholder="Route"
-          aria-label="Route"
-          className="rounded-xl border border-stone-200 bg-stone-50 px-3 text-base font-normal"
-        />
+        <BusFields form={form} onChange={setForm} />
         <button
           type="submit"
-          disabled={saving || loading || !registrationNumber.trim() || !routeLabel.trim()}
+          disabled={saving || loading || !isComplete(form)}
           className="rounded-xl bg-stone-900 px-4 text-sm font-semibold text-white disabled:opacity-60"
         >
           Add bus
@@ -191,22 +311,11 @@ export function FleetManager() {
                   void saveEdit(bus.id);
                 }}
               >
-                <input
-                  value={editRegistration}
-                  onChange={(event) => setEditRegistration(event.target.value)}
-                  aria-label="Registration number"
-                  className="rounded-xl border border-stone-200 bg-stone-50 px-3 text-base font-normal"
-                />
-                <input
-                  value={editRoute}
-                  onChange={(event) => setEditRoute(event.target.value)}
-                  aria-label="Route"
-                  className="rounded-xl border border-stone-200 bg-stone-50 px-3 text-base font-normal"
-                />
+                <BusFields form={editForm} onChange={setEditForm} />
                 <div className="flex gap-2">
                   <button
                     type="submit"
-                    disabled={saving || !editRegistration.trim() || !editRoute.trim()}
+                    disabled={saving || !isComplete(editForm)}
                     className="rounded-xl bg-stone-900 px-3 text-sm font-semibold text-white disabled:opacity-60"
                   >
                     Save
@@ -224,7 +333,24 @@ export function FleetManager() {
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-semibold">{bus.registrationNumber}</p>
-                  <p className="text-sm text-stone-600">{bus.routeLabel}</p>
+                  <p className="text-sm text-stone-600">
+                    {[
+                      BUS_TYPE_LABELS[bus.busType],
+                      bus.routeLabel,
+                      bus.seats
+                        ? `${bus.seats} ${bus.seatLayout || "seats"}`
+                        : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                  {bus.runsWith || bus.permitType ? (
+                    <p className="text-xs text-stone-500">
+                      {[bus.permitType, bus.runsWith ? `Runs with ${bus.runsWith}` : ""]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  ) : null}
                 </div>
                 <div className="flex shrink-0 gap-2">
                   <button

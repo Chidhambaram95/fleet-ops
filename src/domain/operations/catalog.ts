@@ -23,3 +23,15 @@ export function categoryLabel(
   const list = kind === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
   return list.find((item) => item.id === category)?.label ?? category;
 }
+
+export const PERMIT_TYPES = [
+  "Stage carriage",
+  "Contract carriage",
+  "Tourist permit",
+  "All India tourist permit",
+] as const;
+
+export const SEAT_LAYOUTS = [
+  { id: "seater", label: "Seater" },
+  { id: "sleeper", label: "Sleeper" },
+] as const;

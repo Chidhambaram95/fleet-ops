@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { AuthForm } from "@/components/auth/AuthForm";
 
 export const metadata: Metadata = {
@@ -18,10 +17,7 @@ export default function LoginPage() {
       </p>
       <AuthForm mode="login" />
       <p className="text-center text-sm text-stone-600">
-        New to the fleet?{" "}
-        <Link href="/signup" className="font-medium text-orange-800">
-          Create an account
-        </Link>
+        New here? Ask your company admin to send you an invite on WhatsApp.
       </p>
     </section>
   );

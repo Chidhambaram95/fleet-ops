@@ -14,6 +14,11 @@ export type BusRow = {
   id: string;
   registration_number: string;
   route_label: string;
+  bus_type?: string | null;
+  seats?: number | null;
+  seat_layout?: string | null;
+  permit_type?: string | null;
+  runs_with?: string | null;
 };
 
 export type DailyEntryRow = {
@@ -32,6 +37,15 @@ export function mapBus(row: BusRow): Bus {
     id: row.id,
     registrationNumber: row.registration_number,
     routeLabel: row.route_label,
+    busType:
+      row.bus_type === "omni" || row.bus_type === "tour" ? row.bus_type : "town",
+    seats: typeof row.seats === "number" ? row.seats : null,
+    seatLayout:
+      row.seat_layout === "seater" || row.seat_layout === "sleeper"
+        ? row.seat_layout
+        : "",
+    permitType: row.permit_type ?? "",
+    runsWith: row.runs_with ?? "",
   };
 }
 

@@ -41,6 +41,30 @@ type AssignmentRow = {
   bus_id: string;
 };
 
+const BUS_COLUMNS =
+  "id, registration_number, route_label, bus_type, seats, seat_layout, permit_type, runs_with";
+
+function busFields(input: NewBus) {
+  const registrationNumber = input.registrationNumber.trim();
+  const routeLabel = input.routeLabel.trim();
+  const busType = input.busType ?? "town";
+  if (!registrationNumber) {
+    throw new Error("Registration number is required.");
+  }
+  if (busType === "town" && !routeLabel) {
+    throw new Error("Registration number and route are required.");
+  }
+  return {
+    registration_number: registrationNumber,
+    route_label: routeLabel,
+    bus_type: busType,
+    seats: input.seats ?? null,
+    seat_layout: input.seatLayout ?? "",
+    permit_type: input.permitType?.trim() ?? "",
+    runs_with: input.runsWith?.trim() ?? "",
+  };
+}
+
 export class SupabaseOperationsRepository
   implements OperationsRepository, TeamRepository
 {
@@ -49,29 +73,30 @@ export class SupabaseOperationsRepository
   async listBuses(organizationId: string) {
     const { data, error } = await this.client
       .from("buses")
-      .select("id, registration_number, route_label")
+      .select(BUS_COLUMNS)
       .eq("organization_id", organizationId)
       .order("registration_number", { ascending: true });
 
-    throwIfError(error);
-    return ((data ?? []) as BusRow[]).map(mapBus);
+    if (error) {
+      // Database not migrated to company/bus-type columns yet.
+      const legacy = await this.client
+        .from("buses")
+        .select("id, registration_number, route_label")
+        .eq("organization_id", organizationId)
+        .order("registration_number", { ascending: true });
+      throwIfError(legacy.error);
+      return ((legacy.data ?? []) as BusRow[]).map(mapBus);
+    }
+    return ((data ?? []) as unknown as BusRow[]).map(mapBus);
   }
 
   async createBus(organizationId: string, input: NewBus): Promise<Bus> {
-    const registrationNumber = input.registrationNumber.trim();
-    const routeLabel = input.routeLabel.trim();
-    if (!registrationNumber || !routeLabel) {
-      throw new Error("Registration number and route are required.");
-    }
+    const fields = busFields(input);
 
     const { data, error } = await this.client
       .from("buses")
-      .insert({
-        organization_id: organizationId,
-        registration_number: registrationNumber,
-        route_label: routeLabel,
-      })
-      .select("id, registration_number, route_label")
+      .insert({ organization_id: organizationId, ...fields })
+      .select(BUS_COLUMNS)
       .single();
 
     if (error && isDuplicate(error)) {
@@ -81,25 +106,18 @@ export class SupabaseOperationsRepository
     if (!data) {
       throw new Error("Could not add that bus.");
     }
-    return mapBus(data as BusRow);
+    return mapBus(data as unknown as BusRow);
   }
 
   async updateBus(organizationId: string, busId: string, input: NewBus): Promise<Bus> {
-    const registrationNumber = input.registrationNumber.trim();
-    const routeLabel = input.routeLabel.trim();
-    if (!registrationNumber || !routeLabel) {
-      throw new Error("Registration number and route are required.");
-    }
+    const fields = busFields(input);
 
     const { data, error } = await this.client
       .from("buses")
-      .update({
-        registration_number: registrationNumber,
-        route_label: routeLabel,
-      })
+      .update(fields)
       .eq("organization_id", organizationId)
       .eq("id", busId)
-      .select("id, registration_number, route_label");
+      .select(BUS_COLUMNS);
 
     if (error && isDuplicate(error)) {
       throw new Error("A bus with that registration number already exists.");
@@ -109,7 +127,7 @@ export class SupabaseOperationsRepository
     if (!row) {
       throw new Error("Could not update that bus.");
     }
-    return mapBus(row as BusRow);
+    return mapBus(row as unknown as BusRow);
   }
 
   async deleteBus(organizationId: string, busId: string) {

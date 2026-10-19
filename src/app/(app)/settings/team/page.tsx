@@ -1,4 +1,5 @@
 import { getActiveMembership, SessionError } from "@data/auth/session";
+import { getCompanyProfile, listPendingInvites } from "@data/companies/repository";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import { hasPublicSupabaseEnv } from "@data/supabase/env";
 import { TeamSettings } from "@/components/settings/TeamSettings";
@@ -26,15 +27,19 @@ export default async function TeamSettingsPage() {
     }
 
     const repo = createSupabaseOperationsRepository(supabase);
-    const [members, buses] = await Promise.all([
+    const [members, buses, invites, company] = await Promise.all([
       repo.getOrganizationMembers(membership.organizationId),
       repo.listBuses(membership.organizationId),
+      listPendingInvites(supabase, membership.organizationId),
+      getCompanyProfile(supabase, membership.organizationId),
     ]);
 
     return (
       <TeamSettings
         members={members}
         buses={buses}
+        invites={invites}
+        companyName={company.name}
         currentUserId={membership.userId}
       />
     );

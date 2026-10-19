@@ -1,0 +1,106 @@
+"use client";
+
+import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { signInWithEmail } from "@data/auth/email";
+import { acceptInvite } from "@data/companies/repository";
+import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
+
+const field =
+  "rounded-xl border border-stone-200 bg-stone-50 px-3 text-base font-normal";
+
+export function InviteForm({
+  token,
+  initialName,
+}: {
+  token: string;
+  initialName: string;
+}) {
+  const router = useRouter();
+  const [hasLogin, setHasLogin] = useState(false);
+  const [name, setName] = useState(initialName);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
+
+  async function onSubmit(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    setInfo("");
+    const client = createBrowserSupabaseClient();
+    try {
+      if (hasLogin) {
+        await signInWithEmail(client, email.trim(), password);
+      } else {
+        const { data, error: signUpError } = await client.auth.signUp({
+          email: email.trim(),
+          password,
+          options: { data: { display_name: name.trim() } },
+        });
+        if (signUpError) throw new Error(signUpError.message);
+        if (data.user?.identities && data.user.identities.length === 0) {
+          throw new Error("An account with that email already exists. Choose “I already have a login”.");
+        }
+        if (!data.session) {
+          setInfo(
+            "Check your email to confirm the account. Then sign in here with “I already have a login”.",
+          );
+          return;
+        }
+      }
+      await acceptInvite(client, token);
+      router.replace("/");
+      router.refresh();
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : "Something went wrong.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={(event) => void onSubmit(event)} className="flex flex-col gap-3">
+      {hasLogin ? null : (
+        <label className="flex flex-col gap-1 text-sm font-medium">
+          Your name
+          <input value={name} onChange={(e) => setName(e.target.value)} required className={field} />
+        </label>
+      )}
+      <label className="flex flex-col gap-1 text-sm font-medium">
+        Email
+        <input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required className={field} />
+      </label>
+      <label className="flex flex-col gap-1 text-sm font-medium">
+        {hasLogin ? "Password" : "Create a password"}
+        <input
+          type="password"
+          autoComplete={hasLogin ? "current-password" : "new-password"}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          minLength={6}
+          required
+          className={field}
+        />
+      </label>
+      {error ? <p className="text-sm text-red-700">{error}</p> : null}
+      {info ? <p className="text-sm text-stone-700">{info}</p> : null}
+      <button
+        type="submit"
+        disabled={busy}
+        className="rounded-xl bg-orange-700 px-4 text-base font-semibold text-white disabled:opacity-60"
+      >
+        {busy ? "Please wait…" : "Join"}
+      </button>
+      <button
+        type="button"
+        onClick={() => setHasLogin((value) => !value)}
+        className="text-sm font-medium text-orange-800"
+      >
+        {hasLogin ? "I am new, create a password" : "I already have a login"}
+      </button>
+    </form>
+  );
+}

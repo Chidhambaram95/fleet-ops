@@ -35,6 +35,7 @@ import type {
 import type { UserRole } from "@domain/rbac/roles";
 import { compressReceipt } from "@/lib/compressReceipt";
 import { downloadTextFile } from "@/lib/downloadTextFile";
+import { useOrg } from "@/components/billing/OrgContext";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 
 function messageFromUnknown(error: unknown) {
@@ -56,6 +57,7 @@ export function DailyLedger() {
 }
 
 function DailyLedgerBoard() {
+  const org = useOrg();
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const repo = useMemo(
     () => createSupabaseOperationsRepository(supabase),
@@ -282,7 +284,7 @@ function DailyLedgerBoard() {
 
   function downloadCsv() {
     downloadTextFile(
-      settlementFilename(date),
+      settlementFilename(date, org.name),
       settlementCsv({ buses, entries }),
       "text/csv;charset=utf-8",
     );
@@ -343,9 +345,9 @@ function DailyLedgerBoard() {
   }
 
   function sendToOperator() {
-    const phone = process.env.NEXT_PUBLIC_MANAGER_PHONE ?? "";
+    const phone = org.whatsappNumber;
     const url = whatsAppSendUrl({
-      text: formatWhatsAppSettlement({ date, buses, entries }),
+      text: formatWhatsAppSettlement({ company: org.name, date, buses, entries }),
       phone,
       userAgent: navigator.userAgent,
     });
@@ -596,10 +598,12 @@ function DailyLedgerBoard() {
 
         <button
           type="submit"
-          disabled={saving || loading || !busId}
+          disabled={saving || loading || !busId || org.viewOnly}
           className="rounded-xl bg-orange-700 px-4 text-base font-semibold text-white disabled:opacity-60"
         >
-          {saving ? "Saving…" : `Save ${kind === "income" ? "income" : "expense"}`}
+          {org.viewOnly
+            ? "View only until payment is received"
+            : saving ? "Saving…" : `Save ${kind === "income" ? "income" : "expense"}`}
         </button>
       </form>
 
@@ -631,7 +635,7 @@ function DailyLedgerBoard() {
                     {entry.note ? ` · ${entry.note}` : ""}
                   </p>
                 </div>
-                {role === "admin" || role === "manager" ? (
+                {(role === "admin" || role === "manager") && !org.viewOnly ? (
                   <button
                     type="button"
                     className="text-sm text-stone-500"
