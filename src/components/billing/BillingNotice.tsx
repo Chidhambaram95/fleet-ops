@@ -52,7 +52,7 @@ export function BillingNotice({
   if (status.state === "due_soon") {
     if (!isAdminOrManager || bannerHidden) return null;
     return (
-      <div className="mx-auto mt-3 max-w-md px-4">
+      <div className="mx-auto mt-3 w-full max-w-6xl px-4 md:px-8">
         <div className="flex items-center gap-3 rounded-2xl border border-[#F0DDB8] bg-white py-2.5 pl-3.5 pr-1">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FFF5E5] text-[#8A5300]">
             <CalendarIcon />
@@ -113,7 +113,7 @@ export function BillingNotice({
   return (
     <>
       <div
-        className={`mx-auto mt-3 max-w-md px-4 text-[13px] font-bold`}
+        className={`mx-auto mt-3 w-full max-w-6xl px-4 md:px-8 text-[13px] font-bold`}
         role="status"
       >
         <div className="rounded-2xl bg-[#FDECEA] px-3.5 py-2.5 text-[#7A2A1C]">

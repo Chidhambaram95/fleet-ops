@@ -3,6 +3,7 @@ import type { ExpenseCategory } from "./types";
 
 export const RECEIPT_CATEGORIES = [
   "Diesel",
+  "AdBlue",
   "Toll",
   "Maintenance",
   "Batta",
@@ -27,6 +28,7 @@ const categoryByReceipt: Record<
   ExpenseCategory
 > = {
   Diesel: "diesel",
+  AdBlue: "adblue",
   Toll: "toll",
   Maintenance: "repair",
   Batta: "crew_bata",

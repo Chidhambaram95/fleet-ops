@@ -12,7 +12,7 @@ import {
 } from "@domain/companies/types";
 import { todayInIst } from "@domain/operations/totals";
 
-const field = "rounded-xl border border-stone-200 bg-stone-50 px-3 text-base font-normal";
+const field = "h-12 rounded-2xl bg-canvas px-4 text-base font-normal";
 
 export function CompanySettings({ profile }: { profile: CompanyProfile }) {
   const router = useRouter();
@@ -43,34 +43,34 @@ export function CompanySettings({ profile }: { profile: CompanyProfile }) {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <div>
-        <h1 className="text-lg font-semibold">Company settings</h1>
-        <p className="text-sm text-stone-600">
+        <h1 className="text-2xl font-extrabold">Company settings</h1>
+        <p className="text-sm text-muted">
           The WhatsApp number is where the daily settlement is sent.
         </p>
       </div>
 
       <form
-        className="flex flex-col gap-3 rounded-2xl bg-white p-3 shadow-sm"
+        className="flex flex-col gap-3 rounded-3xl bg-white p-4 md:p-5"
         onSubmit={(event) => {
           event.preventDefault();
           void save();
         }}
       >
-        <label className="flex flex-col gap-1 text-sm font-medium">
+        <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
           Company name
           <input value={name} onChange={(e) => setName(e.target.value)} required className={field} />
         </label>
-        <label className="flex flex-col gap-1 text-sm font-medium">
+        <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
           Town
           <input value={town} onChange={(e) => setTown(e.target.value)} className={field} />
         </label>
-        <label className="flex flex-col gap-1 text-sm font-medium">
+        <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
           GSTIN (optional)
           <input value={gstin} onChange={(e) => setGstin(e.target.value)} className={field} />
         </label>
-        <label className="flex flex-col gap-1 text-sm font-medium">
+        <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
           WhatsApp number for settlements
           <input
             value={whatsapp}
@@ -80,14 +80,14 @@ export function CompanySettings({ profile }: { profile: CompanyProfile }) {
             className={field}
           />
         </label>
-        <fieldset className="flex flex-col gap-1 text-sm font-medium">
+        <fieldset className="flex flex-col gap-1.5 text-[13px] font-semibold">
           <legend className="mb-1">Bus types we run</legend>
           <div className="flex flex-wrap gap-2">
             {BUS_TYPES.map((type) => (
               <label
                 key={type}
-                className={`flex min-h-11 items-center gap-2 rounded-xl border px-3 text-sm ${
-                  busTypes.includes(type) ? "border-orange-700 bg-orange-50" : "border-stone-200"
+                className={`flex min-h-11 items-center gap-2 rounded-2xl border-2 px-3 text-sm ${
+                  busTypes.includes(type) ? "border-brand bg-brand-soft" : "border-line"
                 }`}
               >
                 <input
@@ -102,27 +102,27 @@ export function CompanySettings({ profile }: { profile: CompanyProfile }) {
           </div>
         </fieldset>
         {message ? (
-          <p className={`text-sm ${failed ? "text-red-700" : "text-green-800"}`}>{message}</p>
+          <p className={`text-sm ${failed ? "text-money-out" : "text-money-in"}`}>{message}</p>
         ) : null}
         <button
           type="submit"
           disabled={busy}
-          className="rounded-xl bg-stone-900 px-4 text-sm font-semibold text-white disabled:opacity-60"
+          className="h-12 rounded-2xl bg-brand px-4 text-[15px] font-bold text-white disabled:opacity-60"
         >
           {busy ? "Saving…" : "Save"}
         </button>
       </form>
 
       {profile.subscription ? (
-        <section className="flex flex-col gap-1 rounded-2xl bg-white p-3 text-sm shadow-sm">
+        <section className="flex flex-col gap-1 rounded-3xl bg-white p-4 text-sm md:p-5">
           <p className="font-semibold">Fleet Ops plan</p>
-          <p className="text-stone-600">
+          <p className="text-muted">
             {profile.subscription.planLabel}
             {profile.subscription.amountInr
               ? ` · ₹${profile.subscription.amountInr.toLocaleString("en-IN")} / ${profile.subscription.billingPeriod}`
               : ""}
           </p>
-          <p className="text-stone-600">
+          <p className="text-muted">
             {status.dueOn
               ? `${status.onTrial ? "Free trial ends" : "Next payment due"} ${shortDate(status.dueOn)}`
               : "No payment due"}

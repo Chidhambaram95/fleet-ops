@@ -7,7 +7,7 @@ import { acceptInvite } from "@data/companies/repository";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 
 const field =
-  "rounded-xl border border-stone-200 bg-stone-50 px-3 text-base font-normal";
+  "h-12 rounded-2xl bg-canvas px-4 text-base font-normal";
 
 export function InviteForm({
   token,
@@ -64,16 +64,16 @@ export function InviteForm({
   return (
     <form onSubmit={(event) => void onSubmit(event)} className="flex flex-col gap-3">
       {hasLogin ? null : (
-        <label className="flex flex-col gap-1 text-sm font-medium">
+        <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
           Your name
           <input value={name} onChange={(e) => setName(e.target.value)} required className={field} />
         </label>
       )}
-      <label className="flex flex-col gap-1 text-sm font-medium">
+      <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
         Email
         <input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required className={field} />
       </label>
-      <label className="flex flex-col gap-1 text-sm font-medium">
+      <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
         {hasLogin ? "Password" : "Create a password"}
         <input
           type="password"
@@ -85,19 +85,19 @@ export function InviteForm({
           className={field}
         />
       </label>
-      {error ? <p className="text-sm text-red-700">{error}</p> : null}
-      {info ? <p className="text-sm text-stone-700">{info}</p> : null}
+      {error ? <p className="text-sm text-money-out">{error}</p> : null}
+      {info ? <p className="text-sm text-muted">{info}</p> : null}
       <button
         type="submit"
         disabled={busy}
-        className="rounded-xl bg-orange-700 px-4 text-base font-semibold text-white disabled:opacity-60"
+        className="h-12 rounded-2xl bg-brand px-4 text-base font-bold text-white disabled:opacity-60"
       >
         {busy ? "Please wait…" : "Join"}
       </button>
       <button
         type="button"
         onClick={() => setHasLogin((value) => !value)}
-        className="text-sm font-medium text-orange-800"
+        className="text-sm font-medium text-brand"
       >
         {hasLogin ? "I am new, create a password" : "I already have a login"}
       </button>

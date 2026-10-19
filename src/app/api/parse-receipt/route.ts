@@ -21,7 +21,7 @@ const receiptPrompt = [
   "Read this Indian bus-fleet expense receipt.",
   "amount is the total in rupees.",
   "date is the receipt date as YYYY-MM-DD.",
-  "category is Diesel for fuel, Toll for tolls, Maintenance for repairs or service, Batta for crew allowance, and Other otherwise.",
+  "category is Diesel for fuel, AdBlue for AdBlue or DEF, Toll for tolls, Maintenance for repairs or service, Batta for crew allowance, and Other otherwise.",
   "liters is the fuel volume when the receipt shows it, otherwise null.",
   "vendorName is the pump or shop name when it is visible, otherwise null.",
 ].join(" ");

@@ -1,5 +1,10 @@
+import { Suspense } from "react";
 import { DailyLedger } from "@/components/operations/DailyLedger";
 
 export default function HomePage() {
-  return <DailyLedger />;
+  return (
+    <Suspense>
+      <DailyLedger />
+    </Suspense>
+  );
 }

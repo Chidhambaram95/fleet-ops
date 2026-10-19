@@ -9,8 +9,10 @@ export const INCOME_CATEGORIES: { id: IncomeCategory; label: string }[] = [
 
 export const EXPENSE_CATEGORIES: { id: ExpenseCategory; label: string }[] = [
   { id: "diesel", label: "Diesel" },
+  { id: "adblue", label: "AdBlue" },
   { id: "toll", label: "Toll" },
   { id: "crew_bata", label: "Crew bata" },
+  { id: "police", label: "Police" },
   { id: "parking", label: "Parking" },
   { id: "repair", label: "Repair" },
   { id: "other", label: "Other" },

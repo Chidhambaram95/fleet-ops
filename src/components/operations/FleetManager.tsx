@@ -9,7 +9,7 @@ import type { Bus, BusKind, NewBus, SeatLayout } from "@domain/operations/types"
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 
 const inputClass =
-  "rounded-xl border border-stone-200 bg-stone-50 px-3 text-base font-normal";
+  "h-12 rounded-2xl bg-canvas px-4 text-base font-normal";
 
 type BusForm = {
   registrationNumber: string;
@@ -81,7 +81,7 @@ function BusFields({
         aria-label="Registration number"
         className={inputClass}
       />
-      <label className="flex flex-col gap-1 text-sm font-medium">
+      <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
         Bus type
         <select
           value={form.busType}
@@ -153,7 +153,7 @@ function messageFromUnknown(error: unknown) {
   return error instanceof Error ? error.message : "Something went wrong.";
 }
 
-export function FleetManager() {
+export function FleetManager({ canEdit }: { canEdit: boolean }) {
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const repo = useMemo(
     () => createSupabaseOperationsRepository(supabase),
@@ -268,40 +268,44 @@ export function FleetManager() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <div>
-        <h1 className="text-lg font-semibold">Manage fleet</h1>
-        <p className="text-sm text-stone-600">
-          Add a vehicle, update its details, or remove it from the organization.
+        <h1 className="text-2xl font-extrabold">Buses</h1>
+        <p className="text-sm text-muted">
+          {canEdit
+            ? "Add a bus, change its details, or remove it."
+            : "All buses in your company. Ask your admin to add or change one."}
         </p>
       </div>
 
-      {error ? <p className="text-sm text-red-700">{error}</p> : null}
+      {error ? <p className="text-sm text-money-out">{error}</p> : null}
 
-      <form
-        className="flex flex-col gap-2 rounded-2xl bg-white p-3 shadow-sm"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void addBus();
-        }}
-      >
-        <p className="text-sm font-semibold">Add bus</p>
-        <BusFields form={form} onChange={setForm} />
-        <button
-          type="submit"
-          disabled={saving || loading || !isComplete(form)}
-          className="rounded-xl bg-stone-900 px-4 text-sm font-semibold text-white disabled:opacity-60"
+      {canEdit ? (
+        <form
+          className="flex flex-col gap-2 rounded-3xl bg-white p-4 md:p-5"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void addBus();
+          }}
         >
-          Add bus
-        </button>
-      </form>
+          <p className="font-bold">Add a bus</p>
+          <BusFields form={form} onChange={setForm} />
+          <button
+            type="submit"
+            disabled={saving || loading || !isComplete(form)}
+            className="h-12 rounded-2xl bg-brand px-4 text-[15px] font-bold text-white disabled:opacity-60"
+          >
+            Add bus
+          </button>
+        </form>
+      ) : null}
 
       <section className="flex flex-col gap-2">
-        {loading ? <p className="text-sm text-stone-600">Loading vehicles…</p> : null}
+        {loading ? <p className="text-sm text-muted">Loading buses…</p> : null}
         {buses.map((bus) => (
           <article
             key={bus.id}
-            className="flex flex-col gap-3 rounded-2xl bg-white px-3 py-3 shadow-sm"
+            className="flex flex-col gap-3 rounded-[20px] bg-white px-4 py-3"
           >
             {editingId === bus.id ? (
               <form
@@ -316,13 +320,13 @@ export function FleetManager() {
                   <button
                     type="submit"
                     disabled={saving || !isComplete(editForm)}
-                    className="rounded-xl bg-stone-900 px-3 text-sm font-semibold text-white disabled:opacity-60"
+                    className="rounded-2xl bg-brand px-4 text-sm font-bold text-white disabled:opacity-60"
                   >
                     Save
                   </button>
                   <button
                     type="button"
-                    className="rounded-xl bg-stone-100 px-3 text-sm font-medium text-stone-700"
+                    className="rounded-full bg-canvas px-4 text-sm font-semibold text-ink"
                     onClick={() => setEditingId("")}
                   >
                     Cancel
@@ -333,7 +337,7 @@ export function FleetManager() {
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-semibold">{bus.registrationNumber}</p>
-                  <p className="text-sm text-stone-600">
+                  <p className="text-sm text-muted">
                     {[
                       BUS_TYPE_LABELS[bus.busType],
                       bus.routeLabel,
@@ -345,36 +349,38 @@ export function FleetManager() {
                       .join(" · ")}
                   </p>
                   {bus.runsWith || bus.permitType ? (
-                    <p className="text-xs text-stone-500">
+                    <p className="text-xs text-muted">
                       {[bus.permitType, bus.runsWith ? `Runs with ${bus.runsWith}` : ""]
                         .filter(Boolean)
                         .join(" · ")}
                     </p>
                   ) : null}
                 </div>
-                <div className="flex shrink-0 gap-2">
-                  <button
-                    type="button"
-                    className="rounded-xl bg-stone-100 px-3 text-sm font-medium text-stone-800"
-                    onClick={() => startEdit(bus)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    className="rounded-xl bg-stone-100 px-3 text-sm font-medium text-stone-700"
-                    onClick={() => void deleteBus(bus.id, bus.registrationNumber)}
-                  >
-                    Delete
-                  </button>
-                </div>
+                {canEdit ? (
+                  <div className="flex shrink-0 gap-2">
+                    <button
+                      type="button"
+                      className="rounded-full bg-canvas px-4 text-sm font-semibold text-ink"
+                      onClick={() => startEdit(bus)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-full bg-canvas px-4 text-sm font-semibold text-ink"
+                      onClick={() => void deleteBus(bus.id, bus.registrationNumber)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ) : null}
               </div>
             )}
           </article>
         ))}
         {!loading && buses.length === 0 && !error ? (
-          <p className="rounded-2xl bg-white px-3 py-4 text-stone-600 shadow-sm">
-            No buses yet. Add the first vehicle above.
+          <p className="rounded-[20px] bg-white px-4 py-4 text-muted">
+            {canEdit ? "No buses yet. Add the first one above." : "No buses yet."}
           </p>
         ) : null}
       </section>

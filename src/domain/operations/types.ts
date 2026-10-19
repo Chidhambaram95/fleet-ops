@@ -8,8 +8,10 @@ export type IncomeCategory =
 
 export type ExpenseCategory =
   | "diesel"
+  | "adblue"
   | "toll"
   | "crew_bata"
+  | "police"
   | "parking"
   | "repair"
   | "other";

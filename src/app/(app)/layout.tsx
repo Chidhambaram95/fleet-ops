@@ -8,7 +8,10 @@ import type { UserRole } from "@domain/rbac/roles";
 import { BillingNotice } from "@/components/billing/BillingNotice";
 import { OrgProvider } from "@/components/billing/OrgContext";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { BottomNav } from "@/components/layout/BottomNav";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+
+const MAIN_CLASS = "mx-auto w-full max-w-6xl px-4 py-4 md:px-8 md:py-7";
 
 export default async function AppShellLayout({
   children,
@@ -16,7 +19,7 @@ export default async function AppShellLayout({
   children: React.ReactNode;
 }>) {
   if (!hasPublicSupabaseEnv()) {
-    return <main className="mx-auto max-w-md px-4 py-5">{children}</main>;
+    return <main className={MAIN_CLASS}>{children}</main>;
   }
 
   const supabase = await createServerSupabaseClient();
@@ -76,18 +79,20 @@ export default async function AppShellLayout({
   }
 
   return (
-    <div className="min-h-dvh">
+    <div className="min-h-dvh pb-24 md:pb-0">
       <AppHeader
         organizationName={organizationName}
         email={user?.email ?? ""}
         displayName={displayName}
         role={role}
         isSuperAdmin={superAdmin}
+        canAdd={Boolean(role) && !viewOnly}
       />
       {notice}
       <OrgProvider value={{ name: organizationName, whatsappNumber, viewOnly }}>
-        <main className="mx-auto max-w-md px-4 py-5">{children}</main>
+        <main className={MAIN_CLASS}>{children}</main>
       </OrgProvider>
+      <BottomNav canAdd={Boolean(role) && !viewOnly} />
     </div>
   );
 }

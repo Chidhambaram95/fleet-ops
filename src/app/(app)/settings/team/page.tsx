@@ -8,7 +8,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 export default async function TeamSettingsPage() {
   if (!hasPublicSupabaseEnv()) {
     return (
-      <p className="rounded-2xl bg-white px-4 py-6 text-stone-700 shadow-sm">
+      <p className="rounded-3xl bg-white px-4 py-6 text-muted">
         Add Supabase keys to <code className="text-sm">.env.local</code> before
         managing the team.
       </p>
@@ -20,7 +20,7 @@ export default async function TeamSettingsPage() {
     const membership = await getActiveMembership(supabase);
     if (membership.role !== "admin") {
       return (
-        <p className="rounded-2xl bg-white px-4 py-6 text-stone-700 shadow-sm">
+        <p className="rounded-3xl bg-white px-4 py-6 text-muted">
           Only admins can manage the team.
         </p>
       );
@@ -49,7 +49,7 @@ export default async function TeamSettingsPage() {
         ? error.message
         : "Could not load the team.";
     return (
-      <p className="rounded-2xl bg-white px-4 py-6 text-red-700 shadow-sm">
+      <p className="rounded-3xl bg-white px-4 py-6 text-money-out">
         {message}
       </p>
     );

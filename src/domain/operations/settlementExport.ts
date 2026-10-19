@@ -140,8 +140,12 @@ function categoryEmoji(kind: EntryKind, category: string): string {
       return "⛽";
     case "toll":
       return "🛣️";
+    case "adblue":
+      return "💧";
     case "crew_bata":
       return "👷";
+    case "police":
+      return "👮";
     case "parking":
       return "🅿️";
     case "repair":
