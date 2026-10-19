@@ -9,7 +9,7 @@ if [[ ! -f .env.local ]]; then
 fi
 
 SESSION_NAME="fleet-ops-dev"
-TMUX=(tmux -f /exec-daemon/tmux.portal.conf)
+TMUX=(/exec-daemon/tmux -f /exec-daemon/tmux.portal.conf)
 
 if "${TMUX[@]}" has-session -t "=$SESSION_NAME" 2>/dev/null; then
   exit 0
