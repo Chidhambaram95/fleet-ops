@@ -173,7 +173,8 @@ export function RenewalsPage({ organizationId }: { organizationId: string }) {
         days,
       })),
     );
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
+    // To the company's own WhatsApp number when it is set; otherwise WhatsApp asks who to send it to.
+    window.open(`https://wa.me/${org.whatsappNumber}?text=${encodeURIComponent(text)}`, "_blank", "noopener");
   }
 
   function documentRows(ownerId: string, documents: { id: RenewalKind; label: string }[]) {
@@ -405,6 +406,7 @@ export function RenewalsPage({ organizationId }: { organizationId: string }) {
                         {!org.viewOnly ? (
                           <SmallButton
                             onClick={async () => {
+                              if (!window.confirm("Delete this renewal record? This cannot be undone.")) return;
                               try {
                                 await deleteRow(supabase, "renewals", organizationId, renewal.id);
                                 reload();

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getActiveMembership } from "@data/auth/session";
 import { updateCompanyProfile } from "@data/companies/repository";
 import { BUS_TYPES, type BusType } from "@domain/companies/types";
+import { friendlyErrorMessage } from "@domain/platform/errors";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function saveCompanyAction(input: {
@@ -40,6 +41,6 @@ export async function saveCompanyAction(input: {
     revalidatePath("/", "layout");
     return {};
   } catch (error) {
-    return { error: error instanceof Error ? error.message : "Something went wrong." };
+    return { error: friendlyErrorMessage(error) };
   }
 }

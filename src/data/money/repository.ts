@@ -120,13 +120,14 @@ export async function listPumpStatements(
     statementOn: str(row.statement_on),
     outstandingInr: num(row.outstanding_inr),
     note: str(row.note),
+    createdAt: str(row.created_at),
   }));
 }
 
 export function addPumpStatement(
   client: SupabaseClient,
   organizationId: string,
-  input: Omit<PumpStatement, "id">,
+  input: Omit<PumpStatement, "id" | "createdAt">,
 ) {
   return insertRow(client, "pump_statements", organizationId, {
     pump: input.pump,

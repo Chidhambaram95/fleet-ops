@@ -92,7 +92,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
         </div>
       </section>
 
-      <CompanyEditForm key={`${company.name}-${company.maxBuses}`} company={company} />
+      <CompanyEditForm key={company.organizationId} company={company} />
       <CompanyPeople company={company} members={members} invites={invites} />
       <CompanyDanger
         company={company}

@@ -39,9 +39,10 @@ import { downloadTextFile } from "@/lib/downloadTextFile";
 import { useOrg } from "@/components/billing/OrgContext";
 import { RenewalsDueCard } from "@/components/renewals/RenewalsDueCard";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
+import { friendlyErrorMessage } from "@domain/platform/errors";
 
 function messageFromUnknown(error: unknown) {
-  return error instanceof Error ? error.message : "Something went wrong.";
+  return friendlyErrorMessage(error);
 }
 
 export function DailyLedger() {

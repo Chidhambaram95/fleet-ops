@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { friendlyErrorMessage } from "@domain/platform/errors";
 
 /** Shared theme C building blocks for the money, renewals and report pages. */
 export const FIELD =
@@ -155,7 +156,7 @@ export function SmallButton({
 }
 
 export function messageFromUnknown(error: unknown) {
-  return error instanceof Error ? error.message : "Something went wrong.";
+  return friendlyErrorMessage(error);
 }
 
 export function shortDay(date: string) {

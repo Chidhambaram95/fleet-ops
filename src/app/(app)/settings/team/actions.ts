@@ -6,6 +6,7 @@ import { cancelInvite, createInvite } from "@data/companies/repository";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import { isUserRole } from "@domain/rbac/roles";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { friendlyErrorMessage } from "@domain/platform/errors";
 
 async function requireAdmin() {
   const supabase = await createServerSupabaseClient();
@@ -17,7 +18,7 @@ async function requireAdmin() {
 }
 
 function messageFromUnknown(error: unknown) {
-  return error instanceof Error ? error.message : "Something went wrong.";
+  return friendlyErrorMessage(error);
 }
 
 export async function createInviteAction(input: {
@@ -92,8 +93,9 @@ export async function assignCrewToBusAction(userId: string, busId: string) {
       return { error: "You cannot change your own role." };
     }
     const repo = createSupabaseOperationsRepository(supabase);
-    await repo.updateMemberRole(membership.organizationId, userId, "crew");
+    // The bus first: the database refuses crew without one.
     await repo.assignCrewToBus(membership.organizationId, userId, busId);
+    await repo.updateMemberRole(membership.organizationId, userId, "crew");
     revalidatePath("/settings/team");
     return {};
   } catch (error) {

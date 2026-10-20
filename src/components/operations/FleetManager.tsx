@@ -7,6 +7,8 @@ import { BUS_TYPES, BUS_TYPE_LABELS } from "@domain/companies/types";
 import { PERMIT_TYPES, SEAT_LAYOUTS } from "@domain/operations/catalog";
 import type { Bus, BusKind, NewBus, SeatLayout } from "@domain/operations/types";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
+import { useOrg } from "@/components/billing/OrgContext";
+import { friendlyErrorMessage } from "@domain/platform/errors";
 
 const inputClass =
   "h-12 rounded-2xl bg-canvas px-4 text-base font-normal";
@@ -150,10 +152,12 @@ function BusFields({
 }
 
 function messageFromUnknown(error: unknown) {
-  return error instanceof Error ? error.message : "Something went wrong.";
+  return friendlyErrorMessage(error);
 }
 
-export function FleetManager({ canEdit }: { canEdit: boolean }) {
+export function FleetManager({ canEdit: isAdmin }: { canEdit: boolean }) {
+  const { viewOnly } = useOrg();
+  const canEdit = isAdmin && !viewOnly;
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const repo = useMemo(
     () => createSupabaseOperationsRepository(supabase),
@@ -253,7 +257,7 @@ export function FleetManager({ canEdit }: { canEdit: boolean }) {
     if (!organizationId) {
       return;
     }
-    if (!window.confirm(`Delete ${registration}? Its cash entries will be removed.`)) {
+    if (!window.confirm(`Delete ${registration}? Its cash entries, trip sheets and renewals will be removed too. This cannot be undone.`)) {
       return;
     }
     const previous = buses;
@@ -274,7 +278,9 @@ export function FleetManager({ canEdit }: { canEdit: boolean }) {
         <p className="text-sm text-muted">
           {canEdit
             ? "Add a bus, change its details, or remove it."
-            : "All buses in your company. Ask your admin to add or change one."}
+            : isAdmin
+              ? "The app is view-only until the payment is received."
+              : "All buses in your company. Ask your admin to add or change one."}
         </p>
       </div>
 

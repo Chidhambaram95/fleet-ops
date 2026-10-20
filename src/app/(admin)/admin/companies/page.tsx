@@ -118,7 +118,7 @@ export default async function CompaniesPage() {
                     token={company.pendingInviteToken}
                     company={company.name}
                     name={company.adminName}
-                    whatsappNumber=""
+                    whatsappNumber={company.pendingInviteWhatsapp}
                   />
                 </div>
               ) : null}

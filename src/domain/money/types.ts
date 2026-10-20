@@ -28,6 +28,8 @@ export type PumpStatement = {
   statementOn: string;
   outstandingInr: number;
   note: string;
+  /** When it was entered; breaks ties between figures for the same date. */
+  createdAt: string;
 };
 
 export type PumpPayment = {

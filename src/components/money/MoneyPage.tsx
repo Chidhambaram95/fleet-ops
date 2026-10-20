@@ -121,6 +121,8 @@ export function MoneyPage({ organizationId }: { organizationId: string }) {
   }
 
   function remove(table: "company_expenses" | "intercity_income", id: string) {
+    const what = table === "company_expenses" ? "this cost" : "this Intercity payment";
+    if (!window.confirm(`Delete ${what}? This cannot be undone.`)) return;
     void run(() => deleteRow(supabase, table, organizationId, id));
   }
 

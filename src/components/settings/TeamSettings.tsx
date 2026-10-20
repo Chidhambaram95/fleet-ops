@@ -9,6 +9,7 @@ import {
   updateMemberRoleAction,
 } from "@/app/(app)/settings/team/actions";
 import { InviteShare } from "@/components/admin/InviteShare";
+import { useOrg } from "@/components/billing/OrgContext";
 import type { PendingInvite } from "@domain/companies/types";
 import type { Bus } from "@domain/operations/types";
 import {
@@ -32,6 +33,7 @@ export function TeamSettings({
   currentUserId: string;
 }) {
   const router = useRouter();
+  const { viewOnly } = useOrg();
   const [roles, setRoles] = useState<Record<string, UserRole>>(() =>
     Object.fromEntries(members.map((member) => [member.userId, member.role])),
   );
@@ -152,6 +154,11 @@ export function TeamSettings({
 
       {error ? <p className="text-sm text-money-out">{error}</p> : null}
 
+      {viewOnly ? (
+        <p className="rounded-3xl bg-white px-4 py-4 text-sm text-muted">
+          The app is view-only until the payment is received. Invites and role changes open again after that.
+        </p>
+      ) : (
       <form
         className="flex flex-col gap-2 rounded-3xl bg-white p-4 md:p-5"
         onSubmit={(event) => {
@@ -218,6 +225,7 @@ export function TeamSettings({
           {adding ? "Creating…" : "Create invite"}
         </button>
       </form>
+      )}
 
       {fresh ? (
         <section className="flex flex-col gap-2 rounded-3xl bg-brand-soft p-3">
@@ -247,6 +255,7 @@ export function TeamSettings({
                   name={invite.displayName}
                   whatsappNumber={invite.whatsappNumber}
                 />
+                {viewOnly ? null : (
                 <button
                   type="button"
                   onClick={() => void cancel(invite.id)}
@@ -254,6 +263,7 @@ export function TeamSettings({
                 >
                   Cancel invite
                 </button>
+                )}
               </div>
             </div>
           ))}
@@ -286,7 +296,7 @@ export function TeamSettings({
                       <span className="sr-only">Role for {member.displayName}</span>
                       <select
                         value={role}
-                        disabled={isSelf || pending}
+                        disabled={isSelf || pending || viewOnly}
                         onChange={(event) =>
                           onRoleChange(member, event.target.value as UserRole)
                         }
@@ -301,7 +311,7 @@ export function TeamSettings({
                       {role === "crew" ? (
                         <select
                           value={busIds[member.userId] ?? ""}
-                          disabled={isSelf || pending || buses.length === 0}
+                          disabled={isSelf || pending || viewOnly || buses.length === 0}
                           onChange={(event) =>
                             onBusChange(member.userId, event.target.value)
                           }

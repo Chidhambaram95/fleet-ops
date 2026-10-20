@@ -35,6 +35,8 @@ export type Company = {
   memberCount: number;
   adminName: string;
   pendingInviteToken: string | null;
+  /** WhatsApp number the pending admin invite was made for. */
+  pendingInviteWhatsapp: string;
   subscription: Subscription;
 };
 

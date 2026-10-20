@@ -98,6 +98,8 @@ export function FuelPage({ organizationId }: { organizationId: string }) {
   }
 
   async function remove(table: "pump_payments" | "pump_statements", id: string) {
+    const what = table === "pump_payments" ? "this payment" : "this pump figure";
+    if (!window.confirm(`Delete ${what}? This cannot be undone.`)) return;
     try {
       await deleteRow(supabase, table, organizationId, id);
       reload();

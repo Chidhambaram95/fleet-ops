@@ -62,7 +62,15 @@ export function CompanyEditForm({ company }: { company: Company }) {
     });
     setBusy(false);
     setMessage(result.error ?? "Saved.");
-    if (!result.error) router.refresh();
+    if (!result.error) {
+      // Show what was saved, the same way the server cleans it up.
+      setName(name.trim());
+      setTown(town.trim());
+      setGstin(gstin.trim().toUpperCase());
+      setWhatsapp(whatsapp.trim());
+      setMaxBuses(maxBuses.trim());
+      router.refresh();
+    }
   }
 
   return (

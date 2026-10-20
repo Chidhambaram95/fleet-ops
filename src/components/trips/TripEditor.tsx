@@ -34,12 +34,13 @@ import {
   tripInput,
   type TripForm,
 } from "./tripForm";
+import { friendlyErrorMessage } from "@domain/platform/errors";
 
 const FIELD = "h-12 w-full min-w-0 rounded-2xl bg-canvas px-4 text-base disabled:opacity-70";
 const LABEL = "flex min-w-0 flex-col gap-1.5 text-[13px] font-semibold";
 
 function messageFromUnknown(error: unknown) {
-  return error instanceof Error ? error.message : "Something went wrong.";
+  return friendlyErrorMessage(error);
 }
 
 type Step = "photo" | "reading" | "form";
@@ -347,7 +348,11 @@ export function TripEditor({
           Filled from the photo. Check every number against the sheet before you approve.
         </p>
       ) : null}
-      {approved ? (
+      {org.viewOnly ? (
+        <p className="rounded-3xl bg-white px-4 py-3 text-sm text-muted">
+          The app is view-only until the payment is received. This trip can be read but not changed.
+        </p>
+      ) : approved ? (
         <p className="rounded-3xl bg-white px-4 py-3 text-sm text-muted">
           {isAdmin
             ? "This trip is approved and counts in reports. As admin you can still correct it."
@@ -415,7 +420,7 @@ export function TripEditor({
           </section>
         </aside>
 
-        <fieldset disabled={locked || saving} className="flex min-w-0 flex-col gap-4">
+        <fieldset disabled={locked || saving} className={`flex min-w-0 flex-col gap-4 ${locked ? "opacity-80" : ""}`}>
           <Card title="Trip">
             <label className={LABEL}>
               Bus

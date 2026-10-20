@@ -242,6 +242,7 @@ export async function listCompanies(client: SupabaseClient): Promise<Company[]> 
     memberCount: Number(row.member_count ?? 0),
     adminName: (row.admin_name as string) ?? "",
     pendingInviteToken: (row.pending_invite_token as string | null) ?? null,
+    pendingInviteWhatsapp: (row.pending_invite_whatsapp as string | null) ?? "",
     subscription: {
       planLabel: (row.plan_label as string) ?? "Per operator",
       amountInr: (row.amount_inr as number | null) ?? null,
@@ -353,6 +354,22 @@ export async function closedCompanyName(client: SupabaseClient): Promise<string 
 }
 
 export type ReceivedPayment = SubscriptionPayment & { organizationId: string };
+
+/** Every plan payment ever recorded, added up (not just the ones listed). */
+export async function totalSubscriptionPayments(client: SupabaseClient): Promise<number> {
+  let total = 0;
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await client
+      .from("subscription_payments")
+      .select("amount_inr")
+      .order("id")
+      .range(from, from + 999);
+    fail(error);
+    const rows = data ?? [];
+    total += rows.reduce((sum, row) => sum + Number(row.amount_inr ?? 0), 0);
+    if (rows.length < 1000) return total;
+  }
+}
 
 export async function listAllSubscriptionPayments(
   client: SupabaseClient,

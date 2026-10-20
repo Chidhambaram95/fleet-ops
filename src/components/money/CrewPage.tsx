@@ -93,9 +93,15 @@ export function CrewPage({ organizationId }: { organizationId: string }) {
   const active = data.people.filter((item) => item.active);
   const paidThisMonth = data.salaries.filter((item) => item.forMonth === forMonth);
   const monthPaid = paidThisMonth.reduce((total, item) => total + item.amountInr, 0);
-  const monthDue = active
-    .filter((item) => !paidThisMonth.some((paid) => paid.personId === item.id))
-    .reduce((total, item) => total + item.monthlySalaryInr, 0);
+  // A salary can be paid in parts; what is left is the salary less every part paid.
+  const paymentsOf = (personId: string) =>
+    paidThisMonth
+      .filter((payment) => payment.personId === personId)
+      .sort((left, right) => right.paidOn.localeCompare(left.paidOn));
+  const paidTo = (personId: string) =>
+    paymentsOf(personId).reduce((total, payment) => total + payment.amountInr, 0);
+  const leftFor = (item: CrewPerson) => Math.max(item.monthlySalaryInr - paidTo(item.id), 0);
+  const monthDue = active.reduce((total, item) => total + leftFor(item), 0);
 
   const openAdvances = data.trips
     .filter((trip) => !trip.settledOn)
@@ -139,17 +145,18 @@ export function CrewPage({ organizationId }: { organizationId: string }) {
 
   function paySalary(item: CrewPerson) {
     const typed = payAmounts[item.id];
-    const amount = typed == null || typed === "" ? item.monthlySalaryInr : wholeNumber(typed);
+    const amount = typed == null || typed === "" ? leftFor(item) : wholeNumber(typed);
     if (!amount) return setFormError(`Enter the amount paid to ${item.name}.`);
-    void run(() =>
-      addSalaryPayment(supabase, organizationId, {
+    void run(async () => {
+      await addSalaryPayment(supabase, organizationId, {
         personId: item.id,
         forMonth,
         paidOn: todayInIst(),
         amountInr: amount,
         note: "",
-      }),
-    );
+      });
+      setPayAmounts((all) => ({ ...all, [item.id]: "" }));
+    });
   }
 
   return (
@@ -199,42 +206,55 @@ export function CrewPage({ organizationId }: { organizationId: string }) {
             <p className="text-muted">Add your drivers and cleaners under People first.</p>
           ) : (
             active.map((item, index) => {
-              const paid = paidThisMonth.find((payment) => payment.personId === item.id);
+              const payments = paymentsOf(item.id);
+              const paidInr = paidTo(item.id);
+              const leftInr = leftFor(item);
+              const fullyPaid = payments.length > 0 && leftInr === 0;
+              const latest = payments[0];
               return (
                 <ListRow
                   key={item.id}
                   first={index === 0}
                   title={item.name}
                   detail={
-                    paid
-                      ? `Paid ${formatInr(paid.amountInr)} on ${shortDay(paid.paidOn)}`
-                      : `${item.job === "driver" ? "Driver" : "Cleaner"} · ${formatInr(item.monthlySalaryInr)} a month`
+                    fullyPaid
+                      ? payments.length === 1
+                        ? `Paid ${formatInr(paidInr)} on ${shortDay(latest.paidOn)}`
+                        : `Paid ${formatInr(paidInr)} in ${payments.length} parts, last on ${shortDay(latest.paidOn)}`
+                      : payments.length
+                        ? `Paid ${formatInr(paidInr)} of ${formatInr(item.monthlySalaryInr)} · ${formatInr(leftInr)} still to pay`
+                        : `${item.job === "driver" ? "Driver" : "Cleaner"} · ${formatInr(item.monthlySalaryInr)} a month`
                   }
-                  tone={paid ? "in" : "ink"}
-                  amount={paid ? "Paid" : undefined}
+                  tone={fullyPaid ? "in" : "ink"}
+                  amount={fullyPaid ? "Paid" : undefined}
                   actions={
-                    org.viewOnly ? null : paid ? (
-                      <SmallButton disabled={saving} onClick={() => run(() => deleteRow(supabase, "salary_payments", organizationId, paid.id))}>
-                        Undo
-                      </SmallButton>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <input
-                          inputMode="numeric"
-                          aria-label={`Amount for ${item.name}`}
-                          className="h-11 w-24 rounded-2xl bg-canvas px-3 text-right"
-                          placeholder={String(item.monthlySalaryInr || "")}
-                          value={payAmounts[item.id] ?? ""}
-                          onChange={(event) => setPayAmounts((all) => ({ ...all, [item.id]: event.target.value }))}
-                        />
-                        <button
-                          type="button"
-                          disabled={saving}
-                          onClick={() => paySalary(item)}
-                          className="h-11 rounded-2xl bg-brand px-4 text-sm font-bold text-white disabled:opacity-50"
-                        >
-                          Mark paid
-                        </button>
+                    org.viewOnly ? null : (
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        {latest ? (
+                          <SmallButton disabled={saving} onClick={() => run(() => deleteRow(supabase, "salary_payments", organizationId, latest.id))}>
+                            Undo
+                          </SmallButton>
+                        ) : null}
+                        {fullyPaid ? null : (
+                          <>
+                            <input
+                              inputMode="numeric"
+                              aria-label={`Amount for ${item.name}`}
+                              className="h-11 w-24 rounded-2xl bg-canvas px-3 text-right"
+                              placeholder={String(leftInr || "")}
+                              value={payAmounts[item.id] ?? ""}
+                              onChange={(event) => setPayAmounts((all) => ({ ...all, [item.id]: event.target.value }))}
+                            />
+                            <button
+                              type="button"
+                              disabled={saving}
+                              onClick={() => paySalary(item)}
+                              className="h-11 rounded-2xl bg-brand px-4 text-sm font-bold text-white disabled:opacity-50"
+                            >
+                              {payments.length ? "Pay the rest" : "Mark paid"}
+                            </button>
+                          </>
+                        )}
                       </div>
                     )
                   }

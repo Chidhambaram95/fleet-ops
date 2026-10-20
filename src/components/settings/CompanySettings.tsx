@@ -25,6 +25,7 @@ export function CompanySettings({ profile }: { profile: CompanyProfile }) {
   const [message, setMessage] = useState("");
   const [failed, setFailed] = useState(false);
   const status = subscriptionStatus(profile.subscription, todayInIst());
+  const viewOnly = status.state === "view_only";
 
   function toggle(type: BusType) {
     setBusTypes((current) =>
@@ -58,6 +59,10 @@ export function CompanySettings({ profile }: { profile: CompanyProfile }) {
           void save();
         }}
       >
+        {viewOnly ? (
+          <p className="text-sm text-muted">The app is view-only until the payment is received.</p>
+        ) : null}
+        <fieldset disabled={viewOnly} className="flex flex-col gap-3 disabled:opacity-70">
         <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
           Company name
           <input value={name} onChange={(e) => setName(e.target.value)} required className={field} />
@@ -104,13 +109,16 @@ export function CompanySettings({ profile }: { profile: CompanyProfile }) {
         {message ? (
           <p className={`text-sm ${failed ? "text-money-out" : "text-money-in"}`}>{message}</p>
         ) : null}
-        <button
-          type="submit"
-          disabled={busy}
-          className="h-12 rounded-2xl bg-brand px-4 text-[15px] font-bold text-white disabled:opacity-60"
-        >
-          {busy ? "Saving…" : "Save"}
-        </button>
+        </fieldset>
+        {viewOnly ? null : (
+          <button
+            type="submit"
+            disabled={busy}
+            className="h-12 rounded-2xl bg-brand px-4 text-[15px] font-bold text-white disabled:opacity-60"
+          >
+            {busy ? "Saving…" : "Save"}
+          </button>
+        )}
       </form>
 
       {profile.subscription ? (

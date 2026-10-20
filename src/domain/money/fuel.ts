@@ -54,7 +54,12 @@ export function pumpBalances(
   }
   for (const statement of statements) {
     const pump = entry(statement.pump);
-    if (!pump.latest || statement.statementOn > pump.latest.statementOn) {
+    const latest = pump.latest;
+    if (
+      !latest ||
+      statement.statementOn > latest.statementOn ||
+      (statement.statementOn === latest.statementOn && statement.createdAt > latest.createdAt)
+    ) {
       pump.latest = statement;
     }
   }

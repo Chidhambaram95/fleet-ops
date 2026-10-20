@@ -99,7 +99,7 @@ export async function getActiveMembership(
   }
 
   throw new SessionError(
-    `You are not a member of an organization. No organization_members row is visible for ${userId}.`,
+    "You are not part of a company. Ask your company admin for a new invite link.",
     403,
   );
 }

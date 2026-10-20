@@ -4,11 +4,14 @@ import {
   listAllSubscriptionPayments,
   listCompanies,
   listSubscriptionPayments,
+  totalSubscriptionPayments,
 } from "@data/companies/repository";
 import { shortDate, subscriptionStatus } from "@domain/billing/subscription";
 import { todayInIst } from "@domain/operations/totals";
 import { CompanyBilling, PaymentDetailsForm } from "@/components/admin/PaymentsPanel";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+
+const LISTED_PAYMENTS = 50;
 
 export const metadata = { title: "Payments · Fleet Ops" };
 
@@ -37,10 +40,11 @@ export default async function PaymentsPage({
     );
   }
   const selected = companies.find((c) => c.organizationId === org) ?? companies[0];
-  const [payments, details, allPayments] = await Promise.all([
+  const [payments, details, allPayments, allPaymentsTotal] = await Promise.all([
     selected ? listSubscriptionPayments(supabase, selected.organizationId) : Promise.resolve([]),
     getPlatformPaymentDetails(supabase),
-    listAllSubscriptionPayments(supabase, 50),
+    listAllSubscriptionPayments(supabase, LISTED_PAYMENTS),
+    totalSubscriptionPayments(supabase),
   ]);
   const companyName = (id: string) => companies.find((c) => c.organizationId === id)?.name ?? "Deleted company";
   const today = todayInIst();
@@ -173,8 +177,13 @@ export default async function PaymentsPage({
           <section className="overflow-x-auto rounded-3xl bg-white px-5 pb-3 pt-2">
             <h2 className="py-3 text-base font-extrabold">
               All payments received
-              {allPayments.length ? ` · ₹${allPayments.reduce((t, p) => t + p.amountInr, 0).toLocaleString("en-IN")}` : ""}
+              {allPayments.length ? ` · ₹${allPaymentsTotal.toLocaleString("en-IN")}` : ""}
             </h2>
+            {allPayments.length === LISTED_PAYMENTS ? (
+              <p className="pb-2 text-xs text-[#5B5E7A]">
+                The total counts every payment. The list shows the latest {LISTED_PAYMENTS}.
+              </p>
+            ) : null}
             <table className="w-full min-w-[480px] border-collapse text-sm">
               <thead>
                 <tr className="text-left text-[#5B5E7A]">

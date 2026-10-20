@@ -3,6 +3,7 @@ import { getActiveMembership } from "@data/auth/session";
 import { closedCompanyName, getCompanyProfile, isSuperAdmin } from "@data/companies/repository";
 import { hasPublicSupabaseEnv } from "@data/supabase/env";
 import { subscriptionStatus } from "@domain/billing/subscription";
+import { FLEETOPS_WHATSAPP } from "@domain/platform/contact";
 import { todayInIst } from "@domain/operations/totals";
 import type { UserRole } from "@domain/rbac/roles";
 import { SignOutButton } from "@/components/admin/SignOutButton";
@@ -36,6 +37,7 @@ export default async function AppShellLayout({
   let notice: React.ReactNode = null;
   let viewOnly = false;
   let closedCompany: string | null = null;
+  let noCompany = false;
   if (user) {
     superAdmin = await isSuperAdmin(supabase, user.id);
     if (superAdmin) {
@@ -72,6 +74,7 @@ export default async function AppShellLayout({
     } catch {
       role = null;
       closedCompany = await closedCompanyName(supabase);
+      noCompany = !closedCompany;
     }
   }
 
@@ -84,6 +87,33 @@ export default async function AppShellLayout({
             This company&apos;s Fleet Ops account has been deactivated, so no one can open it. Please contact
             Fleet Ops to reopen it.
           </p>
+          <SignOutButton />
+        </section>
+      </main>
+    );
+  }
+
+  if (noCompany) {
+    // Removed from their company, or the company was deleted.
+    const contactUrl = `https://wa.me/${FLEETOPS_WHATSAPP.replace(/\D/g, "")}?text=${encodeURIComponent(
+      `Hi Fleet Ops, I can't open my company on Fleet Ops (${user?.email ?? ""}).`,
+    )}`;
+    return (
+      <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-4 px-4">
+        <section className="flex flex-col gap-3 rounded-3xl bg-white p-6">
+          <h1 className="text-xl font-extrabold">You are not part of a company</h1>
+          <p className="text-muted">
+            This login is not linked to any company on Fleet Ops. Ask your company admin for a new invite
+            link, or contact Fleet Ops.
+          </p>
+          <a
+            href={contactUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex h-12 items-center justify-center rounded-2xl bg-[#1f8f4e] px-5 text-[15px] font-bold text-white"
+          >
+            Contact Fleet Ops on WhatsApp
+          </a>
           <SignOutButton />
         </section>
       </main>
