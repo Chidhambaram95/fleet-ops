@@ -3,9 +3,10 @@ const JPEG_QUALITY = 0.7;
 
 export async function compressReceipt(
   file: File,
-): Promise<{ base64: string; mediaType: "image/jpeg" }> {
+  { maxEdge = MAX_EDGE, quality = JPEG_QUALITY } = {},
+): Promise<{ base64: string; mediaType: "image/jpeg"; blob: Blob }> {
   const bitmap = await createImageBitmap(file);
-  const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
+  const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
   const width = Math.max(1, Math.round(bitmap.width * scale));
   const height = Math.max(1, Math.round(bitmap.height * scale));
   const canvas = document.createElement("canvas");
@@ -29,7 +30,7 @@ export async function compressReceipt(
         }
       },
       "image/jpeg",
-      JPEG_QUALITY,
+      quality,
     );
   });
 
@@ -40,5 +41,5 @@ export async function compressReceipt(
     binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
   }
 
-  return { base64: btoa(binary), mediaType: "image/jpeg" };
+  return { base64: btoa(binary), mediaType: "image/jpeg", blob };
 }

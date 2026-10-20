@@ -4,7 +4,13 @@ import { revalidatePath } from "next/cache";
 import { getAuthenticatedUserId } from "@data/auth/session";
 import {
   createCompany,
+  createInvite,
+  deleteCompanyForGood,
   isSuperAdmin,
+  removeMember,
+  setCompanyActive,
+  setMemberRole,
+  updateCompanyAsAdmin,
   recordPayment,
   updatePlatformPaymentDetails,
   updateSubscription,
@@ -151,6 +157,117 @@ export async function savePaymentDetailsAction(input: {
       ifsc: input.ifsc.trim().toUpperCase(),
       upiId: input.upiId.trim(),
     });
+    revalidatePath("/admin/payments");
+    return {};
+  } catch (error) {
+    return { error: messageFromUnknown(error) };
+  }
+}
+
+function revalidateCompany(organizationId: string) {
+  revalidatePath("/admin/companies");
+  revalidatePath(`/admin/companies/${organizationId}`);
+  revalidatePath("/admin/payments");
+}
+
+export async function updateCompanyAction(
+  organizationId: string,
+  input: {
+    name: string;
+    town: string;
+    gstin: string;
+    whatsappNumber: string;
+    busTypes: string[];
+    maxBuses: string;
+  },
+) {
+  try {
+    const name = input.name.trim();
+    if (!name) return { error: "Enter the company name." };
+    const busTypes = input.busTypes.filter((type): type is BusType =>
+      (BUS_TYPES as readonly string[]).includes(type),
+    );
+    if (busTypes.length === 0) return { error: "Choose at least one bus type." };
+    const maxBuses = input.maxBuses.trim() === "" ? null : Number(input.maxBuses);
+    if (maxBuses !== null && (!Number.isInteger(maxBuses) || maxBuses < 0)) {
+      return { error: "Enter the bus limit as a whole number, or leave it empty for no limit." };
+    }
+    const supabase = await requireSuperAdmin();
+    await updateCompanyAsAdmin(supabase, organizationId, {
+      name,
+      town: input.town.trim(),
+      gstin: input.gstin.trim().toUpperCase(),
+      whatsappNumber: input.whatsappNumber.trim(),
+      busTypes,
+      maxBuses,
+    });
+    revalidateCompany(organizationId);
+    return {};
+  } catch (error) {
+    return { error: messageFromUnknown(error) };
+  }
+}
+
+export async function inviteAdminAction(
+  organizationId: string,
+  input: { name: string; whatsapp: string; role: string },
+) {
+  try {
+    if (!input.name.trim()) return { error: "Enter the person's name." };
+    if (!["admin", "manager"].includes(input.role)) return { error: "Choose admin or manager." };
+    const supabase = await requireSuperAdmin();
+    const token = await createInvite(supabase, {
+      organizationId,
+      role: input.role,
+      displayName: input.name.trim(),
+      whatsappNumber: input.whatsapp.trim(),
+      busId: null,
+    });
+    revalidateCompany(organizationId);
+    return { token };
+  } catch (error) {
+    return { error: messageFromUnknown(error) };
+  }
+}
+
+export async function setMemberRoleAction(organizationId: string, userId: string, role: string) {
+  try {
+    const supabase = await requireSuperAdmin();
+    await setMemberRole(supabase, organizationId, userId, role);
+    revalidateCompany(organizationId);
+    return {};
+  } catch (error) {
+    return { error: messageFromUnknown(error) };
+  }
+}
+
+export async function removeMemberAction(organizationId: string, userId: string) {
+  try {
+    const supabase = await requireSuperAdmin();
+    await removeMember(supabase, organizationId, userId);
+    revalidateCompany(organizationId);
+    return {};
+  } catch (error) {
+    return { error: messageFromUnknown(error) };
+  }
+}
+
+export async function setCompanyActiveAction(organizationId: string, active: boolean) {
+  try {
+    const supabase = await requireSuperAdmin();
+    await setCompanyActive(supabase, organizationId, active);
+    revalidateCompany(organizationId);
+    return {};
+  } catch (error) {
+    return { error: messageFromUnknown(error) };
+  }
+}
+
+export async function deleteCompanyAction(organizationId: string, confirmName: string) {
+  try {
+    const supabase = await requireSuperAdmin();
+    await deleteCompanyForGood(supabase, organizationId, confirmName);
+    revalidatePath("/admin/companies");
     revalidatePath("/admin/payments");
     return {};
   } catch (error) {

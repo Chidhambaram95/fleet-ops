@@ -4,6 +4,7 @@ import {
   BUS_TYPES,
   type BusType,
   type Company,
+  type CompanyMember,
   type CompanyProfile,
   type InviteInfo,
   type PendingInvite,
@@ -231,7 +232,12 @@ export async function listCompanies(client: SupabaseClient): Promise<Company[]> 
     organizationId: row.organization_id as string,
     name: row.name as string,
     town: (row.town as string) ?? "",
+    gstin: (row.gstin as string) ?? "",
+    whatsappNumber: (row.whatsapp_number as string) ?? "",
     busTypes: toBusTypes(row.bus_types),
+    maxBuses: row.max_buses == null ? null : Number(row.max_buses),
+    deactivatedAt: (row.deactivated_at as string | null) ?? null,
+    trialStartsOn: (row.trial_starts_on as string | null) ?? null,
     busCount: Number(row.bus_count ?? 0),
     memberCount: Number(row.member_count ?? 0),
     adminName: (row.admin_name as string) ?? "",
@@ -243,6 +249,129 @@ export async function listCompanies(client: SupabaseClient): Promise<Company[]> 
       trialEndsOn: (row.trial_ends_on as string | null) ?? null,
       nextDueOn: (row.next_due_on as string | null) ?? null,
     },
+  }));
+}
+
+export async function updateCompanyAsAdmin(
+  client: SupabaseClient,
+  organizationId: string,
+  input: {
+    name: string;
+    town: string;
+    gstin: string;
+    whatsappNumber: string;
+    busTypes: BusType[];
+    maxBuses: number | null;
+  },
+) {
+  const { error } = await client.rpc("admin_update_company", {
+    p_org: organizationId,
+    p_name: input.name,
+    p_town: input.town,
+    p_gstin: input.gstin,
+    p_whatsapp: input.whatsappNumber,
+    p_bus_types: input.busTypes,
+    p_max_buses: input.maxBuses,
+  });
+  fail(error);
+}
+
+export async function listCompanyMembers(
+  client: SupabaseClient,
+  organizationId: string,
+): Promise<CompanyMember[]> {
+  const { data, error } = await client.rpc("admin_list_members", { p_org: organizationId });
+  fail(error);
+  return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+    userId: row.user_id as string,
+    displayName: (row.display_name as string) ?? "",
+    email: (row.email as string) ?? "",
+    role: (row.role as string) ?? "",
+    joinedAt: (row.joined_at as string) ?? "",
+  }));
+}
+
+export async function setMemberRole(
+  client: SupabaseClient,
+  organizationId: string,
+  userId: string,
+  role: string,
+) {
+  const { error } = await client.rpc("admin_set_member_role", {
+    p_org: organizationId,
+    p_user: userId,
+    p_role: role,
+  });
+  fail(error);
+}
+
+export async function removeMember(client: SupabaseClient, organizationId: string, userId: string) {
+  const { error } = await client.rpc("admin_remove_member", { p_org: organizationId, p_user: userId });
+  fail(error);
+}
+
+export async function setCompanyActive(
+  client: SupabaseClient,
+  organizationId: string,
+  active: boolean,
+) {
+  const { error } = await client.rpc("admin_set_company_active", {
+    p_org: organizationId,
+    p_active: active,
+  });
+  fail(error);
+}
+
+/** Removes the company's photos, then the company and all its records. */
+export async function deleteCompanyForGood(
+  client: SupabaseClient,
+  organizationId: string,
+  confirmName: string,
+) {
+  const bucket = client.storage.from("trip-sheets");
+  for (const folder of [organizationId, `${organizationId}/documents`]) {
+    for (;;) {
+      const { data, error } = await bucket.list(folder, { limit: 100 });
+      if (error) throw new Error(error.message);
+      const files = (data ?? []).filter((item) => item.id).map((item) => `${folder}/${item.name}`);
+      if (files.length === 0) break;
+      const removed = await bucket.remove(files);
+      if (removed.error) throw new Error(removed.error.message);
+    }
+  }
+  const { error } = await client.rpc("admin_delete_company", {
+    p_org: organizationId,
+    p_confirm_name: confirmName,
+  });
+  fail(error);
+}
+
+/** Who belongs to a locked company, so the app can say it is closed. */
+export async function closedCompanyName(client: SupabaseClient): Promise<string | null> {
+  const { data, error } = await client.rpc("my_closed_company");
+  return !error && typeof data === "string" && data ? data : null;
+}
+
+export type ReceivedPayment = SubscriptionPayment & { organizationId: string };
+
+export async function listAllSubscriptionPayments(
+  client: SupabaseClient,
+  limit = 200,
+): Promise<ReceivedPayment[]> {
+  const { data, error } = await client
+    .from("subscription_payments")
+    .select("id, organization_id, paid_on, amount_inr, mode, reference, paid_until")
+    .order("paid_on", { ascending: false })
+    .limit(limit);
+  fail(error);
+  return (data ?? []).map((row) => ({
+    id: row.id as string,
+    organizationId: row.organization_id as string,
+    paidOn: row.paid_on as string,
+    amountInr: row.amount_inr as number,
+    mode: row.mode as string,
+    reference: row.reference as string,
+    paidUntil: row.paid_until as string,
   }));
 }
 

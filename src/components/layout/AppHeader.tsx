@@ -64,7 +64,7 @@ export function AppHeader({
   return (
     <header
       ref={headerRef}
-      className="sticky top-0 z-40 bg-canvas/95 backdrop-blur md:bg-white"
+      className="sticky top-0 z-40 bg-canvas/95 backdrop-blur md:bg-white print:hidden"
     >
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 pb-2 pt-4 md:px-8 md:py-3">
         <div className="flex min-w-0 items-center gap-2.5">
@@ -83,7 +83,7 @@ export function AppHeader({
         </div>
 
         <nav aria-label="Main" className="hidden flex-1 flex-wrap justify-center gap-1 md:flex">
-          {links.map((link) => (
+          {links.filter((link) => !link.settings).map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -133,11 +133,23 @@ export function AppHeader({
                     <p className="truncate text-xs text-muted">{email}</p>
                   ) : null}
                 </div>
+                {links
+                  .filter((link) => link.settings)
+                  .map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      role="menuitem"
+                      className="flex min-h-11 items-center rounded-2xl px-3 text-sm font-semibold hover:bg-canvas"
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
                 {isSuperAdmin ? (
                   <Link
                     href="/admin/companies"
                     role="menuitem"
-                    className="flex items-center rounded-2xl px-3 text-sm font-semibold hover:bg-canvas"
+                    className="flex min-h-11 items-center rounded-2xl px-3 text-sm font-semibold hover:bg-canvas"
                   >
                     Super-admin
                   </Link>
@@ -146,7 +158,7 @@ export function AppHeader({
                   type="button"
                   role="menuitem"
                   onClick={() => void onSignOut()}
-                  className="flex w-full items-center rounded-2xl px-3 text-left text-sm font-semibold hover:bg-canvas"
+                  className="flex min-h-11 w-full items-center rounded-2xl px-3 text-left text-sm font-semibold hover:bg-canvas"
                 >
                   Sign out
                 </button>

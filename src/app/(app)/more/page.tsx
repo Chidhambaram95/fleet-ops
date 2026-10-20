@@ -23,7 +23,8 @@ export default async function MorePage() {
       }
     }
   }
-  const rows = links.filter((link) => link.href !== "/");
+  // Home, Trips and Reports are phone tabs already.
+  const rows = links.filter((link) => !["/", "/trips", "/reports"].includes(link.href));
   if (superAdmin) {
     rows.push({ href: "/admin/companies", label: "Super-admin", hint: "All companies and payments" });
   }

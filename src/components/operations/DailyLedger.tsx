@@ -37,6 +37,7 @@ import type { UserRole } from "@domain/rbac/roles";
 import { compressReceipt } from "@/lib/compressReceipt";
 import { downloadTextFile } from "@/lib/downloadTextFile";
 import { useOrg } from "@/components/billing/OrgContext";
+import { RenewalsDueCard } from "@/components/renewals/RenewalsDueCard";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 
 function messageFromUnknown(error: unknown) {
@@ -635,6 +636,10 @@ function DailyLedgerBoard() {
               </button>
             </div>
           </div>
+        ) : null}
+
+        {organizationId && role && role !== "crew" ? (
+          <RenewalsDueCard supabase={supabase} organizationId={organizationId} />
         ) : null}
 
         {error && !sheetOpen ? (

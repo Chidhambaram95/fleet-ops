@@ -23,7 +23,14 @@ export type Company = {
   organizationId: string;
   name: string;
   town: string;
+  gstin: string;
+  whatsappNumber: string;
   busTypes: BusType[];
+  /** Null means no limit. */
+  maxBuses: number | null;
+  /** When the super-admin locked the company; null while active. */
+  deactivatedAt: string | null;
+  trialStartsOn: string | null;
   busCount: number;
   memberCount: number;
   adminName: string;
@@ -43,6 +50,28 @@ export type PendingInvite = {
   whatsappNumber: string;
   expiresAt: string;
 };
+
+export type CompanyMember = {
+  userId: string;
+  displayName: string;
+  email: string;
+  role: string;
+  joinedAt: string;
+};
+
+/** Days a deactivated company stays locked before its data can be deleted. */
+export const DELETE_AFTER_DAYS = 30;
+
+/** The day (YYYY-MM-DD, IST) a deactivated company's data can be deleted. */
+export function deletableFrom(deactivatedAt: string): string {
+  const date = new Date(new Date(deactivatedAt).getTime() + DELETE_AFTER_DAYS * 86_400_000);
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
 
 export type SubscriptionPayment = {
   id: string;

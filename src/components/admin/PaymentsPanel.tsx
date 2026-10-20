@@ -66,9 +66,12 @@ export function CompanyBilling({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap gap-2">
-        <button type="button" onClick={() => setPanel(panel === "trial" ? "" : "trial")} className="h-[46px] rounded-2xl bg-[#F3F4FB] px-4 text-sm font-bold">
-          Extend trial
-        </button>
+        {/* The trial only matters until the first payment. */}
+        {!subscription.nextDueOn ? (
+          <button type="button" onClick={() => setPanel(panel === "trial" ? "" : "trial")} className="h-[46px] rounded-2xl bg-[#F3F4FB] px-4 text-sm font-bold">
+            Extend trial
+          </button>
+        ) : null}
         <button type="button" onClick={() => setPanel(panel === "plan" ? "" : "plan")} className="h-[46px] rounded-2xl bg-[#F3F4FB] px-4 text-sm font-bold">
           Edit plan amount
         </button>
@@ -196,8 +199,10 @@ export function PaymentDetailsForm({ initial }: { initial: PaymentDetails }) {
       className="flex flex-col gap-3 rounded-3xl bg-white p-5"
     >
       <div>
-        <h2 className="text-base font-extrabold">Where companies pay</h2>
-        <p className="text-sm text-[#5B5E7A]">Shown in the payment reminders. Bank transfer or UPI only.</p>
+        <h2 className="text-base font-extrabold">Fleet Ops bank account</h2>
+        <p className="text-sm text-[#5B5E7A]">
+          The one account every company pays into. Companies see these details in their payment reminders.
+        </p>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         {rows.map(([key, label]) => (

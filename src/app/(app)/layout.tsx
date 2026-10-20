@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
 import { getActiveMembership } from "@data/auth/session";
-import { getCompanyProfile, isSuperAdmin } from "@data/companies/repository";
+import { closedCompanyName, getCompanyProfile, isSuperAdmin } from "@data/companies/repository";
 import { hasPublicSupabaseEnv } from "@data/supabase/env";
 import { subscriptionStatus } from "@domain/billing/subscription";
 import { todayInIst } from "@domain/operations/totals";
 import type { UserRole } from "@domain/rbac/roles";
+import { SignOutButton } from "@/components/admin/SignOutButton";
 import { BillingNotice } from "@/components/billing/BillingNotice";
 import { OrgProvider } from "@/components/billing/OrgContext";
 import { AppHeader } from "@/components/layout/AppHeader";
@@ -34,17 +35,12 @@ export default async function AppShellLayout({
   let whatsappNumber = "";
   let notice: React.ReactNode = null;
   let viewOnly = false;
+  let closedCompany: string | null = null;
   if (user) {
     superAdmin = await isSuperAdmin(supabase, user.id);
     if (superAdmin) {
-      // A super-admin with no company of their own works from the console.
-      const { count } = await supabase
-        .from("organization_members")
-        .select("organization_id", { count: "exact", head: true })
-        .eq("user_id", user.id);
-      if (!count) {
-        redirect("/admin");
-      }
+      // The super-admin only manages companies and payments, never a fleet.
+      redirect("/admin");
     }
     try {
       const membership = await getActiveMembership(supabase);
@@ -75,7 +71,23 @@ export default async function AppShellLayout({
       );
     } catch {
       role = null;
+      closedCompany = await closedCompanyName(supabase);
     }
+  }
+
+  if (closedCompany) {
+    return (
+      <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-4 px-4">
+        <section className="flex flex-col gap-3 rounded-3xl bg-white p-6">
+          <h1 className="text-xl font-extrabold">{closedCompany} is closed</h1>
+          <p className="text-muted">
+            This company&apos;s Fleet Ops account has been deactivated, so no one can open it. Please contact
+            Fleet Ops to reopen it.
+          </p>
+          <SignOutButton />
+        </section>
+      </main>
+    );
   }
 
   return (
@@ -92,7 +104,10 @@ export default async function AppShellLayout({
       <OrgProvider value={{ name: organizationName, whatsappNumber, viewOnly }}>
         <main className={MAIN_CLASS}>{children}</main>
       </OrgProvider>
-      <BottomNav canAdd={Boolean(role) && !viewOnly} />
+      <BottomNav
+        canAdd={Boolean(role) && !viewOnly}
+        showTrips={role === "admin" || role === "manager"}
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   getPlatformPaymentDetails,
+  listAllSubscriptionPayments,
   listCompanies,
   listSubscriptionPayments,
 } from "@data/companies/repository";
@@ -36,17 +37,26 @@ export default async function PaymentsPage({
     );
   }
   const selected = companies.find((c) => c.organizationId === org) ?? companies[0];
-  const [payments, details] = await Promise.all([
+  const [payments, details, allPayments] = await Promise.all([
     selected ? listSubscriptionPayments(supabase, selected.organizationId) : Promise.resolve([]),
     getPlatformPaymentDetails(supabase),
+    listAllSubscriptionPayments(supabase, 50),
   ]);
+  const companyName = (id: string) => companies.find((c) => c.organizationId === id)?.name ?? "Deleted company";
   const today = todayInIst();
   const status = selected ? subscriptionStatus(selected.subscription, today) : null;
 
   const tile = "flex flex-col gap-0.5 rounded-[18px] bg-[#F3F4FB] p-3.5";
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-2xl font-extrabold">Payments</h1>
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl font-extrabold">Payments</h1>
+        <p className="text-sm text-[#5B5E7A]">
+          Every company pays into the one Fleet Ops account below. Each company has its own plan amount and
+          due date, so this tracks who has paid and who is due. A company turns view-only 15 days after an
+          unpaid due date.
+        </p>
+      </div>
       <div className="flex flex-wrap items-start gap-5">
         <nav aria-label="Companies" className="flex w-full flex-col gap-1 rounded-3xl bg-white p-2.5 sm:max-w-xs">
           {companies.map((company) => {
@@ -61,7 +71,11 @@ export default async function PaymentsPage({
                 <span className="flex min-w-0 flex-col">
                   <span className="truncate font-bold">{company.name}</span>
                   <span className="text-xs text-[#5B5E7A]">
-                    {s.dueOn ? `${s.onTrial ? "Trial ends" : "Next"}: ${shortDate(s.dueOn)}` : "No due date"}
+                    {company.deactivatedAt
+                      ? "Deactivated"
+                      : s.dueOn
+                        ? `${s.onTrial ? "Trial ends" : "Next"}: ${shortDate(s.dueOn)}`
+                        : "No due date"}
                   </span>
                 </span>
                 {s.state === "overdue" || s.state === "view_only" ? (
@@ -92,12 +106,16 @@ export default async function PaymentsPage({
                       : "Not set"}
                   </span>
                 </div>
-                <div className={tile}>
-                  <span className="text-xs text-[#5B5E7A]">Free trial</span>
-                  <span className="font-extrabold">
-                    {selected.subscription.trialEndsOn ? `Ends ${shortDate(selected.subscription.trialEndsOn)}` : "—"}
-                  </span>
-                </div>
+                {/* Trial dates show only until the first payment, then they are gone. */}
+                {status.onTrial ? (
+                  <div className={tile}>
+                    <span className="text-xs text-[#5B5E7A]">Trial</span>
+                    <span className="font-extrabold">
+                      {selected.trialStartsOn ? shortDate(selected.trialStartsOn) : "—"} to{" "}
+                      {selected.subscription.trialEndsOn ? shortDate(selected.subscription.trialEndsOn) : "—"}
+                    </span>
+                  </div>
+                ) : null}
                 <div className={tile}>
                   <span className="text-xs text-[#5B5E7A]">{status.onTrial ? "Trial ends" : "Next due"}</span>
                   <span className="font-extrabold">
@@ -151,6 +169,34 @@ export default async function PaymentsPage({
               {payments.length === 0 ? <p className="py-3 text-sm text-[#5B5E7A]">No payments recorded yet.</p> : null}
             </section>
           ) : null}
+
+          <section className="overflow-x-auto rounded-3xl bg-white px-5 pb-3 pt-2">
+            <h2 className="py-3 text-base font-extrabold">
+              All payments received
+              {allPayments.length ? ` · ₹${allPayments.reduce((t, p) => t + p.amountInr, 0).toLocaleString("en-IN")}` : ""}
+            </h2>
+            <table className="w-full min-w-[480px] border-collapse text-sm">
+              <thead>
+                <tr className="text-left text-[#5B5E7A]">
+                  <th className="py-2 pr-2 font-semibold">Paid on</th>
+                  <th className="py-2 pr-2 font-semibold">Company</th>
+                  <th className="py-2 pr-2 font-semibold">Mode</th>
+                  <th className="py-2 text-right font-semibold">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allPayments.map((p) => (
+                  <tr key={p.id} className="border-t border-[#EEEFF7]">
+                    <td className="py-3 pr-2">{p.paidOn}</td>
+                    <td className="py-3 pr-2">{companyName(p.organizationId)}</td>
+                    <td className="py-3 pr-2">{MODE_LABELS[p.mode] ?? p.mode}</td>
+                    <td className="py-3 text-right font-bold">₹{p.amountInr.toLocaleString("en-IN")}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {allPayments.length === 0 ? <p className="py-3 text-sm text-[#5B5E7A]">No payments recorded yet.</p> : null}
+          </section>
 
           <PaymentDetailsForm initial={details} />
         </div>
