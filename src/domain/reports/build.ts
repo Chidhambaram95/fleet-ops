@@ -13,8 +13,11 @@ import type { Renewal } from "@domain/renewals/types";
 import { tripExpenseLabel } from "@domain/trips/catalog";
 import { tripTotals } from "@domain/trips/checks";
 import type { Trip } from "@domain/trips/types";
+import { balanceDue, receivedTotal } from "@domain/tours/calc";
+import { tripLine } from "@domain/tours/messages";
+import type { TourBooking, TourPayment } from "@domain/tours/types";
 
-export type ReportKind = "pnl" | "trips" | "fuel" | "expenses" | "crew" | "renewals";
+export type ReportKind = "pnl" | "trips" | "fuel" | "expenses" | "crew" | "renewals" | "tours" | "dues";
 
 export type ReportFilters = {
   from: string;
@@ -38,6 +41,8 @@ export type ReportData = {
   salaries: SalaryPayment[];
   intercity: IntercityIncome[];
   renewals: Renewal[];
+  tourBookings: TourBooking[];
+  tourPayments: TourPayment[];
 };
 
 export type Cell = string | number;
@@ -136,6 +141,12 @@ function intercityShares(data: ReportData, filters: ReportFilters) {
       shares.set(busId, (shares.get(busId) ?? 0) + base + (index < leftover ? 1 : 0));
     });
   }
+  // Tour customers' payments count as income of the bus on the booking.
+  for (const payment of data.tourPayments) {
+    if (!inRange(payment.receivedOn, filters)) continue;
+    const busId = data.tourBookings.find((booking) => booking.id === payment.bookingId)?.busId;
+    if (busId) shares.set(busId, (shares.get(busId) ?? 0) + payment.amountInr);
+  }
   return shares;
 }
 
@@ -180,14 +191,14 @@ export function pnlReport(data: ReportData, filters: ReportFilters): ReportTable
   }
   notes.push("Bank and company costs are shared equally by the buses they were for, or by every bus when none was picked.");
   notes.push("Trip costs are approved trip sheets only: all diesel (cash and credit) plus cash expenses.");
-  notes.push("Intercity money is shared equally across the buses it covers.");
+  notes.push("Intercity money is shared equally across the buses it covers. Tour payments count on the day they were received, for the bus on the booking.");
 
   const total: Cell[] = ["Total", ...[1, 2, 3, 4, 5, 6].map((column) => sum(rows.map((row) => Number(row[column]))))];
   const income = Number(total[1]) + Number(total[2]);
   const expense = Number(total[3]) + Number(total[4]) + Number(total[5]);
   return {
     title: "Profit and loss",
-    columns: ["Bus", "Ledger income", "Intercity", "Ledger costs", "Trip costs", "Bank costs", "Profit"],
+    columns: ["Bus", "Ledger income", "Intercity & tour income", "Ledger costs", "Trip costs", "Bank costs", "Profit"],
     moneyColumns: [1, 2, 3, 4, 5, 6],
     shareColumns: [0, 6],
     rows,
@@ -425,6 +436,87 @@ export function renewalsReport(data: ReportData, filters: ReportFilters, today: 
   };
 }
 
+/** Hire minus the cost of the tour's approved trip sheet. */
+export function toursReport(data: ReportData, filters: ReportFilters): ReportTable {
+  const buses = selectedBuses(data, filters);
+  const busIds = new Set(buses.map((bus) => bus.id));
+  const rows: Cell[][] = data.tourBookings
+    .filter(
+      (booking) =>
+        (booking.status === "confirmed" || booking.status === "completed") &&
+        booking.busId &&
+        busIds.has(booking.busId) &&
+        inRange(booking.startDate, filters),
+    )
+    .sort((left, right) => left.startDate.localeCompare(right.startDate))
+    .map((booking) => {
+      const trip = data.trips.find((item) => item.id === booking.tripId);
+      const costs = trip ? tripTotals(trip).dieselInr + tripTotals(trip).cashExpensesInr : 0;
+      return [
+        booking.customerName,
+        busLabel(data, booking.busId),
+        `${booking.startDate} · ${tripLine(booking)}`,
+        booking.hireAmountInr,
+        trip ? costs : "Not approved",
+        trip ? booking.hireAmountInr - costs : "–",
+      ];
+    });
+  const hire = sum(rows.map((row) => Number(row[3])));
+  const costs = sum(rows.map((row) => Number(row[4]) || 0));
+  const profit = sum(rows.map((row) => Number(row[5]) || 0));
+  return {
+    title: "Profit per tour",
+    columns: ["Customer", "Bus", "Tour", "Hire", "Trip costs", "Profit"],
+    moneyColumns: [3, 4, 5],
+    shareColumns: [0, 1, 5],
+    rows,
+    total: ["Total", "", "", hire, costs, profit],
+    summary: [
+      { label: "Hire", value: hire, tone: "in" },
+      { label: "Trip costs", value: costs, tone: "out" },
+      { label: profit >= 0 ? "Profit" : "Loss", value: profit, tone: profit >= 0 ? "in" : "out" },
+    ],
+    notes: [
+      "Tours confirmed or completed that start in these dates. Trip costs come from the approved trip sheet; a tour with no approved sheet shows 'Not approved'.",
+      "Bank and company costs are not shared into this report; see Profit per bus.",
+    ],
+  };
+}
+
+/** What each tour customer still owes; the date range does not apply. */
+export function duesReport(data: ReportData, filters: ReportFilters): ReportTable {
+  const buses = selectedBuses(data, filters);
+  const busIds = new Set(buses.map((bus) => bus.id));
+  const rows: Cell[][] = data.tourBookings
+    .filter(
+      (booking) =>
+        (booking.status === "confirmed" || booking.status === "completed") &&
+        booking.busId &&
+        busIds.has(booking.busId) &&
+        balanceDue(booking, data.tourPayments) > 0,
+    )
+    .sort((left, right) => left.startDate.localeCompare(right.startDate))
+    .map((booking) => [
+      booking.customerName,
+      booking.customerPhone,
+      `${booking.startDate} · ${tripLine(booking)}`,
+      booking.hireAmountInr,
+      receivedTotal(booking.id, data.tourPayments),
+      balanceDue(booking, data.tourPayments),
+    ]);
+  const balance = sum(rows.map((row) => Number(row[5])));
+  return {
+    title: "Customer dues",
+    columns: ["Customer", "Phone", "Tour", "Hire", "Received", "Balance"],
+    moneyColumns: [3, 4, 5],
+    shareColumns: [0, 2, 5],
+    rows,
+    total: ["Total", "", "", sum(rows.map((row) => Number(row[3]))), sum(rows.map((row) => Number(row[4]))), balance],
+    summary: [{ label: "Balance to collect", value: balance, tone: "out" }],
+    notes: ["Confirmed and completed tours with money still to receive. The date range does not apply here."],
+  };
+}
+
 export function buildReport(kind: ReportKind, data: ReportData, filters: ReportFilters, today: string): ReportTable {
   switch (kind) {
     case "pnl":
@@ -439,6 +531,10 @@ export function buildReport(kind: ReportKind, data: ReportData, filters: ReportF
       return crewReport(data, filters);
     case "renewals":
       return renewalsReport(data, filters, today);
+    case "tours":
+      return toursReport(data, filters);
+    case "dues":
+      return duesReport(data, filters);
   }
 }
 

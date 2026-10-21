@@ -4,7 +4,7 @@ import { getActiveMembership } from "@data/auth/session";
 import { isSuperAdmin } from "@data/companies/repository";
 import { hasPublicSupabaseEnv } from "@data/supabase/env";
 import {
-  hasScreen,
+  secondTabScreen,
   isModuleId,
   LAST_MODULE_COOKIE,
   MODULE_TITLES,
@@ -36,7 +36,7 @@ export default async function MorePage() {
           // Home, Trips (Crew in Town) and Reports are phone tabs already.
           const tabs = [
             moduleHref(current),
-            moduleHref(current, hasScreen(current, "trips") ? "trips" : "crew"),
+            moduleHref(current, secondTabScreen(current)),
             moduleHref(current, "reports"),
           ];
           sections.push({

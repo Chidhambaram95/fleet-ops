@@ -15,7 +15,7 @@ export default async function CompanySettingsPage() {
       return <p className="rounded-3xl bg-white px-4 py-6 text-muted">Only admins can change company settings.</p>;
     }
     const profile = await getCompanyProfile(supabase, membership.organizationId);
-    return <CompanySettings profile={profile} />;
+    return <CompanySettings profile={profile} organizationId={membership.organizationId} />;
   } catch (error) {
     return (
       <p className="rounded-3xl bg-white px-4 py-6 text-money-out">

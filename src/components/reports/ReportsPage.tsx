@@ -10,6 +10,7 @@ import {
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import { listRenewals } from "@data/renewals/repository";
 import { listEntriesBetween } from "@data/reports/repository";
+import { listBookings, listTourPayments } from "@data/tours/repository";
 import { listTripsWithLines } from "@data/trips/repository";
 import { hasScreen, MODULE_LABELS, type ModuleId } from "@domain/modules/modules";
 import { formatInr, shiftDate, todayInIst } from "@domain/operations/totals";
@@ -53,6 +54,8 @@ const REPORTS: { id: ReportKind; label: string }[] = [
   { id: "expenses", label: "Where the money went" },
   { id: "crew", label: "Crew" },
   { id: "renewals", label: "Documents due" },
+  { id: "tours", label: "Profit per tour" },
+  { id: "dues", label: "Customer dues" },
 ];
 
 const PRESETS: { id: Preset; label: string }[] = [
@@ -147,7 +150,11 @@ export function ReportsPage({
   const [pickedType, setBusType] = useState<"" | BusKind>("");
   const busType: "" | BusKind = module ?? pickedType;
   // Town buses have no trip sheets.
-  const reports = REPORTS.filter((report) => report.id !== "trips" || !module || hasScreen(module, "trips"));
+  const reports = REPORTS.filter((report) => {
+    if (report.id === "trips") return !module || hasScreen(module, "trips");
+    if (report.id === "tours" || report.id === "dues") return !module ? modules.includes("tour") : module === "tour";
+    return true;
+  });
   const [renewalDays, setRenewalDays] = useState<30 | 60 | 90>(30);
 
   const empty: ReportData = {
@@ -160,6 +167,8 @@ export function ReportsPage({
     salaries: [],
     intercity: [],
     renewals: [],
+    tourBookings: [],
+    tourPayments: [],
   };
   const { data, loading, error } = useLoaded<ReportData>(
     async () => {
@@ -172,6 +181,8 @@ export function ReportsPage({
         salaries,
         intercity,
         renewals,
+        tourBookings,
+        tourPayments,
       ] = await Promise.all([
         createSupabaseOperationsRepository(supabase).listBuses(organizationId),
         listCrewPeople(supabase, organizationId),
@@ -192,6 +203,9 @@ export function ReportsPage({
           to: range.to,
         }),
         listRenewals(supabase, organizationId),
+        // Tour tables exist only after migration 0016, and only tour companies use them.
+        !module || module === "tour" ? listBookings(supabase, organizationId).catch(() => []) : Promise.resolve([]),
+        !module || module === "tour" ? listTourPayments(supabase, organizationId).catch(() => []) : Promise.resolve([]),
       ]);
       return {
         buses,
@@ -203,6 +217,8 @@ export function ReportsPage({
         salaries,
         intercity,
         renewals,
+        tourBookings,
+        tourPayments,
       };
     },
     empty,

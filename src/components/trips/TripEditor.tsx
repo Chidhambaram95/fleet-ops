@@ -12,9 +12,13 @@ import {
   uploadTripPhoto,
   usualMileage,
 } from "@data/trips/repository";
+import { getBooking, listTourPayments, updateBooking } from "@data/tours/repository";
 import { whatsAppSendUrl } from "@domain/operations/settlementExport";
 import { hasScreen, moduleHref, type ModuleId } from "@domain/modules/modules";
 import { formatInr } from "@domain/operations/totals";
+import { balanceDue } from "@domain/tours/calc";
+import { tripLine } from "@domain/tours/messages";
+import type { TourBooking } from "@domain/tours/types";
 import type { Bus } from "@domain/operations/types";
 import type { UserRole } from "@domain/rbac/roles";
 import { TRIP_EXPENSE_CATEGORIES } from "@domain/trips/catalog";
@@ -51,11 +55,14 @@ export function TripEditor({
   module,
   role,
   tripId,
+  bookingId,
 }: {
   organizationId: string;
   module: ModuleId;
   role: UserRole;
   tripId?: string;
+  /** A tour booking this new trip sheet is for. */
+  bookingId?: string;
 }) {
   const tripsHref = moduleHref(module, "trips");
   const org = useOrg();
@@ -77,6 +84,7 @@ export function TripEditor({
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [confirmApprove, setConfirmApprove] = useState(false);
+  const [booking, setBooking] = useState<{ booking: TourBooking; balance: number; received: number } | null>(null);
 
   const approved = trip?.status === "approved";
   const isAdmin = role === "admin";
@@ -91,7 +99,20 @@ export function TripEditor({
         const moduleBuses = allBuses.filter((bus) => bus.busType === module);
         setBuses(moduleBuses);
         if (!tripId) {
-          setForm(emptyForm(moduleBuses[0]?.id ?? ""));
+          const blank = emptyForm(moduleBuses[0]?.id ?? "");
+          const linked = bookingId ? await getBooking(supabase, organizationId, bookingId).catch(() => null) : null;
+          if (cancelled) return;
+          if (linked && !linked.tripId) {
+            const paid = (await listTourPayments(supabase, organizationId).catch(() => []))
+              .filter((payment) => payment.bookingId === linked.id);
+            const received = paid.reduce((total, payment) => total + payment.amountInr, 0);
+            setBooking({ booking: linked, received, balance: balanceDue(linked, paid) });
+            blank.busId = linked.busId ?? blank.busId;
+            blank.route = tripLine(linked);
+            blank.startDate = linked.startDate;
+            blank.endDate = linked.endDate;
+          }
+          setForm(blank);
           return;
         }
         const loaded = await getTrip(supabase, organizationId, tripId);
@@ -125,7 +146,7 @@ export function TripEditor({
     return () => {
       cancelled = true;
     };
-  }, [operations, organizationId, supabase, tripId, module, router]);
+  }, [operations, organizationId, supabase, tripId, bookingId, module, router]);
 
   useEffect(() => {
     if (!form.busId) {
@@ -232,6 +253,10 @@ export function TripEditor({
           setForm(formFromTrip(reloaded));
         }
       } else {
+        if (booking) {
+          // Link the new sheet to its booking; a failure here must not lose the saved sheet.
+          await updateBooking(supabase, organizationId, booking.booking.id, { tripId: id }).catch(() => undefined);
+        }
         router.replace(`${tripsHref}/${id}`);
       }
       setConfirmApprove(false);
@@ -434,6 +459,17 @@ export function TripEditor({
         </aside>
 
         <fieldset disabled={locked || saving} className={`flex min-w-0 flex-col gap-4 ${locked ? "opacity-80" : ""}`}>
+          {booking ? (
+            <section className="flex flex-col gap-1 rounded-3xl bg-brand-soft p-4 text-sm">
+              <span className="font-extrabold text-brand">
+                Tour for {booking.booking.customerName}
+              </span>
+              <span className="text-muted">
+                Hire {formatInr(booking.booking.hireAmountInr)} · received {formatInr(booking.received)} · balance{" "}
+                {formatInr(booking.balance)}
+              </span>
+            </section>
+          ) : null}
           <Card title="Trip">
             <label className={LABEL}>
               Bus

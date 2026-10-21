@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { ModuleHome } from "@/components/modules/ModuleHome";
+import { TourHome } from "@/components/tours/TourHome";
 import { DailyLedger } from "@/components/operations/DailyLedger";
 import { AccessMessage } from "@/app/(app)/editorAccess";
 import { moduleAccess } from "@/app/(app)/moduleAccess";
@@ -16,6 +17,9 @@ export default async function ModuleHomePage({ params }: { params: Promise<{ mod
         <DailyLedger key={access.module} module={access.module} />
       </Suspense>
     );
+  }
+  if (access.module === "tour") {
+    return <TourHome key={access.module} organizationId={access.membership.organizationId} />;
   }
   return <ModuleHome key={access.module} organizationId={access.membership.organizationId} module={access.module} />;
 }

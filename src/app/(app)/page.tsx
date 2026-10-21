@@ -26,8 +26,13 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
         );
       }
       const { add } = await searchParams;
-      const home = openModule === "town" ? moduleHref(openModule) : moduleHref(openModule, "daybook");
-      redirect(add ? `${home}?add=${encodeURIComponent(add)}` : moduleHref(openModule));
+      const home =
+        openModule === "town"
+          ? moduleHref(openModule)
+          : openModule === "tour"
+            ? `${moduleHref(openModule, "enquiries")}?new=1`
+            : moduleHref(openModule, "daybook");
+      redirect(add ? (openModule === "tour" ? home : `${home}?add=${encodeURIComponent(add)}`) : moduleHref(openModule));
     }
   }
   return (

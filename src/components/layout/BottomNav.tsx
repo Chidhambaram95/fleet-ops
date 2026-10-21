@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PlusIcon } from "./AppHeader";
-import { hasScreen, moduleHref, screenLabel, type ModuleId } from "@domain/modules/modules";
+import { moduleHref, screenLabel, secondTabScreen, type ModuleId } from "@domain/modules/modules";
 import type { UserRole } from "@domain/rbac/roles";
 import { addEntryHref, currentModule, isActive } from "./navLinks";
 
@@ -25,7 +25,7 @@ export function BottomNav({
   const pathname = usePathname();
   const openModule = role === "admin" || role === "manager" ? currentModule(pathname, modules, defaultModule) : null;
   const homeHref = openModule ? moduleHref(openModule) : "/";
-  const secondScreen = openModule && hasScreen(openModule, "trips") ? "trips" : "crew";
+  const secondScreen = openModule ? secondTabScreen(openModule) : "crew";
   const secondHref = openModule ? moduleHref(openModule, secondScreen) : "";
   const reportsHref = openModule ? moduleHref(openModule, "reports") : "";
   const homeActive = isActive(pathname, homeHref);

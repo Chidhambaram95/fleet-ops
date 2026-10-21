@@ -5,12 +5,13 @@ import { useState } from "react";
 import { saveCompanyAction } from "@/app/(app)/settings/company/actions";
 import { shortDate, subscriptionStatus } from "@domain/billing/subscription";
 import { BUS_TYPES, type BusType, type CompanyProfile } from "@domain/companies/types";
+import { TourQuoteSettings } from "@/components/tours/TourQuoteSettings";
 import { MODULE_TITLES } from "@domain/modules/modules";
 import { todayInIst } from "@domain/operations/totals";
 
 const field = "h-12 rounded-2xl bg-canvas px-4 text-base font-normal";
 
-export function CompanySettings({ profile }: { profile: CompanyProfile }) {
+export function CompanySettings({ profile, organizationId }: { profile: CompanyProfile; organizationId: string }) {
   const router = useRouter();
   const [name, setName] = useState(profile.name);
   const [town, setTown] = useState(profile.town);
@@ -124,6 +125,10 @@ export function CompanySettings({ profile }: { profile: CompanyProfile }) {
           </button>
         )}
       </form>
+
+      {enabled.includes("tour") && allowed.includes("tour") ? (
+        <TourQuoteSettings organizationId={organizationId} viewOnly={viewOnly} />
+      ) : null}
 
       {profile.subscription ? (
         <section className="flex flex-col gap-1 rounded-3xl bg-white p-4 text-sm md:p-5">

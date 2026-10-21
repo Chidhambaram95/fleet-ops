@@ -15,6 +15,8 @@ export const TRIP_EXPENSE_CATEGORIES: { id: TripExpenseCategory; label: string }
   { id: "mechanic", label: "Mechanic" },
   { id: "seat_wash", label: "Seat cover wash" },
   { id: "grease", label: "Grease" },
+  { id: "interstate_permit", label: "Inter-state permit / tax" },
+  { id: "guide_commission", label: "Guide / agent commission" },
   { id: "other", label: "Other" },
 ];
 

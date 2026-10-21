@@ -64,6 +64,7 @@ export function currentModule(
 /** Where "Add entry" opens the day book. */
 export function addEntryHref(role: UserRole | null, module: ModuleId | null) {
   if (role === "crew" || !module) return "/?add=income";
+  if (module === "tour") return "/tour/enquiries?new=1";
   return module === "town" ? "/town?add=income" : `${moduleHref(module, "daybook")}?add=income`;
 }
 

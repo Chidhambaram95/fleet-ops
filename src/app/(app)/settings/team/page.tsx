@@ -38,7 +38,7 @@ export default async function TeamSettingsPage() {
     return (
       <TeamSettings
         members={members}
-        buses={buses}
+        buses={buses.filter((bus) => bus.busType !== "tour")}
         invites={invites}
         companyName={company.name}
         currentUserId={membership.userId}

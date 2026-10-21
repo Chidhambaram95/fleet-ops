@@ -15,6 +15,8 @@ export type TripExpenseCategory =
   | "mechanic"
   | "seat_wash"
   | "grease"
+  | "interstate_permit"
+  | "guide_commission"
   | "other";
 
 /** One diesel fill on a trip sheet. Credit fills are paid later by the office. */

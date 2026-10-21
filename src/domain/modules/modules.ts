@@ -23,6 +23,8 @@ export const MODULE_TITLES: Record<ModuleId, string> = {
 export type Screen =
   | "home"
   | "daybook"
+  | "enquiries"
+  | "bookings"
   | "trips"
   | "fuel"
   | "intercity"
@@ -35,12 +37,14 @@ export type Screen =
 export const MODULE_SCREENS: Record<ModuleId, readonly Screen[]> = {
   town: ["home", "buses", "crew", "renewals", "reports"],
   omni: ["home", "trips", "fuel", "intercity", "daybook", "buses", "crew", "renewals", "reports"],
-  tour: ["home", "trips", "fuel", "daybook", "buses", "crew", "renewals", "reports"],
+  tour: ["home", "enquiries", "bookings", "trips", "fuel", "buses", "crew", "renewals", "reports"],
 };
 
 export const SCREEN_LABELS: Record<Screen, string> = {
   home: "Today",
   daybook: "Day book",
+  enquiries: "Enquiries & quotes",
+  bookings: "Bookings",
   trips: "Trip sheets",
   fuel: "Diesel & pumps",
   intercity: "Intercity payments",
@@ -53,6 +57,8 @@ export const SCREEN_LABELS: Record<Screen, string> = {
 export const SCREEN_HINTS: Record<Screen, string> = {
   home: "Today at a glance",
   daybook: "Daily money in and out",
+  enquiries: "New enquiries, quotes and advances",
+  bookings: "Confirmed tours, payments and balances",
   trips: "Trip sheets, approvals and advances",
   fuel: "Pump credit and mileage",
   intercity: "Fortnightly Intercity payments",
@@ -65,6 +71,12 @@ export const SCREEN_HINTS: Record<Screen, string> = {
 /** Omni and Tour open on an overview of what needs doing; Town on today's cash. */
 export function screenLabel(module: ModuleId, screen: Screen) {
   return screen === "home" && module !== "town" ? "Overview" : SCREEN_LABELS[screen];
+}
+
+/** The second tab on the phone: Trip sheets, or Enquiries for Tour, or Crew where there are no trips. */
+export function secondTabScreen(module: ModuleId): Screen {
+  if (module === "tour") return "enquiries";
+  return hasScreen(module, "trips") ? "trips" : "crew";
 }
 
 export function isModuleId(value: unknown): value is ModuleId {
