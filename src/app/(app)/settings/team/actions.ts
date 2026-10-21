@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getActiveMembership } from "@data/auth/session";
 import { cancelInvite, createInvite } from "@data/companies/repository";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
+import { isModuleId } from "@domain/modules/modules";
 import { isUserRole } from "@domain/rbac/roles";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { friendlyErrorMessage } from "@domain/platform/errors";
@@ -96,6 +97,22 @@ export async function assignCrewToBusAction(userId: string, busId: string) {
     // The bus first: the database refuses crew without one.
     await repo.assignCrewToBus(membership.organizationId, userId, busId);
     await repo.updateMemberRole(membership.organizationId, userId, "crew");
+    revalidatePath("/settings/team");
+    return {};
+  } catch (error) {
+    return { error: messageFromUnknown(error) };
+  }
+}
+
+/** Limits a manager to one module, or (empty) lets them open every module. */
+export async function updateMemberModuleAction(userId: string, module: string) {
+  try {
+    if (module && !isModuleId(module)) {
+      return { error: "Choose a valid module." };
+    }
+    const { supabase, membership } = await requireAdmin();
+    const repo = createSupabaseOperationsRepository(supabase);
+    await repo.updateMemberModule(membership.organizationId, userId, isModuleId(module) ? module : null);
     revalidatePath("/settings/team");
     return {};
   } catch (error) {

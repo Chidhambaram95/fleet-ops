@@ -1,10 +1,6 @@
-import { MoneyPage } from "@/components/money/MoneyPage";
-import { AccessMessage, editorAccess } from "@/app/(app)/editorAccess";
+import { redirect } from "next/navigation";
 
-export default async function MoneyRoute() {
-  const access = await editorAccess();
-  if (!access.membership) {
-    return <AccessMessage message={access.message} />;
-  }
-  return <MoneyPage organizationId={access.membership.organizationId} />;
+/** Old link: bank and company costs moved to the Company area. */
+export default function OldMoneyPage() {
+  redirect("/company/costs");
 }

@@ -11,6 +11,7 @@ import { createSupabaseOperationsRepository } from "@data/operations/supabaseRep
 import { listRenewals } from "@data/renewals/repository";
 import { listEntriesBetween } from "@data/reports/repository";
 import { listTripsWithLines } from "@data/trips/repository";
+import { hasScreen, MODULE_LABELS, type ModuleId } from "@domain/modules/modules";
 import { formatInr, shiftDate, todayInIst } from "@domain/operations/totals";
 import type { BusKind } from "@domain/operations/types";
 import {
@@ -123,18 +124,35 @@ function whatsappText(
   return lines.join("\n");
 }
 
-export function ReportsPage({ organizationId }: { organizationId: string }) {
+/**
+ * Reports for one module, or the combined report for the whole company
+ * (module null) in the Company area.
+ */
+export function ReportsPage({
+  organizationId,
+  module,
+  modules,
+}: {
+  organizationId: string;
+  module: ModuleId | null;
+  /** The company's modules, for the combined report's bus type filter. */
+  modules: ModuleId[];
+}) {
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const today = todayInIst();
   const [kind, setKind] = useState<ReportKind>("pnl");
   const [preset, setPreset] = useState<Preset>("this_month");
   const [range, setRange] = useState(() => presetRange("this_month", today));
   const [busId, setBusId] = useState("");
-  const [busType, setBusType] = useState<"" | BusKind>("");
+  const [pickedType, setBusType] = useState<"" | BusKind>("");
+  const busType: "" | BusKind = module ?? pickedType;
+  // Town buses have no trip sheets.
+  const reports = REPORTS.filter((report) => report.id !== "trips" || !module || hasScreen(module, "trips"));
   const [renewalDays, setRenewalDays] = useState<30 | 60 | 90>(30);
 
   const empty: ReportData = {
     buses: [],
+    allBusIds: [],
     people: [],
     entries: [],
     trips: [],
@@ -177,6 +195,7 @@ export function ReportsPage({ organizationId }: { organizationId: string }) {
       ]);
       return {
         buses,
+        allBusIds: buses.map((bus) => bus.id),
         people,
         entries,
         trips,
@@ -198,18 +217,23 @@ export function ReportsPage({ organizationId }: { organizationId: string }) {
     : busType
       ? `${BUS_TYPE_LABELS[busType]} buses`
       : "All buses";
-  const types = [...new Set(data.buses.map((bus) => bus.busType))];
+  const types = modules.filter((type) => data.buses.some((bus) => bus.busType === type));
+  const pickable = busType ? data.buses.filter((bus) => bus.busType === busType) : data.buses;
 
   return (
     <div className="flex flex-col gap-4">
       <div className="print:hidden">
         <PageHeader
-          title="Reports"
-          hint="Pick a report and dates. Share it or save it for Excel."
+          title={module ? `${MODULE_LABELS[module]} reports` : "Combined report"}
+          hint={
+            module
+              ? "Pick a report and dates. Share it or save it for Excel."
+              : "Every module together. Pick a report and dates."
+          }
         />
       </div>
       <div className="print:hidden">
-        <Tabs<ReportKind> value={kind} onChange={setKind} options={REPORTS} />
+        <Tabs<ReportKind> value={kind} onChange={setKind} options={reports} />
       </div>
 
       <Card>
@@ -282,20 +306,22 @@ export function ReportsPage({ organizationId }: { organizationId: string }) {
           <label className={LABEL}>
             Bus
             <BusSelect
-              buses={data.buses}
+              buses={pickable}
               value={busId}
               onChange={setBusId}
               allLabel="All buses"
             />
           </label>
+          {!module ? (
           <label className={LABEL}>
             Bus type
             <select
               className={FIELD}
               value={busType}
-              onChange={(event) =>
-                setBusType(event.target.value as "" | BusKind)
-              }
+              onChange={(event) => {
+                setBusType(event.target.value as "" | BusKind);
+                setBusId("");
+              }}
             >
               <option value="">All types</option>
               {types.map((type) => (
@@ -305,6 +331,7 @@ export function ReportsPage({ organizationId }: { organizationId: string }) {
               ))}
             </select>
           </label>
+          ) : null}
         </div>
 
         <div>

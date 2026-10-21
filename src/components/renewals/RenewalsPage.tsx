@@ -9,6 +9,7 @@ import {
   listRenewals,
   uploadDocumentPhoto,
 } from "@data/renewals/repository";
+import type { ModuleId } from "@domain/modules/modules";
 import { formatInr, todayInIst } from "@domain/operations/totals";
 import {
   BUS_DOCUMENTS,
@@ -76,16 +77,21 @@ function emptyDraft(kind: RenewalKind = "fc", ownerId = ""): Draft {
   };
 }
 
-export function RenewalsPage({ organizationId }: { organizationId: string }) {
+export function RenewalsPage({ organizationId, module }: { organizationId: string; module: ModuleId }) {
   const org = useOrg();
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const { data, loading, error, reload } = useLoaded(
     async () => {
-      const [renewals, buses, people] = await Promise.all([
+      const [allRenewals, allBuses, allPeople] = await Promise.all([
         listRenewals(supabase, organizationId),
         createSupabaseOperationsRepository(supabase).listBuses(organizationId),
         listCrewPeople(supabase, organizationId),
       ]);
+      // This module's buses and drivers, and their documents.
+      const buses = allBuses.filter((bus) => bus.busType === module);
+      const people = allPeople.filter((person) => person.module === module);
+      const owners = new Set([...buses.map((bus) => bus.id), ...people.map((person) => person.id)]);
+      const renewals = allRenewals.filter((renewal) => owners.has(renewal.busId ?? renewal.personId ?? ""));
       return { renewals, buses, people };
     },
     { renewals: [], buses: [], people: [] },

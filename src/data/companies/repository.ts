@@ -10,6 +10,7 @@ import {
   type PendingInvite,
   type SubscriptionPayment,
 } from "@domain/companies/types";
+import { isModuleId, type ModuleId } from "@domain/modules/modules";
 
 function fail(error: { message: string } | null) {
   if (error) {
@@ -80,7 +81,7 @@ export async function getCompanyProfile(
   client: SupabaseClient,
   organizationId: string,
 ): Promise<CompanyProfile> {
-  const [org, sub, pay] = await Promise.all([
+  const [org, sub, pay, modules] = await Promise.all([
     client
       .from("organizations")
       .select("name, town, gstin, whatsapp_number, bus_types")
@@ -95,7 +96,10 @@ export async function getCompanyProfile(
       .from("platform_payment_details")
       .select("account_name, bank_name, account_number, ifsc, upi_id")
       .maybeSingle(),
+    // Separate and soft, so the app still opens before migration 0015 is run.
+    client.from("organizations").select("enabled_modules").eq("id", organizationId).maybeSingle(),
   ]);
+  const enabledRaw = modules.error ? null : (modules.data as Record<string, unknown> | null)?.enabled_modules;
 
   let orgRow = org.data as Record<string, unknown> | null;
   if (org.error) {
@@ -115,6 +119,7 @@ export async function getCompanyProfile(
     whatsappNumber:
       typeof orgRow?.whatsapp_number === "string" ? orgRow.whatsapp_number : "",
     busTypes: toBusTypes(orgRow?.bus_types),
+    enabledModules: Array.isArray(enabledRaw) ? toBusTypes(enabledRaw) : null,
     subscription: sub.data ? mapSubscription(sub.data as SubscriptionRow) : null,
     paymentDetails: pay.data ? mapPaymentDetails(pay.data as PaymentDetailsRow) : null,
   };
@@ -123,7 +128,7 @@ export async function getCompanyProfile(
 export async function updateCompanyProfile(
   client: SupabaseClient,
   organizationId: string,
-  input: { name: string; town: string; gstin: string; whatsappNumber: string; busTypes: BusType[] },
+  input: { name: string; town: string; gstin: string; whatsappNumber: string; enabledModules: BusType[] },
 ) {
   const { data, error } = await client
     .from("organizations")
@@ -132,7 +137,7 @@ export async function updateCompanyProfile(
       town: input.town,
       gstin: input.gstin,
       whatsapp_number: input.whatsappNumber,
-      bus_types: input.busTypes,
+      enabled_modules: input.enabledModules,
     })
     .eq("id", organizationId)
     .select("id");
@@ -514,4 +519,20 @@ export async function updatePlatformPaymentDetails(
   if (!data?.length) {
     throw new Error("Could not save the payment details.");
   }
+}
+
+/** The module a manager is limited to, or null for every module (soft before migration 0015). */
+export async function getMemberModule(
+  client: SupabaseClient,
+  organizationId: string,
+  userId: string,
+): Promise<ModuleId | null> {
+  const { data, error } = await client
+    .from("organization_members")
+    .select("module")
+    .eq("organization_id", organizationId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  const value = error ? null : (data as Record<string, unknown> | null)?.module;
+  return isModuleId(value) ? value : null;
 }

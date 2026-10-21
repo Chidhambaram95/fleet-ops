@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import { listTrips } from "@data/trips/repository";
+import { moduleHref, type ModuleId } from "@domain/modules/modules";
 import { formatInr } from "@domain/operations/totals";
 import type { Bus } from "@domain/operations/types";
 import { settlementText } from "@domain/trips/checks";
@@ -15,7 +16,7 @@ import { StatusBadge } from "./TripEditor";
 
 type Filter = "draft" | "approved";
 
-export function TripsList({ organizationId }: { organizationId: string }) {
+export function TripsList({ organizationId, module }: { organizationId: string; module: ModuleId }) {
   const org = useOrg();
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const [trips, setTrips] = useState<TripSummary[]>([]);
@@ -33,9 +34,12 @@ export function TripsList({ organizationId }: { organizationId: string }) {
           createSupabaseOperationsRepository(supabase).listBuses(organizationId),
         ]);
         if (cancelled) return;
-        setTrips(nextTrips);
-        setBuses(nextBuses);
-        if (!nextTrips.some((trip) => trip.status === "draft") && nextTrips.length > 0) {
+        const moduleBuses = nextBuses.filter((bus) => bus.busType === module);
+        const ids = new Set(moduleBuses.map((bus) => bus.id));
+        const moduleTrips = nextTrips.filter((trip) => ids.has(trip.busId));
+        setTrips(moduleTrips);
+        setBuses(moduleBuses);
+        if (!moduleTrips.some((trip) => trip.status === "draft") && moduleTrips.length > 0) {
           setFilter("approved");
         }
       } catch (loadError) {
@@ -50,7 +54,7 @@ export function TripsList({ organizationId }: { organizationId: string }) {
     return () => {
       cancelled = true;
     };
-  }, [supabase, organizationId]);
+  }, [supabase, organizationId, module]);
 
   const drafts = trips.filter((trip) => trip.status === "draft");
   const shown = trips.filter((trip) => trip.status === filter);
@@ -64,7 +68,7 @@ export function TripsList({ organizationId }: { organizationId: string }) {
         </div>
         {!org.viewOnly ? (
           <Link
-            href="/trips/new"
+            href={`${moduleHref(module, "trips")}/new`}
             className="flex min-h-12 items-center gap-2 rounded-2xl bg-brand px-5 text-[15px] font-bold text-white"
           >
             <span aria-hidden="true" className="text-xl leading-none">+</span>
@@ -108,7 +112,7 @@ export function TripsList({ organizationId }: { organizationId: string }) {
           return (
             <Link
               key={trip.id}
-              href={`/trips/${trip.id}`}
+              href={`${moduleHref(module, "trips")}/${trip.id}`}
               className="flex flex-col gap-2 rounded-3xl bg-white p-4 hover:bg-white/80"
             >
               <div className="flex items-start justify-between gap-3">

@@ -1,10 +1,6 @@
-import { TripsList } from "@/components/trips/TripsList";
-import { AccessMessage, editorAccess } from "@/app/(app)/editorAccess";
+import { redirectToModuleScreen } from "@/app/(app)/moduleAccess";
 
-export default async function TripsPage() {
-  const access = await editorAccess();
-  if (!access.membership) {
-    return <AccessMessage message={access.message} />;
-  }
-  return <TripsList organizationId={access.membership.organizationId} />;
+/** Old link: opens trips in the person's module. */
+export default async function OldTripsPage() {
+  return redirectToModuleScreen("trips");
 }

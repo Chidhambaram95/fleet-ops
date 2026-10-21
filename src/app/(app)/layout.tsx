@@ -5,6 +5,7 @@ import { hasPublicSupabaseEnv } from "@data/supabase/env";
 import { subscriptionStatus } from "@domain/billing/subscription";
 import { FLEETOPS_WHATSAPP } from "@domain/platform/contact";
 import { todayInIst } from "@domain/operations/totals";
+import type { ModuleId } from "@domain/modules/modules";
 import type { UserRole } from "@domain/rbac/roles";
 import { SignOutButton } from "@/components/admin/SignOutButton";
 import { BillingNotice } from "@/components/billing/BillingNotice";
@@ -12,6 +13,7 @@ import { OrgProvider } from "@/components/billing/OrgContext";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { homeModule, moduleInfo } from "./moduleAccess";
 
 const MAIN_CLASS = "mx-auto w-full max-w-6xl px-4 py-4 md:px-8 md:py-7";
 
@@ -38,6 +40,9 @@ export default async function AppShellLayout({
   let viewOnly = false;
   let closedCompany: string | null = null;
   let noCompany = false;
+  let modules: ModuleId[] = [];
+  let defaultModule: ModuleId | null = null;
+  let companyArea = false;
   if (user) {
     superAdmin = await isSuperAdmin(supabase, user.id);
     if (superAdmin) {
@@ -56,6 +61,12 @@ export default async function AppShellLayout({
           .maybeSingle(),
       ]);
       organizationName = profileInfo.name;
+      if (role === "admin" || role === "manager") {
+        const info = await moduleInfo(membership);
+        modules = info.mine;
+        defaultModule = await homeModule(membership, info.mine);
+        companyArea = role === "admin" || !info.limited;
+      }
       whatsappNumber = profileInfo.whatsappNumber.replace(/\D/g, "");
       if (typeof profile?.display_name === "string" && profile.display_name.trim()) {
         displayName = profile.display_name.trim();
@@ -129,6 +140,9 @@ export default async function AppShellLayout({
         role={role}
         isSuperAdmin={superAdmin}
         canAdd={Boolean(role) && !viewOnly}
+        modules={modules}
+        defaultModule={defaultModule}
+        companyArea={companyArea}
       />
       {notice}
       <OrgProvider value={{ name: organizationName, whatsappNumber, viewOnly }}>
@@ -136,7 +150,9 @@ export default async function AppShellLayout({
       </OrgProvider>
       <BottomNav
         canAdd={Boolean(role) && !viewOnly}
-        showTrips={role === "admin" || role === "manager"}
+        role={role}
+        modules={modules}
+        defaultModule={defaultModule}
       />
     </div>
   );

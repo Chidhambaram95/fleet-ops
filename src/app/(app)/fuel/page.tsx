@@ -1,10 +1,6 @@
-import { FuelPage } from "@/components/money/FuelPage";
-import { AccessMessage, editorAccess } from "@/app/(app)/editorAccess";
+import { redirectToModuleScreen } from "@/app/(app)/moduleAccess";
 
-export default async function FuelRoute() {
-  const access = await editorAccess();
-  if (!access.membership) {
-    return <AccessMessage message={access.message} />;
-  }
-  return <FuelPage organizationId={access.membership.organizationId} />;
+/** Old link: opens fuel in the person's module. */
+export default async function OldFuelPage() {
+  return redirectToModuleScreen("fuel");
 }

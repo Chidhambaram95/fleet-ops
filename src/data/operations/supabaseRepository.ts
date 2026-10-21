@@ -15,6 +15,7 @@ import {
   type DailyEntryRow,
 } from "./mappers";
 import type { OperationsRepository, TeamRepository } from "./repository";
+import { isModuleId, type ModuleId } from "@domain/modules/modules";
 
 function throwIfError(error: { message: string; code?: string } | null) {
   if (error) {
@@ -29,6 +30,7 @@ function isDuplicate(error: { message: string; code?: string }) {
 type MemberRow = {
   user_id: string;
   role: string;
+  module?: string | null;
 };
 
 type ProfileRow = {
@@ -212,11 +214,19 @@ export class SupabaseOperationsRepository
   }
 
   async getOrganizationMembers(organizationId: string): Promise<OrganizationMember[]> {
-    const { data, error } = await this.client
+    const withModule = await this.client
       .from("organization_members")
-      .select("user_id, role")
+      .select("user_id, role, module")
       .eq("organization_id", organizationId)
       .order("created_at", { ascending: true });
+    // Before migration 0015 there is no module column; everyone sees every module.
+    const { data, error } = withModule.error
+      ? await this.client
+          .from("organization_members")
+          .select("user_id, role")
+          .eq("organization_id", organizationId)
+          .order("created_at", { ascending: true })
+      : withModule;
 
     throwIfError(error);
     const members = (data ?? []) as MemberRow[];
@@ -260,8 +270,24 @@ export class SupabaseOperationsRepository
         displayName: names.get(member.user_id) || "Member",
         role,
         busId: buses.get(member.user_id) ?? null,
+        module: isModuleId(member.module) ? member.module : null,
       };
     });
+  }
+
+  /** Limits a manager to one module, or null for every module. */
+  async updateMemberModule(organizationId: string, userId: string, module: ModuleId | null) {
+    const { data, error } = await this.client
+      .from("organization_members")
+      .update({ module })
+      .eq("organization_id", organizationId)
+      .eq("user_id", userId)
+      .select("user_id");
+
+    throwIfError(error);
+    if (!data?.length) {
+      throw new Error("Could not update that member.");
+    }
   }
 
   async addOrganizationMember(organizationId: string, userId: string, role: UserRole) {

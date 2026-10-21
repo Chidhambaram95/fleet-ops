@@ -6,6 +6,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { listCrewPeople } from "@data/money/repository";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import { listRenewals } from "@data/renewals/repository";
+import { moduleHref, type ModuleId } from "@domain/modules/modules";
 import { todayInIst } from "@domain/operations/totals";
 import { currentRenewals, daysLeft, dueText, renewalLabel } from "@domain/renewals/catalog";
 
@@ -15,9 +16,12 @@ type DueItem = { id: string; owner: string; label: string; days: number };
 export function RenewalsDueCard({
   supabase,
   organizationId,
+  module,
 }: {
   supabase: SupabaseClient;
   organizationId: string;
+  /** Only this module's buses and drivers. */
+  module?: ModuleId;
 }) {
   const [items, setItems] = useState<DueItem[]>([]);
 
@@ -33,6 +37,13 @@ export function RenewalsDueCard({
         const today = todayInIst();
         setItems(
           currentRenewals(renewals)
+            .filter((renewal) =>
+              !module
+                ? true
+                : renewal.busId
+                  ? buses.find((bus) => bus.id === renewal.busId)?.busType === module
+                  : people.find((person) => person.id === renewal.personId)?.module === module,
+            )
             .map((renewal) => ({
               id: renewal.id,
               owner: renewal.busId
@@ -49,14 +60,14 @@ export function RenewalsDueCard({
     return () => {
       cancelled = true;
     };
-  }, [supabase, organizationId]);
+  }, [supabase, organizationId, module]);
 
   if (items.length === 0) {
     return null;
   }
   return (
     <Link
-      href="/renewals"
+      href={module ? moduleHref(module, "renewals") : "/renewals"}
       className="flex flex-col gap-2 rounded-3xl bg-warn-bg p-4 text-warn-ink"
     >
       <span className="flex items-center justify-between gap-2 font-extrabold">

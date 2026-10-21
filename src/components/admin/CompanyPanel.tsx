@@ -107,7 +107,7 @@ export function CompanyEditForm({ company }: { company: Company }) {
           </span>
         </label>
         <fieldset className="flex flex-col gap-1.5">
-          <legend className="mb-1.5 text-[13px] font-semibold">Bus types</legend>
+          <legend className="mb-1.5 text-[13px] font-semibold">Modules allowed</legend>
           <div className="flex flex-wrap gap-2">
             {BUS_TYPES.map((type) => {
               const on = busTypes.includes(type);

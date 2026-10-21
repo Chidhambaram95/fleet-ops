@@ -35,6 +35,8 @@ export type OrganizationMember = {
   displayName: string;
   role: UserRole;
   busId: string | null;
+  /** A manager limited to one module; null means every module. */
+  module: "town" | "omni" | "tour" | null;
 };
 
 export type CrewAssignment = {

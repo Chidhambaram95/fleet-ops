@@ -6,11 +6,13 @@ import {
   assignCrewToBusAction,
   cancelInviteAction,
   createInviteAction,
+  updateMemberModuleAction,
   updateMemberRoleAction,
 } from "@/app/(app)/settings/team/actions";
 import { InviteShare } from "@/components/admin/InviteShare";
 import { useOrg } from "@/components/billing/OrgContext";
 import type { PendingInvite } from "@domain/companies/types";
+import { MODULE_LABELS, type ModuleId } from "@domain/modules/modules";
 import type { Bus } from "@domain/operations/types";
 import {
   ROLE_LABELS,
@@ -25,12 +27,15 @@ export function TeamSettings({
   invites,
   companyName,
   currentUserId,
+  modules = [],
 }: {
   members: OrganizationMember[];
   buses: Bus[];
   invites: PendingInvite[];
   companyName: string;
   currentUserId: string;
+  /** The company's switched-on modules. A manager can be limited to one. */
+  modules?: ModuleId[];
 }) {
   const router = useRouter();
   const { viewOnly } = useOrg();
@@ -41,6 +46,9 @@ export function TeamSettings({
     Object.fromEntries(
       members.map((member) => [member.userId, member.busId ?? ""]),
     ),
+  );
+  const [memberModules, setMemberModules] = useState<Record<string, string>>(() =>
+    Object.fromEntries(members.map((member) => [member.userId, member.module ?? ""])),
   );
   const [pendingId, setPendingId] = useState("");
   const [error, setError] = useState("");
@@ -62,7 +70,25 @@ export function TeamSettings({
         members.map((member) => [member.userId, member.busId ?? ""]),
       ),
     );
+    setMemberModules(
+      Object.fromEntries(members.map((member) => [member.userId, member.module ?? ""])),
+    );
   }, [memberKey, members]);
+
+  async function onModuleChange(userId: string, module: string) {
+    const previous = memberModules[userId] ?? "";
+    setMemberModules((current) => ({ ...current, [userId]: module }));
+    setPendingId(userId);
+    setError("");
+    const result = await updateMemberModuleAction(userId, module);
+    setPendingId("");
+    if (result.error) {
+      setError(result.error);
+      setMemberModules((current) => ({ ...current, [userId]: previous }));
+      return;
+    }
+    router.refresh();
+  }
 
   async function saveRole(
     userId: string,
@@ -324,6 +350,22 @@ export function TeamSettings({
                           {buses.map((bus) => (
                             <option key={bus.id} value={bus.id}>
                               {bus.registrationNumber}
+                            </option>
+                          ))}
+                        </select>
+                      ) : null}
+                      {role === "manager" && modules.length > 1 ? (
+                        <select
+                          value={memberModules[member.userId] ?? ""}
+                          disabled={pending || viewOnly}
+                          onChange={(event) => void onModuleChange(member.userId, event.target.value)}
+                          aria-label={`Modules for ${member.displayName}`}
+                          className="h-11 rounded-2xl bg-canvas px-3 text-sm disabled:opacity-60"
+                        >
+                          <option value="">All modules</option>
+                          {modules.map((item) => (
+                            <option key={item} value={item}>
+                              Only {MODULE_LABELS[item]}
                             </option>
                           ))}
                         </select>

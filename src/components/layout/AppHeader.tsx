@@ -4,9 +4,16 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { signOut } from "@data/auth/email";
+import {
+  LAST_MODULE_COOKIE,
+  MODULE_LABELS,
+  moduleFromPath,
+  moduleHref,
+  type ModuleId,
+} from "@domain/modules/modules";
 import { ROLE_LABELS, type UserRole } from "@domain/rbac/roles";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
-import { initials, isActive, navLinksFor } from "./navLinks";
+import { addEntryHref, currentModule, initials, isActive, navLinksFor } from "./navLinks";
 
 /** Phone: company name and account button. Laptop: logo, top menu and account. */
 export function AppHeader({
@@ -16,6 +23,9 @@ export function AppHeader({
   role,
   isSuperAdmin = false,
   canAdd = true,
+  modules = [],
+  defaultModule = null,
+  companyArea = false,
 }: {
   organizationName: string;
   email: string;
@@ -23,6 +33,12 @@ export function AppHeader({
   role: UserRole | null;
   isSuperAdmin?: boolean;
   canAdd?: boolean;
+  /** Modules this person may open. */
+  modules?: ModuleId[];
+  /** The module shown outside module pages: the one used last. */
+  defaultModule?: ModuleId | null;
+  /** Bank and company costs and the combined report. */
+  companyArea?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -30,10 +46,17 @@ export function AppHeader({
   const accountId = useId();
   const [accountOpen, setAccountOpen] = useState(false);
   const label = displayName || email || "Signed in";
-  const links = navLinksFor(role);
+  const openModule = role === "crew" ? null : currentModule(pathname, modules, defaultModule);
+  const links = navLinksFor(role, openModule, companyArea);
 
   useEffect(() => {
     setAccountOpen(false);
+    // Remember the module opened, so Home brings people back to it. This is
+    // done here, not on the server, because link prefetches would count too.
+    const opened = moduleFromPath(pathname);
+    if (opened) {
+      document.cookie = `${LAST_MODULE_COOKIE}=${opened}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
+    }
   }, [pathname]);
 
   useEffect(() => {
@@ -80,6 +103,9 @@ export function AppHeader({
               {organizationName}
             </span>
           </div>
+          {modules.length > 1 && role !== "crew" ? (
+            <ModuleSwitch modules={modules} current={openModule} pathname={pathname} className="ml-2 hidden md:flex" />
+          ) : null}
         </div>
 
         <nav aria-label="Main" className="hidden flex-1 flex-wrap justify-center gap-1 md:flex">
@@ -102,7 +128,7 @@ export function AppHeader({
         <div className="flex shrink-0 items-center gap-2">
           {canAdd ? (
             <Link
-              href="/?add=income"
+              href={addEntryHref(role, openModule)}
               className="hidden min-h-10 items-center gap-1.5 rounded-full bg-brand px-4 text-sm font-bold text-white md:flex"
             >
               <PlusIcon className="h-4 w-4" />
@@ -167,7 +193,53 @@ export function AppHeader({
           </div>
         </div>
       </div>
+      {modules.length > 1 && role !== "crew" ? (
+        <div className="mx-auto w-full max-w-6xl px-4 pb-2 md:hidden">
+          <ModuleSwitch modules={modules} current={openModule} pathname={pathname} className="flex" />
+        </div>
+      ) : null}
     </header>
+  );
+}
+
+const MODULE_ACCENT: Record<ModuleId, string> = {
+  town: "bg-brand text-white",
+  omni: "bg-teal-700 text-white",
+  tour: "bg-amber-600 text-white",
+};
+
+/** Town | Omni | Tour. Each opens that module's home. */
+export function ModuleSwitch({
+  modules,
+  current,
+  pathname,
+  className = "",
+}: {
+  modules: ModuleId[];
+  current: ModuleId | null;
+  pathname: string;
+  className?: string;
+}) {
+  // Outside a module (company pages) no module is highlighted.
+  const inModule = modules.some((item) => pathname === `/${item}` || pathname.startsWith(`/${item}/`));
+  return (
+    <nav aria-label="Modules" className={`gap-1 rounded-full bg-white p-1 md:bg-canvas ${className}`}>
+      {modules.map((item) => {
+        const active = inModule && item === current;
+        return (
+          <Link
+            key={item}
+            href={moduleHref(item)}
+            aria-current={active ? "page" : undefined}
+            className={`flex min-h-9 grow items-center justify-center rounded-full px-4 text-sm font-bold ${
+              active ? MODULE_ACCENT[item] : "text-muted hover:text-ink"
+            }`}
+          >
+            {MODULE_LABELS[item]}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }
 

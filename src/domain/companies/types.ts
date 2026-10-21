@@ -14,7 +14,10 @@ export type CompanyProfile = {
   town: string;
   gstin: string;
   whatsappNumber: string;
+  /** Modules the super admin allows. */
   busTypes: BusType[];
+  /** Modules the company admin switched on; null means every allowed one. */
+  enabledModules: BusType[] | null;
   subscription: Subscription | null;
   paymentDetails: PaymentDetails | null;
 };

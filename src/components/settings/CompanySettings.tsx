@@ -4,12 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { saveCompanyAction } from "@/app/(app)/settings/company/actions";
 import { shortDate, subscriptionStatus } from "@domain/billing/subscription";
-import {
-  BUS_TYPES,
-  BUS_TYPE_LABELS,
-  type BusType,
-  type CompanyProfile,
-} from "@domain/companies/types";
+import { BUS_TYPES, type BusType, type CompanyProfile } from "@domain/companies/types";
+import { MODULE_TITLES } from "@domain/modules/modules";
 import { todayInIst } from "@domain/operations/totals";
 
 const field = "h-12 rounded-2xl bg-canvas px-4 text-base font-normal";
@@ -20,7 +16,11 @@ export function CompanySettings({ profile }: { profile: CompanyProfile }) {
   const [town, setTown] = useState(profile.town);
   const [gstin, setGstin] = useState(profile.gstin);
   const [whatsapp, setWhatsapp] = useState(profile.whatsappNumber);
-  const [busTypes, setBusTypes] = useState<BusType[]>(profile.busTypes);
+  // Fleet Ops sets which modules the company may use; the admin switches them on.
+  const allowed = BUS_TYPES.filter((type) => profile.busTypes.includes(type));
+  const [enabled, setEnabled] = useState<BusType[]>(
+    allowed.filter((type) => !profile.enabledModules || profile.enabledModules.includes(type)),
+  );
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [failed, setFailed] = useState(false);
@@ -28,7 +28,7 @@ export function CompanySettings({ profile }: { profile: CompanyProfile }) {
   const viewOnly = status.state === "view_only";
 
   function toggle(type: BusType) {
-    setBusTypes((current) =>
+    setEnabled((current) =>
       current.includes(type) ? current.filter((item) => item !== type) : [...current, type],
     );
   }
@@ -36,7 +36,7 @@ export function CompanySettings({ profile }: { profile: CompanyProfile }) {
   async function save() {
     setBusy(true);
     setMessage("");
-    const result = await saveCompanyAction({ name, town, gstin, whatsappNumber: whatsapp, busTypes });
+    const result = await saveCompanyAction({ name, town, gstin, whatsappNumber: whatsapp, enabledModules: enabled });
     setBusy(false);
     setFailed(Boolean(result.error));
     setMessage(result.error ?? "Saved.");
@@ -86,25 +86,29 @@ export function CompanySettings({ profile }: { profile: CompanyProfile }) {
           />
         </label>
         <fieldset className="flex flex-col gap-1.5 text-[13px] font-semibold">
-          <legend className="mb-1">Bus types we run</legend>
+          <legend className="mb-1">Modules switched on</legend>
           <div className="flex flex-wrap gap-2">
-            {BUS_TYPES.map((type) => (
+            {allowed.map((type) => (
               <label
                 key={type}
                 className={`flex min-h-11 items-center gap-2 rounded-2xl border-2 px-3 text-sm ${
-                  busTypes.includes(type) ? "border-brand bg-brand-soft" : "border-line"
+                  enabled.includes(type) ? "border-brand bg-brand-soft" : "border-line"
                 }`}
               >
                 <input
                   type="checkbox"
-                  checked={busTypes.includes(type)}
+                  checked={enabled.includes(type)}
                   onChange={() => toggle(type)}
                   className="min-h-0"
                 />
-                {BUS_TYPE_LABELS[type]}
+                {MODULE_TITLES[type]}
               </label>
             ))}
           </div>
+          <span className="font-normal text-muted">
+            Each module has its own menu and screens. Switching one off hides it but keeps its data.
+            {allowed.length < BUS_TYPES.length ? " To add another module, contact Fleet Ops." : ""}
+          </span>
         </fieldset>
         {message ? (
           <p className={`text-sm ${failed ? "text-money-out" : "text-money-in"}`}>{message}</p>

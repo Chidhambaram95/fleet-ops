@@ -5,6 +5,7 @@ import type {
   IntercityIncome,
   SalaryPayment,
 } from "@domain/money/types";
+import { costShares } from "@domain/modules/modules";
 import { categoryLabel } from "@domain/operations/catalog";
 import type { Bus, BusKind, DailyEntry } from "@domain/operations/types";
 import { currentRenewals, daysLeft, dueText, renewalLabel } from "@domain/renewals/catalog";
@@ -28,6 +29,8 @@ export type ReportFilters = {
 
 export type ReportData = {
   buses: Bus[];
+  /** Every bus of the company, which shares a cost with no buses picked. */
+  allBusIds: string[];
   people: CrewPerson[];
   entries: DailyEntry[];
   trips: Trip[];
@@ -82,9 +85,39 @@ function selectedBuses(data: ReportData, filters: ReportFilters): Bus[] {
   );
 }
 
-/** Company-level costs (no bus, salaries) only belong in an unfiltered report. */
+/** Salaries are not tied to a bus, so they are left out when one bus is picked. */
 function wholeCompany(filters: ReportFilters) {
-  return !filters.busId && !filters.busType;
+  return !filters.busId;
+}
+
+/** Salaries paid in the range to the crew of the picked bus type. */
+function salariesInRange(data: ReportData, filters: ReportFilters) {
+  if (!wholeCompany(filters)) return 0;
+  return sum(
+    data.salaries
+      .filter((item) => inRange(item.paidOn, filters))
+      .filter(
+        (item) =>
+          !filters.busType ||
+          data.people.find((person) => person.id === item.personId)?.module === filters.busType,
+      )
+      .map((item) => item.amountInr),
+  );
+}
+
+/**
+ * Each bus's part of the bank and company costs in the range. A cost for
+ * several buses is shared equally by them; one with none by every bus.
+ */
+function costSharesByBus(data: ReportData, filters: ReportFilters) {
+  const byBus = new Map<string, number>();
+  for (const cost of data.companyExpenses) {
+    if (!inRange(cost.spentOn, filters)) continue;
+    for (const [busId, share] of costShares(cost.amountInr, cost.busIds, data.allBusIds)) {
+      byBus.set(busId, (byBus.get(busId) ?? 0) + share);
+    }
+  }
+  return byBus;
 }
 
 function busLabel(data: ReportData, busId: string | null) {
@@ -118,7 +151,7 @@ export function pnlReport(data: ReportData, filters: ReportFilters): ReportTable
   const shares = intercityShares(data, filters);
   const trips = tripsInRange(data, filters, busIds);
   const entries = data.entries.filter((entry) => busIds.has(entry.busId) && inRange(entry.date, filters));
-  const costs = data.companyExpenses.filter((item) => inRange(item.spentOn, filters));
+  const costs = costSharesByBus(data, filters);
 
   const rows: Cell[][] = buses.map((bus) => {
     const busEntries = entries.filter((entry) => entry.busId === bus.id);
@@ -132,7 +165,7 @@ export function pnlReport(data: ReportData, filters: ReportFilters): ReportTable
         return totals.dieselInr + totals.cashExpensesInr;
       }),
     );
-    const bankOut = sum(costs.filter((item) => item.busId === bus.id).map((item) => item.amountInr));
+    const bankOut = costs.get(bus.id) ?? 0;
     const income = ledgerIn + intercity;
     const expense = ledgerOut + tripOut + bankOut;
     return [bus.registrationNumber, ledgerIn, intercity, ledgerOut, tripOut, bankOut, income - expense];
@@ -140,13 +173,12 @@ export function pnlReport(data: ReportData, filters: ReportFilters): ReportTable
 
   const notes: string[] = [];
   if (wholeCompany(filters)) {
-    const companyCosts = sum(costs.filter((item) => !item.busId).map((item) => item.amountInr));
-    const salaries = sum(data.salaries.filter((item) => inRange(item.paidOn, filters)).map((item) => item.amountInr));
-    rows.push(["Company costs", 0, 0, 0, 0, companyCosts, -companyCosts]);
+    const salaries = salariesInRange(data, filters);
     rows.push(["Crew salaries", 0, 0, 0, 0, salaries, -salaries]);
   } else {
-    notes.push("Company costs and salaries are left out when one bus or bus type is picked.");
+    notes.push("Salaries are left out when one bus is picked.");
   }
+  notes.push("Bank and company costs are shared equally by the buses they were for, or by every bus when none was picked.");
   notes.push("Trip costs are approved trip sheets only: all diesel (cash and credit) plus cash expenses.");
   notes.push("Intercity money is shared equally across the buses it covers.");
 
@@ -282,14 +314,14 @@ export function expensesReport(data: ReportData, filters: ReportFilters): Report
   }
   for (const item of data.companyExpenses) {
     if (!inRange(item.spentOn, filters)) continue;
-    if (item.busId ? busIds.has(item.busId) : wholeCompany(filters)) {
-      add(companyExpenseLabel(item.category), "Bank & company", item.amountInr);
+    let share = 0;
+    for (const [busId, amount] of costShares(item.amountInr, item.busIds, data.allBusIds)) {
+      if (busIds.has(busId)) share += amount;
     }
+    if (share) add(companyExpenseLabel(item.category), "Bank & company", share);
   }
-  if (wholeCompany(filters)) {
-    const salaries = sum(data.salaries.filter((item) => inRange(item.paidOn, filters)).map((item) => item.amountInr));
-    if (salaries) add("Crew salaries", "Salaries", salaries);
-  }
+  const salaries = salariesInRange(data, filters);
+  if (salaries) add("Crew salaries", "Salaries", salaries);
   const grand = sum([...totals.values()].map((item) => item.amount));
   const rows: Cell[][] = [...totals.entries()]
     .map(([key, item]): Cell[] => [
@@ -307,7 +339,10 @@ export function expensesReport(data: ReportData, filters: ReportFilters): Report
     rows,
     total: ["Total", "", grand, rows.length ? "100%" : ""],
     summary: [{ label: "Total spent", value: grand, tone: "out" }],
-    notes: wholeCompany(filters) ? [] : ["Company costs and salaries are left out when one bus or bus type is picked."],
+    notes: [
+      "Bank and company costs count only the part that falls on these buses.",
+      ...(wholeCompany(filters) ? [] : ["Salaries are left out when one bus is picked."]),
+    ],
   };
 }
 
@@ -315,7 +350,8 @@ export function crewReport(data: ReportData, filters: ReportFilters): ReportTabl
   const busIds = new Set(selectedBuses(data, filters).map((bus) => bus.id));
   const trips = tripsInRange(data, filters, busIds);
   const nameKey = (name: string) => name.trim().toLowerCase();
-  const rows: Cell[][] = data.people.map((person) => {
+  const people = data.people.filter((person) => !filters.busType || person.module === filters.busType);
+  const rows: Cell[][] = people.map((person) => {
     const theirs = trips.filter((trip) =>
       [trip.driver1, trip.driver2, trip.cleaner].some((name) => name && nameKey(name) === nameKey(person.name)),
     );
@@ -357,7 +393,13 @@ export function crewReport(data: ReportData, filters: ReportFilters): ReportTabl
 export function renewalsReport(data: ReportData, filters: ReportFilters, today: string): ReportTable {
   const busIds = new Set(selectedBuses(data, filters).map((bus) => bus.id));
   const rows: Cell[][] = currentRenewals(data.renewals)
-    .filter((renewal) => (renewal.busId ? busIds.has(renewal.busId) : wholeCompany(filters)))
+    .filter((renewal) =>
+      renewal.busId
+        ? busIds.has(renewal.busId)
+        : wholeCompany(filters) &&
+          (!filters.busType ||
+            data.people.find((person) => person.id === renewal.personId)?.module === filters.busType),
+    )
     .map((renewal) => ({ renewal, days: daysLeft(renewal.expiresOn, today) }))
     .filter((item) => item.days <= filters.renewalDays)
     .map(({ renewal, days }) => [

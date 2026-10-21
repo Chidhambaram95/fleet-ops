@@ -13,6 +13,7 @@ import {
   usualMileage,
 } from "@data/trips/repository";
 import { whatsAppSendUrl } from "@domain/operations/settlementExport";
+import { hasScreen, moduleHref, type ModuleId } from "@domain/modules/modules";
 import { formatInr } from "@domain/operations/totals";
 import type { Bus } from "@domain/operations/types";
 import type { UserRole } from "@domain/rbac/roles";
@@ -47,13 +48,16 @@ type Step = "photo" | "reading" | "form";
 
 export function TripEditor({
   organizationId,
+  module,
   role,
   tripId,
 }: {
   organizationId: string;
+  module: ModuleId;
   role: UserRole;
   tripId?: string;
 }) {
+  const tripsHref = moduleHref(module, "trips");
   const org = useOrg();
   const router = useRouter();
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
@@ -84,10 +88,10 @@ export function TripEditor({
       try {
         const allBuses = await operations.listBuses(organizationId);
         if (cancelled) return;
-        setBuses(allBuses);
+        const moduleBuses = allBuses.filter((bus) => bus.busType === module);
+        setBuses(moduleBuses);
         if (!tripId) {
-          const omni = allBuses.filter((bus) => bus.busType !== "town");
-          setForm(emptyForm((omni[0] ?? allBuses[0])?.id ?? ""));
+          setForm(emptyForm(moduleBuses[0]?.id ?? ""));
           return;
         }
         const loaded = await getTrip(supabase, organizationId, tripId);
@@ -95,6 +99,15 @@ export function TripEditor({
         if (!loaded) {
           setError("This trip was not found. It may have been deleted.");
           return;
+        }
+        const tripBus = allBuses.find((item) => item.id === loaded.busId);
+        if (tripBus && tripBus.busType !== module) {
+          // A link from another module: open the trip in its bus's module.
+          if (hasScreen(tripBus.busType, "trips")) {
+            router.replace(`${moduleHref(tripBus.busType, "trips")}/${loaded.id}`);
+            return;
+          }
+          setBuses([...moduleBuses, tripBus]);
         }
         setTrip(loaded);
         setForm(formFromTrip(loaded));
@@ -112,7 +125,7 @@ export function TripEditor({
     return () => {
       cancelled = true;
     };
-  }, [operations, organizationId, supabase, tripId]);
+  }, [operations, organizationId, supabase, tripId, module, router]);
 
   useEffect(() => {
     if (!form.busId) {
@@ -219,7 +232,7 @@ export function TripEditor({
           setForm(formFromTrip(reloaded));
         }
       } else {
-        router.replace(`/trips/${id}`);
+        router.replace(`${tripsHref}/${id}`);
       }
       setConfirmApprove(false);
       router.refresh();
@@ -236,7 +249,7 @@ export function TripEditor({
     }
     try {
       await deleteTrip(supabase, organizationId, trip.id);
-      router.replace("/trips");
+      router.replace(tripsHref);
       router.refresh();
     } catch (removeError) {
       setError(messageFromUnknown(removeError));
@@ -270,7 +283,7 @@ export function TripEditor({
   if (step === "photo") {
     return (
       <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
-        <BackLink />
+        <BackLink href={tripsHref} />
         <h1 className="text-2xl font-extrabold">New trip</h1>
         <p className="text-muted">
           Take a clear photo of the whole trip sheet. The app reads it and fills the
@@ -327,7 +340,7 @@ export function TripEditor({
 
   return (
     <div className="flex flex-col gap-4">
-      <BackLink />
+      <BackLink href={tripsHref} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 flex-col">
           <h1 className="text-2xl font-extrabold">
@@ -720,9 +733,9 @@ export function TripEditor({
   );
 }
 
-function BackLink() {
+function BackLink({ href }: { href: string }) {
   return (
-    <Link href="/trips" className="self-start text-sm font-bold text-brand">
+    <Link href={href} className="self-start text-sm font-bold text-brand">
       ‹ All trips
     </Link>
   );

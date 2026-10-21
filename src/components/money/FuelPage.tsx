@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import {
@@ -11,6 +12,7 @@ import {
 } from "@data/money/repository";
 import { listTripsWithLines } from "@data/trips/repository";
 import { busMileage, pumpBalances } from "@domain/money/fuel";
+import { moduleHref, type ModuleId } from "@domain/modules/modules";
 import { formatInr, todayInIst } from "@domain/operations/totals";
 import { useOrg } from "@/components/billing/OrgContext";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
@@ -33,18 +35,26 @@ import {
 
 type Mode = "statement" | "payment";
 
-export function FuelPage({ organizationId }: { organizationId: string }) {
+export function FuelPage({ organizationId, module }: { organizationId: string; module: ModuleId }) {
   const org = useOrg();
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const { data, loading, error, reload } = useLoaded(
     async () => {
-      const [trips, payments, statements, buses] = await Promise.all([
+      const [allTrips, payments, statements, allBuses] = await Promise.all([
         listTripsWithLines(supabase, organizationId, { approvedOnly: true }),
         listPumpPayments(supabase, organizationId),
         listPumpStatements(supabase, organizationId),
         createSupabaseOperationsRepository(supabase).listBuses(organizationId),
       ]);
-      return { trips, payments, statements, buses };
+      // Only this module's buses, their trips and the pump figures entered here.
+      const buses = allBuses.filter((bus) => bus.busType === module);
+      const ids = new Set(buses.map((bus) => bus.id));
+      return {
+        trips: allTrips.filter((trip) => ids.has(trip.busId)),
+        payments: payments.filter((item) => item.module === module),
+        statements: statements.filter((item) => item.module === module),
+        buses,
+      };
     },
     { trips: [], payments: [], statements: [], buses: [] },
   );
@@ -78,6 +88,7 @@ export function FuelPage({ organizationId }: { organizationId: string }) {
           statementOn: day,
           outstandingInr: value,
           note,
+          module,
         });
       } else {
         await addPumpPayment(supabase, organizationId, {
@@ -85,6 +96,7 @@ export function FuelPage({ organizationId }: { organizationId: string }) {
           paidOn: day,
           amountInr: value,
           reference: note,
+          module,
         });
       }
       setAmount("");
@@ -287,7 +299,9 @@ export function FuelPage({ organizationId }: { organizationId: string }) {
         </div>
       </div>
       {!loading && data.trips.length === 0 ? (
-        <Empty>Approve trip sheets on the Trips page to see fuel figures here.</Empty>
+        <Empty>
+          Approve trip sheets on the <Link className="font-bold text-brand" href={moduleHref(module, "trips")}>Trips</Link> page to see fuel figures here.
+        </Empty>
       ) : null}
     </div>
   );

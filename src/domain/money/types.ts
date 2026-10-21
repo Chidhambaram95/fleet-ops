@@ -1,3 +1,5 @@
+import type { ModuleId } from "@domain/modules/modules";
+
 export type CompanyExpenseCategory =
   | "accident_repair"
   | "workshop"
@@ -11,10 +13,10 @@ export type CompanyExpenseCategory =
 
 export type PaidVia = "bank" | "upi" | "cash";
 
-/** A cost paid from the bank or for the whole company. No bus means "Company". */
+/** A cost paid from the bank or for the company. No buses picked means it is shared by every bus. */
 export type CompanyExpense = {
   id: string;
-  busId: string | null;
+  busIds: string[];
   spentOn: string;
   category: CompanyExpenseCategory;
   amountInr: number;
@@ -30,6 +32,7 @@ export type PumpStatement = {
   note: string;
   /** When it was entered; breaks ties between figures for the same date. */
   createdAt: string;
+  module: ModuleId;
 };
 
 export type PumpPayment = {
@@ -38,6 +41,7 @@ export type PumpPayment = {
   paidOn: string;
   amountInr: number;
   reference: string;
+  module: ModuleId;
 };
 
 export type CrewJob = "driver" | "cleaner";
@@ -50,6 +54,7 @@ export type CrewPerson = {
   monthlySalaryInr: number;
   licenceNo: string;
   active: boolean;
+  module: ModuleId;
 };
 
 export type SalaryPayment = {

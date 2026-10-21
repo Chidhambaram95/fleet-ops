@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { getActiveMembership } from "@data/auth/session";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import { BUS_TYPES, BUS_TYPE_LABELS } from "@domain/companies/types";
+import { MODULE_TITLES, type ModuleId } from "@domain/modules/modules";
 import { PERMIT_TYPES, SEAT_LAYOUTS } from "@domain/operations/catalog";
 import type { Bus, BusKind, NewBus, SeatLayout } from "@domain/operations/types";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
@@ -68,9 +69,12 @@ function isComplete(form: BusForm) {
 function BusFields({
   form,
   onChange,
+  showType = false,
 }: {
   form: BusForm;
   onChange: (next: BusForm) => void;
+  /** New buses take their module's type; an existing bus can be moved to another module. */
+  showType?: boolean;
 }) {
   const set = <K extends keyof BusForm>(key: K, value: BusForm[K]) =>
     onChange({ ...form, [key]: value });
@@ -83,6 +87,7 @@ function BusFields({
         aria-label="Registration number"
         className={inputClass}
       />
+      {showType ? (
       <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
         Bus type
         <select
@@ -97,6 +102,7 @@ function BusFields({
           ))}
         </select>
       </label>
+      ) : null}
       <input
         value={form.routeLabel}
         onChange={(event) => set("routeLabel", event.target.value)}
@@ -155,7 +161,8 @@ function messageFromUnknown(error: unknown) {
   return friendlyErrorMessage(error);
 }
 
-export function FleetManager({ canEdit: isAdmin }: { canEdit: boolean }) {
+export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; module: ModuleId }) {
+  const emptyForm: BusForm = { ...EMPTY_FORM, busType: module };
   const { viewOnly } = useOrg();
   const canEdit = isAdmin && !viewOnly;
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
@@ -165,7 +172,7 @@ export function FleetManager({ canEdit: isAdmin }: { canEdit: boolean }) {
   );
   const [organizationId, setOrganizationId] = useState("");
   const [buses, setBuses] = useState<Bus[]>([]);
-  const [form, setForm] = useState<BusForm>(EMPTY_FORM);
+  const [form, setForm] = useState<BusForm>(emptyForm);
   const [editingId, setEditingId] = useState("");
   const [editForm, setEditForm] = useState<BusForm>(EMPTY_FORM);
   const [loading, setLoading] = useState(true);
@@ -184,7 +191,7 @@ export function FleetManager({ canEdit: isAdmin }: { canEdit: boolean }) {
         setOrganizationId(membership.organizationId);
         const nextBuses = await repo.listBuses(membership.organizationId);
         if (!cancelled) {
-          setBuses(nextBuses);
+          setBuses(nextBuses.filter((bus) => bus.busType === module));
         }
       } catch (loadError) {
         if (!cancelled) {
@@ -201,7 +208,7 @@ export function FleetManager({ canEdit: isAdmin }: { canEdit: boolean }) {
     return () => {
       cancelled = true;
     };
-  }, [repo, supabase]);
+  }, [repo, supabase, module]);
 
   async function addBus() {
     if (!organizationId) {
@@ -216,7 +223,7 @@ export function FleetManager({ canEdit: isAdmin }: { canEdit: boolean }) {
           left.registrationNumber.localeCompare(right.registrationNumber),
         ),
       );
-      setForm(EMPTY_FORM);
+      setForm(emptyForm);
     } catch (addError) {
       setError(messageFromUnknown(addError));
     } finally {
@@ -241,6 +248,8 @@ export function FleetManager({ canEdit: isAdmin }: { canEdit: boolean }) {
       setBuses((current) =>
         current
           .map((bus) => (bus.id === id ? updated : bus))
+          // A bus moved to another module leaves this list.
+          .filter((bus) => bus.busType === module)
           .sort((left, right) =>
             left.registrationNumber.localeCompare(right.registrationNumber),
           ),
@@ -274,13 +283,13 @@ export function FleetManager({ canEdit: isAdmin }: { canEdit: boolean }) {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-extrabold">Buses</h1>
+        <h1 className="text-2xl font-extrabold">{MODULE_TITLES[module]}</h1>
         <p className="text-sm text-muted">
           {canEdit
             ? "Add a bus, change its details, or remove it."
             : isAdmin
               ? "The app is view-only until the payment is received."
-              : "All buses in your company. Ask your admin to add or change one."}
+              : "Ask your admin to add or change a bus."}
         </p>
       </div>
 
@@ -321,7 +330,7 @@ export function FleetManager({ canEdit: isAdmin }: { canEdit: boolean }) {
                   void saveEdit(bus.id);
                 }}
               >
-                <BusFields form={editForm} onChange={setEditForm} />
+                <BusFields form={editForm} onChange={setEditForm} showType />
                 <div className="flex gap-2">
                   <button
                     type="submit"

@@ -2,6 +2,7 @@ import { getActiveMembership, SessionError } from "@data/auth/session";
 import { getCompanyProfile, listPendingInvites } from "@data/companies/repository";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import { hasPublicSupabaseEnv } from "@data/supabase/env";
+import { activeModules } from "@domain/modules/modules";
 import { TeamSettings } from "@/components/settings/TeamSettings";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -41,6 +42,7 @@ export default async function TeamSettingsPage() {
         invites={invites}
         companyName={company.name}
         currentUserId={membership.userId}
+        modules={activeModules(company.busTypes, company.enabledModules)}
       />
     );
   } catch (error) {

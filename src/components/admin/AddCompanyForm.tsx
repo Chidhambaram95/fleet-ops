@@ -132,7 +132,7 @@ export function AddCompanyForm() {
           <input value={gstin} onChange={(e) => setGstin(e.target.value)} className={input} />
         </label>
         <fieldset className="flex flex-col gap-1 text-sm font-semibold">
-          <legend className="mb-1">Bus types</legend>
+          <legend className="mb-1">Modules allowed</legend>
           <div className="flex flex-wrap gap-2">
             {BUS_TYPES.map((type) => (
               <label

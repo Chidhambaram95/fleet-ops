@@ -13,6 +13,8 @@ import {
 } from "@data/money/repository";
 import { listTripsWithLines } from "@data/trips/repository";
 import type { CrewJob, CrewPerson } from "@domain/money/types";
+import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
+import { hasScreen, MODULE_LABELS, moduleHref, type ModuleId } from "@domain/modules/modules";
 import { formatInr, todayInIst } from "@domain/operations/totals";
 import { settlementText, tripTotals } from "@domain/trips/checks";
 import { useOrg } from "@/components/billing/OrgContext";
@@ -37,6 +39,7 @@ import {
 type Section = "salaries" | "advances" | "people";
 
 const EMPTY_PERSON: Omit<CrewPerson, "id"> = {
+  module: "town",
   name: "",
   job: "driver",
   phone: "",
@@ -52,17 +55,36 @@ function monthLabel(month: string) {
   );
 }
 
-export function CrewPage({ organizationId }: { organizationId: string }) {
+export function CrewPage({
+  organizationId,
+  module,
+  modules,
+}: {
+  organizationId: string;
+  module: ModuleId;
+  /** Modules a person can be moved to. */
+  modules: ModuleId[];
+}) {
+  const hasTrips = hasScreen(module, "trips");
   const org = useOrg();
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const { data, loading, error, reload } = useLoaded(
     async () => {
-      const [people, salaries, trips] = await Promise.all([
+      const [allPeople, allSalaries, allTrips, buses] = await Promise.all([
         listCrewPeople(supabase, organizationId),
         listSalaryPayments(supabase, organizationId),
         listTripsWithLines(supabase, organizationId, { approvedOnly: true }),
+        createSupabaseOperationsRepository(supabase).listBuses(organizationId),
       ]);
-      return { people, salaries, trips };
+      // This module's people and their salaries, and trips of this module's buses.
+      const people = allPeople.filter((item) => item.module === module);
+      const ids = new Set(people.map((item) => item.id));
+      const busIds = new Set(buses.filter((bus) => bus.busType === module).map((bus) => bus.id));
+      return {
+        people,
+        salaries: allSalaries.filter((item) => ids.has(item.personId)),
+        trips: allTrips.filter((trip) => busIds.has(trip.busId)),
+      };
     },
     { people: [], salaries: [], trips: [] },
   );
@@ -116,6 +138,7 @@ export function CrewPage({ organizationId }: { organizationId: string }) {
     setPerson(
       item
         ? {
+            module: item.module,
             name: item.name,
             job: item.job,
             phone: item.phone,
@@ -123,7 +146,7 @@ export function CrewPage({ organizationId }: { organizationId: string }) {
             licenceNo: item.licenceNo,
             active: item.active,
           }
-        : EMPTY_PERSON,
+        : { ...EMPTY_PERSON, module },
     );
     setSalaryText(item?.monthlySalaryInr ? String(item.monthlySalaryInr) : "");
   }
@@ -161,7 +184,10 @@ export function CrewPage({ organizationId }: { organizationId: string }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader title="Crew" hint="Salaries, trip advances and your drivers and cleaners." />
+      <PageHeader
+        title="Crew"
+        hint={hasTrips ? "Salaries, trip advances and your drivers and cleaners." : "Salaries and your drivers and conductors."}
+      />
       <Tabs<Section>
         value={section}
         onChange={(next) => {
@@ -170,7 +196,9 @@ export function CrewPage({ organizationId }: { organizationId: string }) {
         }}
         options={[
           { id: "salaries", label: "Salaries" },
-          { id: "advances", label: `Open advances${openAdvances.length ? ` (${openAdvances.length})` : ""}` },
+          ...(hasTrips
+            ? [{ id: "advances" as const, label: `Open advances${openAdvances.length ? ` (${openAdvances.length})` : ""}` }]
+            : []),
           { id: "people", label: "People" },
         ]}
       />
@@ -285,7 +313,7 @@ export function CrewPage({ organizationId }: { organizationId: string }) {
                 key={trip.id}
                 first={index === 0}
                 title={
-                  <Link href={`/trips/${trip.id}`} className="underline-offset-2 hover:underline">
+                  <Link href={`${moduleHref(module, "trips")}/${trip.id}`} className="underline-offset-2 hover:underline">
                     {trip.driver1 || "Driver not named"} · sheet {trip.sheetNo || "–"}
                   </Link>
                 }
@@ -373,6 +401,22 @@ export function CrewPage({ organizationId }: { organizationId: string }) {
                   <input inputMode="numeric" className={FIELD} value={salaryText} onChange={(event) => setSalaryText(event.target.value)} />
                 </label>
               </div>
+              {modules.length > 1 ? (
+                <label className={LABEL}>
+                  Module
+                  <select
+                    className={FIELD}
+                    value={person.module}
+                    onChange={(event) => setPerson({ ...person, module: event.target.value as ModuleId })}
+                  >
+                    {modules.map((item) => (
+                      <option key={item} value={item}>
+                        {MODULE_LABELS[item]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
               {person.job === "driver" ? (
                 <label className={LABEL}>
                   Licence number

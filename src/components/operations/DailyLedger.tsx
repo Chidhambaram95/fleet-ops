@@ -1,6 +1,7 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import type { ModuleId } from "@domain/modules/modules";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { getActiveMembership } from "@data/auth/session";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
@@ -45,7 +46,8 @@ function messageFromUnknown(error: unknown) {
   return friendlyErrorMessage(error);
 }
 
-export function DailyLedger() {
+/** The day book. Inside a module it shows only that module's buses. */
+export function DailyLedger({ module }: { module?: ModuleId } = {}) {
   if (!hasPublicSupabaseEnv()) {
     return (
       <p className="rounded-3xl bg-white px-4 py-6 text-muted">
@@ -56,10 +58,10 @@ export function DailyLedger() {
     );
   }
 
-  return <DailyLedgerBoard />;
+  return <DailyLedgerBoard module={module} />;
 }
 
-function DailyLedgerBoard() {
+function DailyLedgerBoard({ module }: { module?: ModuleId }) {
   const org = useOrg();
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const repo = useMemo(
@@ -76,7 +78,7 @@ function DailyLedgerBoard() {
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [buses, setBuses] = useState<Bus[]>([]);
-  const [entries, setEntries] = useState<DailyEntry[]>([]);
+  const [allEntries, setEntries] = useState<DailyEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -84,6 +86,7 @@ function DailyLedgerBoard() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const sideAmountRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const addParam = searchParams.get("add");
 
@@ -99,8 +102,8 @@ function DailyLedgerBoard() {
     } else {
       setSheetOpen(true);
     }
-    router.replace("/", { scroll: false });
-  }, [addParam, router]);
+    router.replace(pathname, { scroll: false });
+  }, [addParam, router, pathname]);
 
   useEffect(() => {
     if (!sheetOpen) {
@@ -163,7 +166,8 @@ function DailyLedgerBoard() {
 
     async function loadBuses() {
       try {
-        const nextBuses = await repo.listBuses(organizationId);
+        const listed = await repo.listBuses(organizationId);
+        const nextBuses = module ? listed.filter((bus) => bus.busType === module) : listed;
         if (cancelled) {
           return;
         }
@@ -185,7 +189,7 @@ function DailyLedgerBoard() {
     return () => {
       cancelled = true;
     };
-  }, [repo, organizationId, role, assignedBusId]);
+  }, [repo, organizationId, role, assignedBusId, module]);
 
   useEffect(() => {
     if (!organizationId) {
@@ -221,6 +225,11 @@ function DailyLedgerBoard() {
     };
   }, [repo, organizationId, date]);
 
+  const entries = useMemo(() => {
+    if (!module) return allEntries;
+    const ids = new Set(buses.map((bus) => bus.id));
+    return allEntries.filter((entry) => ids.has(entry.busId));
+  }, [allEntries, buses, module]);
   const fleetTotals = useMemo(() => totalsForEntries(entries), [entries]);
   const busTotals = useMemo(
     () => totalsByBus(buses, entries),
@@ -307,7 +316,7 @@ function DailyLedgerBoard() {
       setError("You are not a member of an organization.");
       return;
     }
-    const previous = entries;
+    const previous = allEntries;
     setEntries((current) => current.filter((entry) => entry.id !== id));
     setError("");
     try {
@@ -640,7 +649,7 @@ function DailyLedgerBoard() {
         ) : null}
 
         {organizationId && role && role !== "crew" ? (
-          <RenewalsDueCard supabase={supabase} organizationId={organizationId} />
+          <RenewalsDueCard supabase={supabase} organizationId={organizationId} module={module} />
         ) : null}
 
         {error && !sheetOpen ? (

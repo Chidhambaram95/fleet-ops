@@ -10,6 +10,7 @@ import type {
   PumpStatement,
   SalaryPayment,
 } from "@domain/money/types";
+import { isModuleId, type ModuleId } from "@domain/modules/modules";
 
 function throwIfError(error: { message: string } | null) {
   if (error) {
@@ -72,6 +73,9 @@ export async function deleteRow(
 type Row = Record<string, unknown>;
 const str = (value: unknown) => (typeof value === "string" ? value : "");
 const num = (value: unknown) => (typeof value === "number" ? value : Number(value ?? 0));
+const mod = (value: unknown, fallback: ModuleId): ModuleId => (isModuleId(value) ? value : fallback);
+const ids = (value: unknown) =>
+  Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
 
 // Company and bank costs
 
@@ -83,7 +87,7 @@ export async function listCompanyExpenses(
   const rows = await listRows<Row>(client, "company_expenses", organizationId, "spent_on", range);
   return rows.map((row) => ({
     id: str(row.id),
-    busId: typeof row.bus_id === "string" ? row.bus_id : null,
+    busIds: ids(row.bus_ids).length ? ids(row.bus_ids) : typeof row.bus_id === "string" ? [row.bus_id] : [],
     spentOn: str(row.spent_on),
     category: str(row.category) as CompanyExpenseCategory,
     amountInr: num(row.amount_inr),
@@ -98,7 +102,7 @@ export function addCompanyExpense(
   input: Omit<CompanyExpense, "id">,
 ) {
   return insertRow(client, "company_expenses", organizationId, {
-    bus_id: input.busId,
+    bus_ids: input.busIds,
     spent_on: input.spentOn,
     category: input.category,
     amount_inr: input.amountInr,
@@ -121,6 +125,7 @@ export async function listPumpStatements(
     outstandingInr: num(row.outstanding_inr),
     note: str(row.note),
     createdAt: str(row.created_at),
+    module: mod(row.module, "omni"),
   }));
 }
 
@@ -134,6 +139,7 @@ export function addPumpStatement(
     statement_on: input.statementOn,
     outstanding_inr: input.outstandingInr,
     note: input.note,
+    module: input.module,
   });
 }
 
@@ -148,6 +154,7 @@ export async function listPumpPayments(
     paidOn: str(row.paid_on),
     amountInr: num(row.amount_inr),
     reference: str(row.reference),
+    module: mod(row.module, "omni"),
   }));
 }
 
@@ -161,6 +168,7 @@ export function addPumpPayment(
     paid_on: input.paidOn,
     amount_inr: input.amountInr,
     reference: input.reference,
+    module: input.module,
   });
 }
 
@@ -184,6 +192,7 @@ export async function listCrewPeople(
     monthlySalaryInr: num(row.monthly_salary_inr),
     licenceNo: str(row.licence_no),
     active: row.active !== false,
+    module: mod(row.module, "town"),
   }));
 }
 
@@ -195,6 +204,7 @@ function personColumns(input: Omit<CrewPerson, "id">) {
     monthly_salary_inr: input.monthlySalaryInr,
     licence_no: input.licenceNo,
     active: input.active,
+    module: input.module,
   };
 }
 
