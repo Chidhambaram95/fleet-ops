@@ -144,14 +144,14 @@ export function FuelPage({ organizationId, module }: { organizationId: string; m
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Fuel"
+        title="Diesel & pumps"
         hint="Credit diesel from approved trip sheets, checked against each pump."
       />
       <ErrorText message={error} />
 
       <div className="grid gap-4 md:grid-cols-[1fr_360px]">
         <div className="flex min-w-0 flex-col gap-4">
-          <Card title="Pump outstanding">
+          <Card title="Owed to pumps">
             {loading ? (
               <p className="text-muted">Loading…</p>
             ) : pumps.length === 0 ? (
@@ -195,7 +195,7 @@ export function FuelPage({ organizationId, module }: { organizationId: string; m
             )}
           </Card>
 
-          <Card title="Mileage by bus">
+          <Card title="Km per litre by bus">
             {mileage.length === 0 ? (
               <p className="text-muted">
                 Mileage shows once approved trips have km and diesel litres.
@@ -221,12 +221,12 @@ export function FuelPage({ organizationId, module }: { organizationId: string; m
 
         <div className="flex min-w-0 flex-col gap-4">
           {!org.viewOnly ? (
-            <Card title="Add for a pump">
+            <Card title="Record pump payment or statement">
               <Tabs<Mode>
                 value={mode}
                 onChange={setMode}
                 options={[
-                  { id: "statement", label: "Pump's figure" },
+                  { id: "statement", label: "Pump's statement" },
                   { id: "payment", label: "Payment" },
                 ]}
               />

@@ -109,7 +109,7 @@ export function CompanyCostsPage({
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Bank & company costs"
+        title="Company costs"
         hint="Loan EMIs, auditor, office and workshop bills. Pick the buses a cost was for, or leave it for all buses."
       />
       <ErrorText message={error} />

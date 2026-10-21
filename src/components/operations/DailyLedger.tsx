@@ -710,7 +710,7 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
                 className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-white px-3.5 text-[13px] font-bold text-money-in disabled:opacity-40"
               >
                 <SendIcon />
-                Send on WhatsApp
+                Send daily summary on WhatsApp
               </button>
               <button
                 type="button"
@@ -776,7 +776,7 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
       </div>
 
       <aside className="hidden flex-col gap-4 rounded-3xl bg-white p-5 lg:sticky lg:top-24 lg:flex">
-        <h2 className="text-lg font-extrabold">New entry</h2>
+        <h2 className="text-lg font-extrabold">Add cash entry</h2>
         {renderForm("side")}
       </aside>
 
@@ -791,11 +791,11 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
           <section
             role="dialog"
             aria-modal="true"
-            aria-label="New entry"
+            aria-label="Add cash entry"
             className="mx-auto flex max-h-[90dvh] w-full max-w-lg flex-col gap-4 overflow-y-auto rounded-t-[28px] bg-white px-5 pb-[max(24px,env(safe-area-inset-bottom))] pt-5"
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-extrabold">New entry</h2>
+              <h2 className="text-lg font-extrabold">Add cash entry</h2>
               <button
                 type="button"
                 className="px-2 text-sm font-bold text-brand"

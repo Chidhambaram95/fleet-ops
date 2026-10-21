@@ -63,7 +63,7 @@ export function TripsList({ organizationId, module }: { organizationId: string; 
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold">Trips</h1>
+          <h1 className="text-2xl font-extrabold">Trip sheets</h1>
           <p className="text-sm text-muted">One trip sheet is one round trip.</p>
         </div>
         {!org.viewOnly ? (
@@ -88,7 +88,7 @@ export function TripsList({ organizationId, module }: { organizationId: string; 
               filter === value ? "bg-brand text-white" : "text-muted"
             }`}
           >
-            {value === "draft" ? `To approve${drafts.length ? ` (${drafts.length})` : ""}` : "Approved"}
+            {value === "draft" ? `Waiting for approval${drafts.length ? ` (${drafts.length})` : ""}` : "Approved"}
           </button>
         ))}
       </div>

@@ -47,8 +47,8 @@ export default async function MorePage() {
         const others = info.mine.filter((item) => item !== current);
         if (others.length) {
           sections.push({
-            title: "Other modules",
-            rows: others.map((item) => ({ href: moduleHref(item), label: MODULE_TITLES[item], hint: "Switch module" })),
+            title: "Other bus types",
+            rows: others.map((item) => ({ href: moduleHref(item), label: MODULE_TITLES[item], hint: "Switch to this bus type" })),
           });
         }
         const company = companyLinks(membership.role, membership.role === "admin" || !info.limited);
@@ -59,13 +59,13 @@ export default async function MorePage() {
   if (superAdmin) {
     sections.push({
       title: "Fleet Ops",
-      rows: [{ href: "/admin/companies", label: "Super-admin", hint: "All companies and payments" }],
+      rows: [{ href: "/admin/companies", label: "Fleet Ops admin", hint: "All companies and payments" }],
     });
   }
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
-      <h1 className="text-2xl font-extrabold">More</h1>
+      <h1 className="text-2xl font-extrabold">Menu</h1>
       {sections
         .filter((section) => section.rows.length > 0)
         .map((section) => (

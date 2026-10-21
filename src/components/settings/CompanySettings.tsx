@@ -48,7 +48,7 @@ export function CompanySettings({ profile }: { profile: CompanyProfile }) {
       <div>
         <h1 className="text-2xl font-extrabold">Company settings</h1>
         <p className="text-sm text-muted">
-          The WhatsApp number is where the daily settlement is sent.
+          The WhatsApp number is where the daily summary is sent.
         </p>
       </div>
 
@@ -76,7 +76,7 @@ export function CompanySettings({ profile }: { profile: CompanyProfile }) {
           <input value={gstin} onChange={(e) => setGstin(e.target.value)} className={field} />
         </label>
         <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
-          WhatsApp number for settlements
+          WhatsApp number for daily summaries
           <input
             value={whatsapp}
             onChange={(e) => setWhatsapp(e.target.value)}
@@ -86,7 +86,7 @@ export function CompanySettings({ profile }: { profile: CompanyProfile }) {
           />
         </label>
         <fieldset className="flex flex-col gap-1.5 text-[13px] font-semibold">
-          <legend className="mb-1">Modules switched on</legend>
+          <legend className="mb-1">Bus types you run</legend>
           <div className="flex flex-wrap gap-2">
             {allowed.map((type) => (
               <label
@@ -106,8 +106,8 @@ export function CompanySettings({ profile }: { profile: CompanyProfile }) {
             ))}
           </div>
           <span className="font-normal text-muted">
-            Each module has its own menu and screens. Switching one off hides it but keeps its data.
-            {allowed.length < BUS_TYPES.length ? " To add another module, contact Fleet Ops." : ""}
+            Each bus type has its own menu and screens. Switching one off hides it but keeps its data.
+            {allowed.length < BUS_TYPES.length ? " To add another bus type, contact Fleet Ops." : ""}
           </span>
         </fieldset>
         {message ? (

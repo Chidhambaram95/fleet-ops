@@ -19,7 +19,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
           <AccessMessage
             message={
               membership.role === "admin"
-                ? "No modules are switched on. Turn one on in Company settings."
+                ? "No bus types are switched on. Turn one on in Company settings."
                 : "You don't have a module to open yet. Ask your admin."
             }
           />

@@ -313,7 +313,7 @@ export function RenewalsPage({ organizationId, module }: { organizationId: strin
   return (
     <div className="flex flex-col gap-4">
       <PageHeader
-        title="Renewals"
+        title="Documents due"
         hint="FC, insurance, permit, tax and driver licences in one place."
         action={
           !org.viewOnly ? (
@@ -360,9 +360,9 @@ export function RenewalsPage({ organizationId, module }: { organizationId: strin
             value={section}
             onChange={setSection}
             options={[
-              { id: "buses", label: "Buses" },
-              { id: "drivers", label: "Drivers" },
-              { id: "history", label: "History" },
+              { id: "buses", label: "Bus documents" },
+              { id: "drivers", label: "Driver licences" },
+              { id: "history", label: "Past renewals" },
             ]}
           />
           {loading ? <p className="text-muted">Loading…</p> : null}

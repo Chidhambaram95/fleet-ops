@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { PlusIcon } from "./AppHeader";
-import { hasScreen, moduleHref, SCREEN_LABELS, type ModuleId } from "@domain/modules/modules";
+import { hasScreen, moduleHref, screenLabel, type ModuleId } from "@domain/modules/modules";
 import type { UserRole } from "@domain/rbac/roles";
 import { addEntryHref, currentModule, isActive } from "./navLinks";
 
@@ -44,18 +44,18 @@ export function BottomNav({
     >
       <Link href={homeHref} aria-current={homeActive ? "page" : undefined} className={tab(homeActive)}>
         <HomeIcon />
-        Home
+        {openModule ? screenLabel(openModule, "home") : "Today"}
       </Link>
       {openModule ? (
         <Link href={secondHref} aria-current={secondActive ? "page" : undefined} className={tab(secondActive)}>
           <SheetIcon />
-          {SCREEN_LABELS[secondScreen]}
+          {screenLabel(openModule, secondScreen)}
         </Link>
       ) : null}
       {canAdd ? (
         <Link
           href={addEntryHref(role, openModule)}
-          aria-label="Add entry"
+          aria-label="Add cash entry"
           className="-mt-7 flex h-14 w-14 items-center justify-center justify-self-center rounded-full bg-brand text-white shadow-[0_6px_16px_rgba(58,63,184,0.35)]"
         >
           <PlusIcon className="h-7 w-7" />
@@ -71,7 +71,7 @@ export function BottomNav({
       ) : null}
       <Link href="/more" aria-current={moreActive ? "page" : undefined} className={tab(moreActive)}>
         <MenuIcon />
-        More
+        Menu
       </Link>
     </nav>
   );

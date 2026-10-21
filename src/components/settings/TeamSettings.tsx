@@ -172,7 +172,7 @@ export function TeamSettings({
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-extrabold">Team</h1>
+        <h1 className="text-2xl font-extrabold">Team & logins</h1>
         <p className="text-sm text-muted">
           Invite a person on WhatsApp, then set their role. Crew members need one bus.
         </p>
@@ -359,10 +359,10 @@ export function TeamSettings({
                           value={memberModules[member.userId] ?? ""}
                           disabled={pending || viewOnly}
                           onChange={(event) => void onModuleChange(member.userId, event.target.value)}
-                          aria-label={`Modules for ${member.displayName}`}
+                          aria-label={`Bus types for ${member.displayName}`}
                           className="h-11 rounded-2xl bg-canvas px-3 text-sm disabled:opacity-60"
                         >
-                          <option value="">All modules</option>
+                          <option value="">All bus types</option>
                           {modules.map((item) => (
                             <option key={item} value={item}>
                               Only {MODULE_LABELS[item]}

@@ -14,7 +14,7 @@ const CSV_HEADERS = [
 
 export function settlementFilename(date: string, company = "Fleet"): string {
   const slug = company.trim().replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
-  return `${slug || "Fleet"}_Settlement_${date}.csv`;
+  return `${slug || "Fleet"}_Daily_summary_${date}.csv`;
 }
 
 export function whatsAppSendUrl(input: {
@@ -66,7 +66,7 @@ export function formatWhatsAppSettlement(input: {
 }): string {
   const totals = totalsForEntries(input.entries);
   const lines = [
-    `🚌 ${input.company?.trim() || "Fleet"} Settlement`,
+    `🚌 ${input.company?.trim() || "Fleet"} Daily summary`,
     `📅 ${displayDate(input.date)}`,
     "",
     `💰 Total Income: ${formatInr(totals.incomeInr)}`,

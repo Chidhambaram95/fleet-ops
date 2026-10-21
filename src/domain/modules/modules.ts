@@ -39,14 +39,14 @@ export const MODULE_SCREENS: Record<ModuleId, readonly Screen[]> = {
 };
 
 export const SCREEN_LABELS: Record<Screen, string> = {
-  home: "Home",
+  home: "Today",
   daybook: "Day book",
-  trips: "Trips",
-  fuel: "Fuel",
-  intercity: "Intercity",
+  trips: "Trip sheets",
+  fuel: "Diesel & pumps",
+  intercity: "Intercity payments",
   buses: "Buses",
   crew: "Crew",
-  renewals: "Renewals",
+  renewals: "Documents due",
   reports: "Reports",
 };
 
@@ -61,6 +61,11 @@ export const SCREEN_HINTS: Record<Screen, string> = {
   renewals: "FC, insurance, permit, tax and licences",
   reports: "Profit and loss, trips, fuel and more",
 };
+
+/** Omni and Tour open on an overview of what needs doing; Town on today's cash. */
+export function screenLabel(module: ModuleId, screen: Screen) {
+  return screen === "home" && module !== "town" ? "Overview" : SCREEN_LABELS[screen];
+}
 
 export function isModuleId(value: unknown): value is ModuleId {
   return typeof value === "string" && (MODULES as readonly string[]).includes(value);

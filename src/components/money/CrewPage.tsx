@@ -197,9 +197,9 @@ export function CrewPage({
         options={[
           { id: "salaries", label: "Salaries" },
           ...(hasTrips
-            ? [{ id: "advances" as const, label: `Open advances${openAdvances.length ? ` (${openAdvances.length})` : ""}` }]
+            ? [{ id: "advances" as const, label: `Advances to settle${openAdvances.length ? ` (${openAdvances.length})` : ""}` }]
             : []),
-          { id: "people", label: "People" },
+          { id: "people", label: "Drivers & cleaners" },
         ]}
       />
       <ErrorText message={error} />
@@ -403,7 +403,7 @@ export function CrewPage({
               </div>
               {modules.length > 1 ? (
                 <label className={LABEL}>
-                  Module
+                  Bus type
                   <select
                     className={FIELD}
                     value={person.module}

@@ -305,7 +305,7 @@ export function expensesReport(data: ReportData, filters: ReportFilters): Report
   };
   for (const entry of data.entries) {
     if (entry.kind === "expense" && busIds.has(entry.busId) && inRange(entry.date, filters)) {
-      add(categoryLabel("expense", entry.category), "Home ledger", entry.amountInr);
+      add(categoryLabel("expense", entry.category), "Daily cash", entry.amountInr);
     }
   }
   for (const trip of tripsInRange(data, filters, busIds)) {

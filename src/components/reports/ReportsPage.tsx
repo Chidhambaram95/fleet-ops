@@ -47,12 +47,12 @@ type Preset =
   | "custom";
 
 const REPORTS: { id: ReportKind; label: string }[] = [
-  { id: "pnl", label: "Profit & loss" },
-  { id: "trips", label: "Trips" },
+  { id: "pnl", label: "Profit per bus" },
+  { id: "trips", label: "Trip sheets" },
   { id: "fuel", label: "Fuel" },
-  { id: "expenses", label: "Expenses" },
+  { id: "expenses", label: "Where the money went" },
   { id: "crew", label: "Crew" },
-  { id: "renewals", label: "Renewals" },
+  { id: "renewals", label: "Documents due" },
 ];
 
 const PRESETS: { id: Preset; label: string }[] = [
@@ -224,7 +224,7 @@ export function ReportsPage({
     <div className="flex flex-col gap-4">
       <div className="print:hidden">
         <PageHeader
-          title={module ? `${MODULE_LABELS[module]} reports` : "Combined report"}
+          title={module ? `${MODULE_LABELS[module]} reports` : "All buses report"}
           hint={
             module
               ? "Pick a report and dates. Share it or save it for Excel."
@@ -463,7 +463,7 @@ export function ReportsPage({
             )
           }
         >
-          Send on WhatsApp
+          Send report on WhatsApp
         </button>
         <button
           type="button"
@@ -476,7 +476,7 @@ export function ReportsPage({
             )
           }
         >
-          Download for Excel
+          Download Excel file
         </button>
         <button
           type="button"

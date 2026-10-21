@@ -122,10 +122,10 @@ function BusFields({
         <select
           value={form.seatLayout}
           onChange={(event) => set("seatLayout", event.target.value as SeatLayout)}
-          aria-label="Seater or sleeper"
+          aria-label="Seat type"
           className={inputClass}
         >
-          <option value="">Seater or sleeper</option>
+          <option value="">Seat type</option>
           {SEAT_LAYOUTS.map((layout) => (
             <option key={layout.id} value={layout.id}>
               {layout.label}
@@ -149,8 +149,8 @@ function BusFields({
       <input
         value={form.runsWith}
         onChange={(event) => set("runsWith", event.target.value)}
-        placeholder="Runs with (another bus, optional)"
-        aria-label="Runs with"
+        placeholder="Paired bus (optional)"
+        aria-label="Paired bus"
         className={inputClass}
       />
     </>
@@ -365,7 +365,7 @@ export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; m
                   </p>
                   {bus.runsWith || bus.permitType ? (
                     <p className="text-xs text-muted">
-                      {[bus.permitType, bus.runsWith ? `Runs with ${bus.runsWith}` : ""]
+                      {[bus.permitType, bus.runsWith ? `Paired with ${bus.runsWith}` : ""]
                         .filter(Boolean)
                         .join(" · ")}
                     </p>

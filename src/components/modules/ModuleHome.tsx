@@ -77,14 +77,14 @@ export function ModuleHome({ organizationId, module }: { organizationId: string;
     },
     {
       href: moduleHref(module, "crew"),
-      label: "Owed to drivers",
+      label: "Advances to settle",
       value: formatInr(data.owedToDrivers),
       detail: data.owedByDrivers ? `Drivers owe ${formatInr(data.owedByDrivers)}` : "Unsettled trip advances",
       tone: data.owedToDrivers ? "out" : undefined,
     },
     {
       href: moduleHref(module, "fuel"),
-      label: "Pump credit",
+      label: "Diesel on credit",
       value: formatInr(data.pumpOutstanding),
       detail: data.pumpCount ? `Owed to ${data.pumpCount} pump${data.pumpCount === 1 ? "" : "s"}` : "Nothing owed",
       tone: data.pumpOutstanding ? "out" : undefined,

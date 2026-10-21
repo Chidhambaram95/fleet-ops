@@ -76,8 +76,8 @@ export async function moduleAccess(
     return {
       message:
         membership.role === "admin"
-          ? "No modules are switched on. Turn one on in Company settings."
-          : "You don't have a module to open yet. Ask your admin.",
+          ? "No bus types are switched on. Turn one on in Company settings."
+          : "You don't have a bus type to open yet. Ask your admin.",
     };
   }
   return { membership, module: param, companyModules: active };

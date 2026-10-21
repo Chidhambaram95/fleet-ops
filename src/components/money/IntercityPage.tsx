@@ -95,7 +95,7 @@ export function IntercityPage({ organizationId, module }: { organizationId: stri
 
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader title="Intercity" hint="Fortnightly payments from Intercity for your omni buses." />
+      <PageHeader title="Intercity payments" hint="Fortnightly payments from Intercity for your omni buses." />
       <ErrorText message={error} />
         <div className="grid gap-4 md:grid-cols-[1fr_360px]">
           <Card title="Payments received" action={<span className="font-bold text-money-in">{formatInr(incomeTotal)}</span>}>

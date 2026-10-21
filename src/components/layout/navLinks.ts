@@ -3,7 +3,7 @@ import {
   moduleFromPath,
   moduleHref,
   SCREEN_HINTS,
-  SCREEN_LABELS,
+  screenLabel,
   type ModuleId,
 } from "@domain/modules/modules";
 import type { UserRole } from "@domain/rbac/roles";
@@ -15,7 +15,7 @@ export type NavLink = { href: string; label: string; hint: string; settings?: bo
 export function moduleLinks(module: ModuleId): NavLink[] {
   return MODULE_SCREENS[module].map((screen) => ({
     href: moduleHref(module, screen),
-    label: SCREEN_LABELS[screen],
+    label: screenLabel(module, screen),
     hint: SCREEN_HINTS[screen],
   }));
 }
@@ -25,14 +25,14 @@ export function companyLinks(role: UserRole | null, companyArea: boolean): NavLi
   const links: NavLink[] = [];
   if (companyArea) {
     links.push(
-      { href: "/company/costs", label: "Bank & company costs", hint: "Loan EMI, auditor, office and workshop bills", settings: true },
-      { href: "/company/reports", label: "Combined report", hint: "Profit and loss across every module", settings: true },
+      { href: "/company/costs", label: "Company costs", hint: "Loan EMI, auditor, office and workshop bills", settings: true },
+      { href: "/company/reports", label: "All buses report", hint: "Profit and loss across every module", settings: true },
     );
   }
   if (role === "admin") {
     links.push(
-      { href: "/settings/team", label: "Team", hint: "Invite people and set their role", settings: true },
-      { href: "/settings/company", label: "Company", hint: "Name, WhatsApp number and modules", settings: true },
+      { href: "/settings/team", label: "Team & logins", hint: "Invite people and set their role", settings: true },
+      { href: "/settings/company", label: "Company settings", hint: "Name, WhatsApp number and bus types", settings: true },
     );
   }
   return links;
@@ -45,7 +45,7 @@ export function navLinksFor(
   companyArea = false,
 ): NavLink[] {
   if (role !== "admin" && role !== "manager") {
-    return [{ href: "/", label: "Home", hint: "Today's money in and out" }];
+    return [{ href: "/", label: "Today", hint: "Today's money in and out" }];
   }
   return [...(module ? moduleLinks(module) : []), ...companyLinks(role, companyArea)];
 }

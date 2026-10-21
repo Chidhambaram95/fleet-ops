@@ -33,7 +33,7 @@ export async function saveCompanyAction(input: {
     }
     const { busTypes: allowed } = await getCompanyProfile(supabase, membership.organizationId);
     const enabledModules = BUS_TYPES.filter((type) => allowed.includes(type) && picked.includes(type));
-    if (enabledModules.length === 0) return { error: "Keep at least one module switched on." };
+    if (enabledModules.length === 0) return { error: "Keep at least one bus type switched on." };
     await updateCompanyProfile(supabase, membership.organizationId, {
       name,
       town: input.town.trim(),

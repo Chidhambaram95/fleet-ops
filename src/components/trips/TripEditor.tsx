@@ -422,7 +422,7 @@ export function TripEditor({
               <Figure label="Advance given" value={formatInr(figures.advanceInr)} />
               <Figure label="Cash spent" value={formatInr(totals.cashSpentInr)} />
               <Figure
-                label="Km run"
+                label="Km driven"
                 value={totals.kmRun != null ? `${totals.kmRun.toLocaleString("en-IN")} km` : "–"}
               />
               <Figure
@@ -699,7 +699,7 @@ export function TripEditor({
             onClick={() => void save(true)}
             className="h-14 flex-1 basis-48 rounded-2xl bg-brand px-5 text-base font-bold text-white disabled:opacity-50"
           >
-            {saving ? "Saving…" : "Approve trip"}
+            {saving ? "Saving…" : "Approve trip sheet"}
           </button>
         ) : null}
         {!locked ? (
@@ -709,7 +709,7 @@ export function TripEditor({
             onClick={() => void save(false)}
             className="h-14 flex-1 basis-40 rounded-2xl bg-white px-5 text-base font-bold text-brand disabled:opacity-50"
           >
-            {approved ? (saving ? "Saving…" : "Save changes") : "Save for later"}
+            {approved ? (saving ? "Saving…" : "Save changes") : "Save as draft"}
           </button>
         ) : null}
         <button
@@ -736,7 +736,7 @@ export function TripEditor({
 function BackLink({ href }: { href: string }) {
   return (
     <Link href={href} className="self-start text-sm font-bold text-brand">
-      ‹ All trips
+      ‹ All trip sheets
     </Link>
   );
 }
@@ -748,7 +748,7 @@ export function StatusBadge({ approved }: { approved: boolean }) {
     </span>
   ) : (
     <span className="inline-flex min-h-8 shrink-0 items-center whitespace-nowrap rounded-full bg-warn-bg px-3 text-xs font-bold text-warn-ink">
-      To approve
+      Waiting for approval
     </span>
   );
 }

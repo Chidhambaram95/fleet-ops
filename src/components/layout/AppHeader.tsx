@@ -132,7 +132,7 @@ export function AppHeader({
               className="hidden min-h-10 items-center gap-1.5 rounded-full bg-brand px-4 text-sm font-bold text-white md:flex"
             >
               <PlusIcon className="h-4 w-4" />
-              Add entry
+              Add cash entry
             </Link>
           ) : null}
           <div className="relative">
@@ -177,7 +177,7 @@ export function AppHeader({
                     role="menuitem"
                     className="flex min-h-11 items-center rounded-2xl px-3 text-sm font-semibold hover:bg-canvas"
                   >
-                    Super-admin
+                    Fleet Ops admin
                   </Link>
                 ) : null}
                 <button

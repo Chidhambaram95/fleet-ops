@@ -76,7 +76,7 @@ export function CompanyBilling({
           Edit plan amount
         </button>
         <button type="button" onClick={() => setPanel(panel === "paid" ? "" : "paid")} className="h-[46px] rounded-2xl bg-[#3A3FB8] px-4 text-sm font-bold text-white">
-          Mark payment received
+          Mark as received
         </button>
       </div>
       {error ? <p className="text-sm text-red-700">{error}</p> : null}
