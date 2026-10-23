@@ -18,11 +18,6 @@ export type OperationsRepository = {
 
 export type TeamRepository = {
   getOrganizationMembers: (organizationId: string) => Promise<OrganizationMember[]>;
-  addOrganizationMember: (
-    organizationId: string,
-    userId: string,
-    role: UserRole,
-  ) => Promise<void>;
   updateMemberRole: (
     organizationId: string,
     userId: string,

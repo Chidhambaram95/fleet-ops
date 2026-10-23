@@ -39,6 +39,7 @@ import { compressReceipt } from "@/lib/compressReceipt";
 import { downloadTextFile } from "@/lib/downloadTextFile";
 import { useOrg } from "@/components/billing/OrgContext";
 import { RenewalsDueCard } from "@/components/renewals/RenewalsDueCard";
+import { LastChangeLine, RecordLock } from "@/components/history/RecordLock";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { friendlyErrorMessage } from "@domain/platform/errors";
 
@@ -84,6 +85,7 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
   const [saving, setSaving] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [dayLocked, setDayLocked] = useState(false);
   const sideAmountRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -401,7 +403,7 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
   }
 
   const today = isTodayInIst(date);
-  const canWrite = !org.viewOnly;
+  const canWrite = !org.viewOnly && !dayLocked;
   const canUndo = (role === "admin" || role === "manager") && canWrite;
 
   function scanInput() {
@@ -533,8 +535,10 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
           disabled={saving || loading || !busId || !canWrite}
           className="h-14 rounded-2xl bg-brand px-4 text-base font-bold text-white disabled:opacity-50"
         >
-          {!canWrite
+          {org.viewOnly
             ? "View only until payment is received"
+            : dayLocked
+              ? "This day is closed"
             : saving
               ? "Saving…"
               : kind === "income"
@@ -594,6 +598,16 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
             </button>
           ) : null}
         </div>
+
+        {organizationId ? (
+          <RecordLock
+            supabase={supabase}
+            organizationId={organizationId}
+            target={{ day: date }}
+            role={role}
+            onLockedChange={setDayLocked}
+          />
+        ) : null}
 
         <section className="flex flex-col gap-3.5 rounded-3xl bg-brand p-5 text-white">
           <span className="text-[13px] font-semibold text-brand-pale">
@@ -772,6 +786,14 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
               })}
             </div>
           )}
+          {organizationId && (role === "admin" || role === "manager") ? (
+            <LastChangeLine
+              supabase={supabase}
+              organizationId={organizationId}
+              target={{ day: date, module }}
+              refreshKey={allEntries}
+            />
+          ) : null}
         </section>
       </div>
 

@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { parseLoginId } from "@domain/auth/loginId";
 import {
   signInWithEmail,
   signUpWithEmail,
@@ -29,7 +31,12 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     const client = createBrowserSupabaseClient();
     try {
       if (mode === "login") {
-        await signInWithEmail(client, email.trim(), password);
+        const login = parseLoginId(email);
+        if (!login) {
+          setError("Enter your email or your 10-digit phone number.");
+          return;
+        }
+        await signInWithEmail(client, login.email, password);
         router.replace("/");
         router.refresh();
         return;
@@ -56,10 +63,11 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       className="flex flex-col gap-3"
     >
       <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
-        Email
+        {mode === "login" ? "Email or phone number" : "Email"}
         <input
-          type="email"
-          autoComplete="email"
+          type={mode === "login" ? "text" : "email"}
+          inputMode={mode === "login" ? "email" : undefined}
+          autoComplete={mode === "login" ? "username" : "email"}
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
@@ -78,6 +86,11 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           className="h-12 rounded-2xl bg-canvas px-4 text-base font-normal"
         />
       </label>
+      {mode === "login" ? (
+        <Link href="/forgot-password" className="self-end text-sm font-semibold text-brand">
+          Forgot password?
+        </Link>
+      ) : null}
       {error ? <p className="text-sm text-money-out">{error}</p> : null}
       {info ? <p className="text-sm text-muted">{info}</p> : null}
       <button

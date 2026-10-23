@@ -3,14 +3,17 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
+  addPersonDirectAction,
   deleteCompanyAction,
   inviteAdminAction,
   removeMemberAction,
   setCompanyActiveAction,
+  setPersonPasswordAction,
   setMemberRoleAction,
   updateCompanyAction,
 } from "@/app/(admin)/admin/actions";
 import { InviteShare } from "@/components/admin/InviteShare";
+import { loginLabel, MIN_PASSWORD_LENGTH } from "@domain/auth/loginId";
 import {
   BUS_TYPES,
   BUS_TYPE_LABELS,
@@ -161,6 +164,13 @@ export function CompanyPeople({
   const [inviteWhatsapp, setInviteWhatsapp] = useState("");
   const [inviteRole, setInviteRole] = useState("admin");
   const [created, setCreated] = useState<{ token: string; name: string; whatsapp: string } | null>(null);
+  const [addMode, setAddMode] = useState<"password" | "invite">("password");
+  const [loginId, setLoginId] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [added, setAdded] = useState("");
+  const [passwordFor, setPasswordFor] = useState("");
+  const [memberPassword, setMemberPassword] = useState("");
+  const [passwordSaved, setPasswordSaved] = useState("");
 
   async function run(key: string, action: () => Promise<Result>) {
     setBusy(key);
@@ -173,6 +183,38 @@ export function CompanyPeople({
     }
     router.refresh();
     return true;
+  }
+
+  async function addDirect() {
+    setBusy("invite");
+    setError("");
+    setAdded("");
+    const result: Result & { login?: string } = await addPersonDirectAction(company.organizationId, {
+      name: inviteName,
+      loginId,
+      password: newPassword,
+      role: inviteRole,
+    });
+    setBusy("");
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    setAdded(`${inviteName.trim()} can now sign in with ${result.login} and the password you set.`);
+    setInviteName("");
+    setLoginId("");
+    setNewPassword("");
+    router.refresh();
+  }
+
+  async function savePassword(userId: string) {
+    setPasswordSaved("");
+    const done = await run(userId, () => setPersonPasswordAction(company.organizationId, userId, memberPassword));
+    if (done) {
+      setPasswordFor("");
+      setMemberPassword("");
+      setPasswordSaved("New password saved. Tell them in person or on WhatsApp.");
+    }
   }
 
   async function invite() {
@@ -207,10 +249,49 @@ export function CompanyPeople({
               className={`flex flex-wrap items-center justify-between gap-3 py-3 ${index ? "border-t border-[#EEEFF7]" : ""}`}
             >
               <div className="min-w-0">
-                <p className="truncate font-bold">{member.displayName || member.email || "Unnamed"}</p>
+                <p className="truncate font-bold">{member.displayName || loginLabel(member.email) || "Unnamed"}</p>
                 {member.displayName && member.email ? (
-                  <p className="truncate text-xs text-[#5B5E7A]">{member.email}</p>
+                  <p className="truncate text-xs text-[#5B5E7A]">{loginLabel(member.email)}</p>
                 ) : null}
+                {passwordFor === member.userId ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <input
+                      type="text"
+                      aria-label={`New password for ${member.displayName || "this person"}`}
+                      className={`${input} h-11 w-44`}
+                      value={memberPassword}
+                      minLength={MIN_PASSWORD_LENGTH}
+                      onChange={(e) => setMemberPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="h-11 rounded-2xl bg-[#3A3FB8] px-3 text-sm font-bold text-white"
+                      disabled={busy !== ""}
+                      onClick={() => void savePassword(member.userId)}
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      className="h-11 px-2 text-sm font-semibold text-[#5B5E7A]"
+                      onClick={() => setPasswordFor("")}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="mt-1 text-xs font-semibold text-[#3A3FB8]"
+                    onClick={() => {
+                      setPasswordFor(member.userId);
+                      setMemberPassword("");
+                      setPasswordSaved("");
+                    }}
+                  >
+                    Set new password
+                  </button>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <select
@@ -276,22 +357,59 @@ export function CompanyPeople({
       ) : null}
 
       <div className="flex flex-col gap-3 border-t border-[#EEEFF7] pt-4">
-        <h3 className="font-extrabold">Invite a new admin or manager</h3>
+        <h3 className="font-extrabold">Add an admin or manager</h3>
+        <div className="flex gap-1 self-start rounded-full bg-[#F3F4FB] p-1" role="group" aria-label="How to add">
+          {(["password", "invite"] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              aria-pressed={addMode === mode}
+              className={`h-9 rounded-full px-4 text-sm font-bold ${addMode === mode ? "bg-white text-[#3A3FB8]" : "text-[#5B5E7A]"}`}
+              onClick={() => setAddMode(mode)}
+            >
+              {mode === "password" ? "With a password" : "WhatsApp invite"}
+            </button>
+          ))}
+        </div>
+        {added ? (
+          <p role="status" className="rounded-2xl bg-[#E6E7FA] p-3 text-sm font-semibold">
+            {added}
+          </p>
+        ) : null}
         {created ? (
           <div className="flex flex-col gap-2 rounded-2xl bg-[#E6E7FA] p-3">
             <p className="text-sm font-semibold">Invite ready for {created.name || "them"}. Send it now:</p>
             <InviteShare token={created.token} company={company.name} name={created.name} whatsappNumber={created.whatsapp} />
           </div>
         ) : null}
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <label className={label}>
             Name
             <input className={input} value={inviteName} onChange={(e) => setInviteName(e.target.value)} />
           </label>
-          <label className={label}>
-            WhatsApp number
-            <input inputMode="tel" className={input} value={inviteWhatsapp} onChange={(e) => setInviteWhatsapp(e.target.value)} />
-          </label>
+          {addMode === "invite" ? (
+            <label className={label}>
+              WhatsApp number
+              <input inputMode="tel" className={input} value={inviteWhatsapp} onChange={(e) => setInviteWhatsapp(e.target.value)} />
+            </label>
+          ) : (
+            <>
+              <label className={label}>
+                Email or phone number
+                <input inputMode="email" className={input} value={loginId} onChange={(e) => setLoginId(e.target.value)} />
+              </label>
+              <label className={label}>
+                Password
+                <input
+                  type="text"
+                  className={input}
+                  value={newPassword}
+                  minLength={MIN_PASSWORD_LENGTH}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+              </label>
+            </>
+          )}
           <label className={label}>
             Access
             <select className={input} value={inviteRole} onChange={(e) => setInviteRole(e.target.value)}>
@@ -300,10 +418,21 @@ export function CompanyPeople({
             </select>
           </label>
         </div>
-        <button type="button" className={`${primary} self-start`} disabled={busy !== ""} onClick={invite}>
-          {busy === "invite" ? "Creating…" : "Create invite"}
-        </button>
+        {addMode === "invite" ? (
+          <button type="button" className={`${primary} self-start`} disabled={busy !== ""} onClick={invite}>
+            {busy === "invite" ? "Creating…" : "Create invite"}
+          </button>
+        ) : (
+          <button type="button" className={`${primary} self-start`} disabled={busy !== ""} onClick={addDirect}>
+            {busy === "invite" ? "Adding…" : "Add person"}
+          </button>
+        )}
       </div>
+      {passwordSaved ? (
+        <p role="status" className="text-sm font-semibold text-[#3A3FB8]">
+          {passwordSaved}
+        </p>
+      ) : null}
       {error ? (
         <p role="alert" className="text-sm font-semibold text-[#A3321C]">
           {error}

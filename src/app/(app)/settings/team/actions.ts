@@ -7,6 +7,10 @@ import { createSupabaseOperationsRepository } from "@data/operations/supabaseRep
 import { isModuleId } from "@domain/modules/modules";
 import { isUserRole } from "@domain/rbac/roles";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createServiceSupabaseClient } from "@/lib/supabase/admin";
+import { prepareCompanyLogin, setLoginPassword } from "@data/auth/directLogin";
+import { addMemberDirect, canSetMemberPassword, removeCompanyMember } from "@data/team/repository";
+import { loginLabel, parseLoginId, passwordProblem } from "@domain/auth/loginId";
 import { friendlyErrorMessage } from "@domain/platform/errors";
 
 async function requireAdmin() {
@@ -14,6 +18,16 @@ async function requireAdmin() {
   const membership = await getActiveMembership(supabase);
   if (membership.role !== "admin") {
     throw new Error("Only admins can manage the team.");
+  }
+  return { supabase, membership };
+}
+
+/** Managers open the Team page too, to remove crew. */
+async function requireAdminOrManager() {
+  const supabase = await createServerSupabaseClient();
+  const membership = await getActiveMembership(supabase);
+  if (membership.role !== "admin" && membership.role !== "manager") {
+    throw new Error("Only admins and managers can manage the team.");
   }
   return { supabase, membership };
 }
@@ -114,6 +128,74 @@ export async function updateMemberModuleAction(userId: string, module: string) {
     const repo = createSupabaseOperationsRepository(supabase);
     await repo.updateMemberModule(membership.organizationId, userId, isModuleId(module) ? module : null);
     revalidatePath("/settings/team");
+    return {};
+  } catch (error) {
+    return { error: messageFromUnknown(error) };
+  }
+}
+
+/** Adds a person straight away: their login is an email or a phone number. */
+export async function addMemberDirectAction(input: {
+  displayName: string;
+  loginId: string;
+  password: string;
+  role: string;
+  busId: string;
+}) {
+  try {
+    const displayName = input.displayName.trim();
+    if (!displayName) return { error: "Enter a name." };
+    const login = parseLoginId(input.loginId);
+    if (!login) return { error: "Enter an email address or a 10-digit mobile number." };
+    const weak = passwordProblem(input.password);
+    if (weak) return { error: weak };
+    if (!isUserRole(input.role)) return { error: "Choose a valid role." };
+    if (input.role === "crew" && !input.busId) {
+      return { error: "Choose a vehicle for this crew member." };
+    }
+
+    const { supabase, membership } = await requireAdmin();
+    const userId = await prepareCompanyLogin(createServiceSupabaseClient(), {
+      organizationId: membership.organizationId,
+      login,
+      password: input.password,
+      displayName,
+    });
+    await addMemberDirect(supabase, {
+      organizationId: membership.organizationId,
+      userId,
+      role: input.role,
+      busId: input.role === "crew" ? input.busId : null,
+      displayName,
+    });
+    revalidatePath("/settings/team");
+    return { login: loginLabel(login.email) };
+  } catch (error) {
+    return { error: messageFromUnknown(error) };
+  }
+}
+
+export async function removeMemberAction(userId: string) {
+  try {
+    const { supabase, membership } = await requireAdminOrManager();
+    await removeCompanyMember(supabase, membership.organizationId, userId);
+    revalidatePath("/settings/team");
+    return {};
+  } catch (error) {
+    return { error: messageFromUnknown(error) };
+  }
+}
+
+/** An admin sets a new password for a manager or crew member. */
+export async function setMemberPasswordAction(userId: string, password: string) {
+  try {
+    const weak = passwordProblem(password);
+    if (weak) return { error: weak };
+    const { supabase, membership } = await requireAdmin();
+    if (!(await canSetMemberPassword(supabase, membership.organizationId, userId))) {
+      return { error: "You can set passwords only for managers and crew in your company." };
+    }
+    await setLoginPassword(createServiceSupabaseClient(), userId, password);
     return {};
   } catch (error) {
     return { error: messageFromUnknown(error) };

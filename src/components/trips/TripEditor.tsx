@@ -29,6 +29,7 @@ import { formatTripWhatsApp } from "@domain/trips/whatsapp";
 import { useOrg } from "@/components/billing/OrgContext";
 import { compressReceipt } from "@/lib/compressReceipt";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
+import { LastChangeLine, RecordLock } from "@/components/history/RecordLock";
 import {
   EMPTY_DIESEL,
   emptyForm,
@@ -88,7 +89,9 @@ export function TripEditor({
 
   const approved = trip?.status === "approved";
   const isAdmin = role === "admin";
-  const locked = org.viewOnly || (approved && !isAdmin);
+  // An approved sheet closes 3 days after approval; an admin opens it with a comment.
+  const [sheetClosed, setSheetClosed] = useState(false);
+  const locked = org.viewOnly || (approved && !isAdmin) || sheetClosed;
 
   useEffect(() => {
     let cancelled = false;
@@ -396,6 +399,15 @@ export function TripEditor({
             ? "This trip is approved and counts in reports. As admin you can still correct it."
             : "This trip is approved and counts in reports. Only an admin can change it now."}
         </p>
+      ) : null}
+      {trip && approved && isAdmin && !org.viewOnly ? (
+        <RecordLock
+          supabase={supabase}
+          organizationId={organizationId}
+          target={{ tripId: trip.id }}
+          role={role}
+          onLockedChange={setSheetClosed}
+        />
       ) : null}
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:items-start">
@@ -756,7 +768,7 @@ export function TripEditor({
           Send on WhatsApp
         </button>
       </div>
-      {trip && !org.viewOnly && (!approved || isAdmin) ? (
+      {trip && !locked ? (
         <button
           type="button"
           onClick={() => void remove()}
@@ -764,6 +776,14 @@ export function TripEditor({
         >
           Delete this trip
         </button>
+      ) : null}
+      {trip && (role === "admin" || role === "manager") ? (
+        <LastChangeLine
+          supabase={supabase}
+          organizationId={organizationId}
+          target={{ tripId: trip.id }}
+          refreshKey={trip}
+        />
       ) : null}
     </div>
   );

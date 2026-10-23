@@ -290,29 +290,6 @@ export class SupabaseOperationsRepository
     }
   }
 
-  async addOrganizationMember(organizationId: string, userId: string, role: UserRole) {
-    if (!isUserRole(role)) {
-      throw new Error("Choose a valid role.");
-    }
-
-    const { data, error } = await this.client
-      .from("organization_members")
-      .insert({
-        organization_id: organizationId,
-        user_id: userId,
-        role,
-      })
-      .select("user_id");
-
-    if (error && isDuplicate(error)) {
-      throw new Error("That person is already in this organization.");
-    }
-    throwIfError(error);
-    if (!data?.length) {
-      throw new Error("Could not add that member.");
-    }
-  }
-
   async updateMemberRole(organizationId: string, userId: string, role: UserRole) {
     if (!isUserRole(role)) {
       throw new Error("Choose a valid role.");

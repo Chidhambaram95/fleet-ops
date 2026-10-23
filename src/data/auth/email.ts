@@ -29,3 +29,18 @@ export async function signOut(client: SupabaseClient) {
     throw new Error(error.message);
   }
 }
+
+/** Sends the reset link. It opens /reset-password on this same browser. */
+export async function sendPasswordReset(client: SupabaseClient, email: string, redirectTo: string) {
+  const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo });
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+export async function setNewPassword(client: SupabaseClient, password: string) {
+  const { error } = await client.auth.updateUser({ password });
+  if (error) {
+    throw new Error(error.message);
+  }
+}

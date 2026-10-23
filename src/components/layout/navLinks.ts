@@ -29,11 +29,16 @@ export function companyLinks(role: UserRole | null, companyArea: boolean): NavLi
       { href: "/company/reports", label: "All buses report", hint: "Profit and loss across every module", settings: true },
     );
   }
+  if (role === "admin" || role === "manager") {
+    links.push({ href: "/history", label: "Change history", hint: "Who changed which money record, and why", settings: true });
+  }
   if (role === "admin") {
     links.push(
-      { href: "/settings/team", label: "Team & logins", hint: "Invite people and set their role", settings: true },
+      { href: "/settings/team", label: "Team & logins", hint: "Add people, set passwords and roles", settings: true },
       { href: "/settings/company", label: "Company settings", hint: "Name, WhatsApp number and bus types", settings: true },
     );
+  } else if (role === "manager") {
+    links.push({ href: "/settings/team", label: "Team", hint: "Everyone in the company; remove crew who left", settings: true });
   }
   return links;
 }

@@ -16,6 +16,10 @@ import {
   updateSubscription,
 } from "@data/companies/repository";
 import { BUS_TYPES, type BusType } from "@domain/companies/types";
+import { prepareCompanyLogin, setLoginPassword } from "@data/auth/directLogin";
+import { addMemberDirect, canSetMemberPassword } from "@data/team/repository";
+import { loginLabel, parseLoginId, passwordProblem } from "@domain/auth/loginId";
+import { createServiceSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 async function requireSuperAdmin() {
@@ -225,6 +229,49 @@ export async function inviteAdminAction(
     });
     revalidateCompany(organizationId);
     return { token };
+  } catch (error) {
+    return { error: messageFromUnknown(error) };
+  }
+}
+
+/** Adds an admin or manager with a login and password: no invite link. */
+export async function addPersonDirectAction(
+  organizationId: string,
+  input: { name: string; loginId: string; password: string; role: string },
+) {
+  try {
+    const name = input.name.trim();
+    if (!name) return { error: "Enter the person's name." };
+    if (!["admin", "manager"].includes(input.role)) return { error: "Choose admin or manager." };
+    const login = parseLoginId(input.loginId);
+    if (!login) return { error: "Enter an email address or a 10-digit mobile number." };
+    const weak = passwordProblem(input.password);
+    if (weak) return { error: weak };
+    const supabase = await requireSuperAdmin();
+    const userId = await prepareCompanyLogin(createServiceSupabaseClient(), {
+      organizationId,
+      login,
+      password: input.password,
+      displayName: name,
+    });
+    await addMemberDirect(supabase, { organizationId, userId, role: input.role, busId: null, displayName: name });
+    revalidateCompany(organizationId);
+    return { login: loginLabel(login.email) };
+  } catch (error) {
+    return { error: messageFromUnknown(error) };
+  }
+}
+
+export async function setPersonPasswordAction(organizationId: string, userId: string, password: string) {
+  try {
+    const weak = passwordProblem(password);
+    if (weak) return { error: weak };
+    const supabase = await requireSuperAdmin();
+    if (!(await canSetMemberPassword(supabase, organizationId, userId))) {
+      return { error: "This person is not in this company." };
+    }
+    await setLoginPassword(createServiceSupabaseClient(), userId, password);
+    return {};
   } catch (error) {
     return { error: messageFromUnknown(error) };
   }
