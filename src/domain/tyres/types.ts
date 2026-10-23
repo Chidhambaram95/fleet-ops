@@ -41,6 +41,8 @@ export type Tyre = {
   lifeKm: number;
   /** Warranty km for the current life, when one was given. */
   lifeLimitKm: number | null;
+  /** Off the bus and waiting to be sold as scrap, since this day. */
+  scrapPileOn: string | null;
 };
 
 /** Company defaults for how long a tyre should last, per life. */
@@ -84,6 +86,21 @@ export type TyreEvent = {
   /** Back from retread: the retreader's warranty. */
   warrantyKm: number | null;
   warrantyMonths: number | null;
+  /** Scrapped as part of this scrap sale. */
+  scrapSaleId: string | null;
+};
+
+export type ScrapReceivedVia = "cash" | "account";
+
+/** Tyres sold together as scrap; the money is company income. */
+export type TyreScrapSale = {
+  id: string;
+  soldOn: string;
+  buyer: string;
+  amountInr: number;
+  receivedVia: ScrapReceivedVia;
+  tyreCount: number;
+  note: string;
 };
 
 export type TyreMove = {

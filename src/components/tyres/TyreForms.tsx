@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { DEFAULT_TYRE_LIFE, addTyre, moveTyre, updateTyre, uploadTyreBill } from "@data/tyres/repository";
-import { kmText } from "@domain/tyres/calc";
+import { DEFAULT_TYRE_LIFE, addTyre, moveTyre, setScrapPile, updateTyre, uploadTyreBill } from "@data/tyres/repository";
+import { kmText, readyToFit } from "@domain/tyres/calc";
 import { formatInr, todayInIst } from "@domain/operations/totals";
 import {
   REMOVAL_REASONS,
@@ -108,7 +108,7 @@ export function MoveForm({
   const [reason, setReason] = useState(mode === "remove" ? REMOVAL_REASONS[0] : "");
   const [note, setNote] = useState("");
   /** Remove: what happens to the tyre next. */
-  const [after, setAfter] = useState<"stock" | "retread" | "scrap">("retread");
+  const [after, setAfter] = useState<"stock" | "retread" | "pile" | "scrap">("retread");
   /** Back from retread: fit it straight away. */
   const [fitNow, setFitNow] = useState(false);
   /** Back from retread: the retreader's warranty, when they give one. */
@@ -119,7 +119,7 @@ export function MoveForm({
 
   const moving = tyre ?? tyres.find((item) => item.id === tyreId) ?? null;
   const stock = useMemo(
-    () => tyres.filter((item) => item.status === "in_stock").sort((a, b) => a.tyreNumber.localeCompare(b.tyreNumber)),
+    () => tyres.filter(readyToFit).sort((a, b) => a.tyreNumber.localeCompare(b.tyreNumber)),
     [tyres],
   );
   const fitting = mode === "fit" || (mode === "retread_in" && fitNow);
@@ -199,6 +199,7 @@ export function MoveForm({
       for (const move of moves) {
         await moveTyre(supabase, moving.id, move);
       }
+      if (mode === "remove" && after === "pile") await setScrapPile(supabase, moving.id, true);
       onDone();
     } catch (saveError) {
       setError(messageFromUnknown(saveError));
@@ -334,12 +335,13 @@ export function MoveForm({
           </label>
           <fieldset className="flex flex-col gap-1.5">
             <legend className="mb-1.5 text-[13px] font-semibold">Then</legend>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {(
                 [
                   ["retread", "Send for retread"],
                   ["stock", "Keep in stock"],
-                  ["scrap", "Scrap it"],
+                  ["pile", "Scrap pile"],
+                  ["scrap", "Scrap it now"],
                 ] as const
               ).map(([id, label]) => (
                 <button
@@ -354,6 +356,11 @@ export function MoveForm({
               ))}
             </div>
           </fieldset>
+          {after === "pile" ? (
+            <p className="-mt-1 text-xs text-muted">
+              It waits on the Scrap tab with other removed tyres. Sell them together when you have enough.
+            </p>
+          ) : null}
         </>
       ) : null}
 

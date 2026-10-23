@@ -1,5 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { NewTyre, Tyre, TyreEvent, TyreEventKind, TyreLifeSettings, TyreMove, TyreStatus } from "@domain/tyres/types";
+import type {
+  NewTyre,
+  ScrapReceivedVia,
+  Tyre,
+  TyreEvent,
+  TyreEventKind,
+  TyreLifeSettings,
+  TyreMove,
+  TyreScrapSale,
+  TyreStatus,
+} from "@domain/tyres/types";
 
 /** Used until migration 0019 is run, or when the company has not changed them. */
 export const DEFAULT_TYRE_LIFE: TyreLifeSettings = { newLifeKm: 80000, retreadLifeKm: 40000 };
@@ -40,6 +50,7 @@ function mapTyre(row: Row): Tyre {
     unchargedInr: Number(row.uncharged_inr ?? 0),
     lifeKm: Number(row.life_km ?? row.total_km ?? 0),
     lifeLimitKm: row.life_limit_km === undefined ? num(row.warranty_km) : num(row.life_limit_km),
+    scrapPileOn: typeof row.scrap_pile_on === "string" ? row.scrap_pile_on : null,
   };
 }
 
@@ -63,6 +74,7 @@ function mapEvent(row: Row): TyreEvent {
     note: str(row.note),
     warrantyKm: num(row.warranty_km),
     warrantyMonths: num(row.warranty_months),
+    scrapSaleId: typeof row.scrap_sale_id === "string" ? row.scrap_sale_id : null,
   };
 }
 
@@ -295,4 +307,54 @@ export async function tyreBillUrl(client: SupabaseClient, path: string) {
   const { data, error } = await client.storage.from(PHOTO_BUCKET).createSignedUrl(path, 60 * 60);
   throwIfError(error);
   return data?.signedUrl ?? "";
+}
+
+/** Put an off-bus tyre on the scrap pile, or take it back. */
+export async function setScrapPile(client: SupabaseClient, tyreId: string, onPile: boolean) {
+  const { error } = await client.rpc("tyre_scrap_pile", { p_tyre: tyreId, p_on: onPile });
+  throwIfError(error);
+}
+
+/** Sell tyres together as scrap. Each is scrapped; the money is one company income entry. */
+export async function sellScrap(
+  client: SupabaseClient,
+  input: { tyreIds: string[]; date: string; buyer: string; amountInr: number; receivedVia: ScrapReceivedVia; note: string },
+): Promise<string> {
+  const { data, error } = await client.rpc("tyre_sell_scrap", {
+    p_tyres: input.tyreIds,
+    p_date: input.date,
+    p_buyer: input.buyer,
+    p_amount: input.amountInr,
+    p_via: input.receivedVia,
+    p_note: input.note,
+  });
+  throwIfError(error);
+  return String(data);
+}
+
+/** Admins only: the tyres go back on the pile and the sale is removed. */
+export async function undoScrapSale(client: SupabaseClient, saleId: string) {
+  const { error } = await client.rpc("tyre_undo_scrap_sale", { p_sale: saleId });
+  throwIfError(error);
+}
+
+/** Scrap sales, newest first, optionally between two dates (inclusive). */
+export async function listScrapSales(
+  client: SupabaseClient,
+  organizationId: string,
+  range?: { from: string; to: string },
+): Promise<TyreScrapSale[]> {
+  let query = client.from("tyre_scrap_sales").select("*").eq("organization_id", organizationId);
+  if (range) query = query.gte("sold_on", range.from).lte("sold_on", range.to);
+  const { data, error } = await query.order("sold_on", { ascending: false }).limit(2000);
+  throwIfError(error);
+  return ((data ?? []) as Row[]).map((row) => ({
+    id: str(row.id),
+    soldOn: str(row.sold_on),
+    buyer: str(row.buyer),
+    amountInr: Number(row.amount_inr ?? 0),
+    receivedVia: row.received_via === "account" ? "account" : "cash",
+    tyreCount: Number(row.tyre_count ?? 0),
+    note: str(row.note),
+  }));
 }

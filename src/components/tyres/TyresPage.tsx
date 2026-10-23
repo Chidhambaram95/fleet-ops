@@ -7,6 +7,7 @@ import {
   DEFAULT_TYRE_LIFE,
   getTyreLifeSettings,
   latestOdometers,
+  listScrapSales,
   listTyreEventsBetween,
   listTyres,
   moveTyre,
@@ -19,17 +20,21 @@ import {
   kmSoFar,
   kmText,
   lifeKmSoFar,
+  onScrapPile,
+  readyToFit,
   shortKm,
   tyreHealth,
   warrantyState,
   whereNow,
 } from "@domain/tyres/calc";
 import { ROAD_POSITIONS, STATUS_LABELS, positionLabel, spareCount } from "@domain/tyres/catalog";
-import type { Tyre, TyreLifeSettings, TyreStatus } from "@domain/tyres/types";
+import type { UserRole } from "@domain/rbac/roles";
+import type { Tyre, TyreLifeSettings, TyreScrapSale, TyreStatus } from "@domain/tyres/types";
 import { useOrg } from "@/components/billing/OrgContext";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { ChassisView } from "@/components/tyres/ChassisView";
 import { MoveForm, TyreForm, type MoveMode } from "@/components/tyres/TyreForms";
+import { ScrapSaleForm, ScrapSection } from "@/components/tyres/TyreScrap";
 import { TyreSheet } from "@/components/tyres/TyreSheet";
 import {
   Card,
@@ -44,7 +49,7 @@ import {
   useLoaded,
 } from "@/components/ui/kit";
 
-type Section = "buses" | "all" | "retread";
+type Section = "buses" | "all" | "retread" | "scrap";
 
 const STATUS_CLASS: Record<TyreStatus, string> = {
   fitted: "bg-brand-soft text-brand",
@@ -53,35 +58,49 @@ const STATUS_CLASS: Record<TyreStatus, string> = {
   scrapped: "bg-line text-muted",
 };
 
-export function StatusPill({ status }: { status: TyreStatus }) {
+export function StatusPill({ status, onPile = false }: { status: TyreStatus; onPile?: boolean }) {
+  const pile = onPile && status === "in_stock";
   return (
-    <span className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ${STATUS_CLASS[status]}`}>
-      {STATUS_LABELS[status]}
+    <span
+      className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ${pile ? "bg-[#fbe9e5] text-money-out" : STATUS_CLASS[status]}`}
+    >
+      {pile ? "Scrap pile" : STATUS_LABELS[status]}
     </span>
   );
 }
 
 type Panel =
   | { kind: "new" }
+  | { kind: "scrap" }
   | { kind: "move"; mode: MoveMode; tyre: Tyre | null; slot?: { busId: string; position: string } };
 
 type ChassisMode = "view" | "rotate";
 
-export function TyresPage({ organizationId, module }: { organizationId: string; module: ModuleId }) {
+export function TyresPage({
+  organizationId,
+  module,
+  role,
+}: {
+  organizationId: string;
+  module: ModuleId;
+  role: UserRole | null;
+}) {
   const org = useOrg();
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const today = todayInIst();
   const monthStart = `${today.slice(0, 8)}01`;
   const { data, loading, error, reload } = useLoaded(
     async () => {
-      const [tyres, buses, odometers, monthEvents, settings] = await Promise.all([
+      const [tyres, buses, odometers, monthEvents, settings, scrapSales] = await Promise.all([
         listTyres(supabase, organizationId),
         createSupabaseOperationsRepository(supabase).listBuses(organizationId),
         latestOdometers(supabase, organizationId),
         listTyreEventsBetween(supabase, organizationId, { from: monthStart, to: today }),
         getTyreLifeSettings(supabase, organizationId),
+        // The scrap table exists only after migration 0020.
+        listScrapSales(supabase, organizationId).catch((): TyreScrapSale[] => []),
       ]);
-      return { tyres, buses, odometers, monthEvents, settings };
+      return { tyres, buses, odometers, monthEvents, settings, scrapSales };
     },
     {
       tyres: [] as Tyre[],
@@ -89,6 +108,7 @@ export function TyresPage({ organizationId, module }: { organizationId: string; 
       odometers: new Map<string, number>(),
       monthEvents: [],
       settings: DEFAULT_TYRE_LIFE as TyreLifeSettings,
+      scrapSales: [] as TyreScrapSale[],
     },
   );
 
@@ -118,7 +138,7 @@ export function TyresPage({ organizationId, module }: { organizationId: string; 
   const tyres = data.tyres;
   const counts = {
     fitted: tyres.filter((tyre) => tyre.status === "fitted").length,
-    stock: tyres.filter((tyre) => tyre.status === "in_stock").length,
+    stock: tyres.filter(readyToFit).length,
     retreader: tyres.filter((tyre) => tyre.status === "at_retreader").length,
     warranty: tyres.filter(
       (tyre) => tyre.status !== "scrapped" && warrantyState(tyre, kmSoFar(tyre, odometerOf(tyre)), today) === "ending",
@@ -137,9 +157,10 @@ export function TyresPage({ organizationId, module }: { organizationId: string; 
       );
     });
   const atRetreader = tyres.filter((tyre) => tyre.status === "at_retreader");
-  const waiting = tyres.filter((tyre) => tyre.status === "in_stock" && tyre.retreadCount > 0);
+  const waiting = tyres.filter((tyre) => readyToFit(tyre) && tyre.retreadCount > 0);
+  const pile = tyres.filter(onScrapPile).sort((a, b) => a.tyreNumber.localeCompare(b.tyreNumber));
   const inStock = tyres
-    .filter((tyre) => tyre.status === "in_stock")
+    .filter(readyToFit)
     .sort((a, b) => a.tyreNumber.localeCompare(b.tyreNumber));
   const tyreHref = (tyre: Tyre) => `${moduleHref(module, "tyres")}/${tyre.id}`;
 
@@ -255,7 +276,9 @@ export function TyresPage({ organizationId, module }: { organizationId: string; 
 
   const busOptions = data.buses.map((item) => ({ id: item.id, registrationNumber: item.registrationNumber }));
   const form = panel ? (
-    panel.kind === "new" ? (
+    panel.kind === "scrap" ? (
+      <ScrapSaleForm supabase={supabase} pile={pile} onDone={done} onCancel={() => setPanel(null)} />
+    ) : panel.kind === "new" ? (
       <TyreForm
         supabase={supabase}
         organizationId={organizationId}
@@ -313,7 +336,9 @@ export function TyresPage({ organizationId, module }: { organizationId: string; 
           {tyre.retreadCount ? ` · retread ${tyre.retreadCount}×` : ""}
         </p>
       </Link>
-      <div className="flex shrink-0 items-center gap-1">{actions ?? <StatusPill status={tyre.status} />}</div>
+      <div className="flex shrink-0 items-center gap-1">
+        {actions ?? <StatusPill status={tyre.status} onPile={!!tyre.scrapPileOn} />}
+      </div>
     </div>
   );
 
@@ -442,9 +467,10 @@ export function TyresPage({ organizationId, module }: { organizationId: string; 
               { id: "buses", label: "By bus" },
               { id: "all", label: "All tyres" },
               { id: "retread", label: `Retread${atRetreader.length ? ` (${atRetreader.length})` : ""}` },
+              { id: "scrap", label: `Scrap${pile.length ? ` (${pile.length})` : ""}` },
             ]}
           />
-          {section !== "retread" && data.buses.some((item) => item.busType !== module) ? (
+          {(section === "buses" || section === "all") && data.buses.some((item) => item.busType !== module) ? (
             <label className="flex items-center gap-3 px-1 text-sm font-semibold text-muted">
               <input type="checkbox" className="h-5 w-5" checked={allBuses} onChange={(event) => setAllBuses(event.target.checked)} />
               Show every bus in the company
@@ -617,6 +643,19 @@ export function TyresPage({ organizationId, module }: { organizationId: string; 
                 )}
               </Card>
             </>
+          ) : null}
+
+          {section === "scrap" ? (
+            <ScrapSection
+              supabase={supabase}
+              pile={pile}
+              sales={data.scrapSales}
+              tyreHref={tyreHref}
+              readOnly={org.viewOnly}
+              admin={role === "admin"}
+              onSell={() => open({ kind: "scrap" })}
+              onChanged={reload}
+            />
           ) : null}
         </div>
         <aside className="hidden md:sticky md:top-24 md:flex md:flex-col md:gap-4">

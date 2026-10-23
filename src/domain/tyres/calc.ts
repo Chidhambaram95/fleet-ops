@@ -53,6 +53,16 @@ export function warrantyState(tyre: Tyre, km: number, today: string): WarrantySt
   return "ok";
 }
 
+/** Off the bus and ready to fit: in stock and not waiting on the scrap pile. */
+export function readyToFit(tyre: Tyre): boolean {
+  return tyre.status === "in_stock" && !tyre.scrapPileOn;
+}
+
+/** Off the bus and waiting to be sold as scrap. */
+export function onScrapPile(tyre: Tyre): boolean {
+  return tyre.status === "in_stock" && !!tyre.scrapPileOn;
+}
+
 /** "Fitted on TN 38 AB 1234 · Front left", "In stock" and so on. */
 export function whereNow(tyre: Tyre, busName: (id: string | null) => string): string {
   switch (tyre.status) {
@@ -63,7 +73,7 @@ export function whereNow(tyre: Tyre, busName: (id: string | null) => string): st
     case "scrapped":
       return "Scrapped";
     default:
-      return "In stock";
+      return tyre.scrapPileOn ? "In the scrap pile" : "In stock";
   }
 }
 

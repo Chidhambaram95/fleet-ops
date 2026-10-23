@@ -12,6 +12,7 @@ import {
   latestOdometers,
   listTyreEvents,
   listTyres,
+  setScrapPile,
   tyreBillUrl,
   undoLastTyreMove,
 } from "@data/tyres/repository";
@@ -26,6 +27,7 @@ import {
   kmSoFar,
   kmText,
   lifeKmSoFar,
+  onScrapPile,
   totalSpentInr,
   tyreHealth,
   tyreLives,
@@ -76,7 +78,7 @@ function eventLine(event: TyreEvent): string {
     case "repair":
       return [event.reason, event.vendor, event.busLabel ? `on ${event.busLabel}` : ""].filter(Boolean).join(" · ");
     case "scrapped":
-      return event.reason;
+      return [event.reason, event.vendor].filter(Boolean).join(" · ");
   }
 }
 
@@ -146,6 +148,9 @@ export function TyreDetail({
   const lives = tyreLives(tyre, data.events);
   const byBus = kmByBus(data.events);
   const busOptions = data.buses.map((bus) => ({ id: bus.id, registrationNumber: bus.registrationNumber }));
+  const onPile = onScrapPile(tyre);
+  // A tyre on the scrap pile can only come back off it or be scrapped on its own.
+  const actions = onPile ? ACTIONS.in_stock.filter((action) => action.mode === "scrap") : ACTIONS[tyre.status];
   const health = tyreHealth(lifeKmSoFar(tyre, odometer), expectedLifeKm(tyre, data.settings)).health;
   // The retreader's warranty on the latest retread, when one was entered.
   const lastRetread = [...data.events].reverse().find((event) => event.kind === "retread_received");
@@ -177,6 +182,16 @@ export function TyreDetail({
       router.push(listHref);
     } catch (removeError) {
       setActionError(messageFromUnknown(removeError));
+    }
+  }
+
+  async function togglePile() {
+    setActionError("");
+    try {
+      await setScrapPile(supabase, tyre!.id, !tyre!.scrapPileOn);
+      reload();
+    } catch (pileError) {
+      setActionError(messageFromUnknown(pileError));
     }
   }
 
@@ -239,7 +254,7 @@ export function TyreDetail({
                 "No brand entered"}
             </p>
           </div>
-          <StatusPill status={tyre.status} />
+          <StatusPill status={tyre.status} onPile={!!tyre.scrapPileOn} />
         </div>
         <p className="font-semibold">{whereNow(tyre, busName)}</p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -263,13 +278,22 @@ export function TyreDetail({
       </section>
 
       {!org.viewOnly && ACTIONS[tyre.status].length ? (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {ACTIONS[tyre.status].map((action, index) => (
+        <div className={`grid grid-cols-2 gap-2 ${actions.length > 3 ? "sm:grid-cols-5" : "sm:grid-cols-4"}`}>
+          {tyre.status === "in_stock" ? (
+            <button
+              type="button"
+              onClick={() => void togglePile()}
+              className={onPile ? PRIMARY : "h-12 rounded-2xl bg-white px-5 text-[15px] font-bold text-brand"}
+            >
+              {onPile ? "Take off scrap pile" : "Put in scrap pile"}
+            </button>
+          ) : null}
+          {actions.map((action, index) => (
             <button
               key={action.mode}
               type="button"
               onClick={() => setPanel(action.mode)}
-              className={index === 0 ? PRIMARY : "h-12 rounded-2xl bg-white px-5 text-[15px] font-bold text-brand"}
+              className={index === 0 && !onPile ? PRIMARY : "h-12 rounded-2xl bg-white px-5 text-[15px] font-bold text-brand"}
             >
               {action.label}
             </button>

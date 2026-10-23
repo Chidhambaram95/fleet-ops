@@ -17,7 +17,7 @@ import { balanceDue, receivedTotal } from "@domain/tours/calc";
 import { tripLine } from "@domain/tours/messages";
 import type { TourBooking, TourPayment } from "@domain/tours/types";
 import { EVENT_LABELS, positionLabel } from "@domain/tyres/catalog";
-import type { Tyre, TyreEvent } from "@domain/tyres/types";
+import type { Tyre, TyreEvent, TyreScrapSale } from "@domain/tyres/types";
 
 export type ReportKind = "pnl" | "trips" | "fuel" | "expenses" | "crew" | "renewals" | "tours" | "dues" | "tyres";
 
@@ -48,6 +48,8 @@ export type ReportData = {
   tyres: Tyre[];
   /** Tyre moves in the date range; charge_inr is what each bus paid that day. */
   tyreEvents: TyreEvent[];
+  /** Tyres sold as scrap in the date range: company income. */
+  scrapSales: TyreScrapSale[];
 };
 
 export type Cell = string | number;
@@ -165,6 +167,10 @@ function tyreChargesByBus(data: ReportData, filters: ReportFilters) {
   return byBus;
 }
 
+function scrapInRange(data: ReportData, filters: ReportFilters) {
+  return sum(data.scrapSales.filter((sale) => inRange(sale.soldOn, filters)).map((sale) => sale.amountInr));
+}
+
 function tripsInRange(data: ReportData, filters: ReportFilters, busIds: Set<string>) {
   return data.trips.filter(
     (trip) => trip.status === "approved" && busIds.has(trip.busId) && inRange(istDay(trip.startedAt), filters),
@@ -203,8 +209,10 @@ export function pnlReport(data: ReportData, filters: ReportFilters): ReportTable
   if (wholeCompany(filters)) {
     const salaries = salariesInRange(data, filters);
     rows.push(["Crew salaries", 0, 0, 0, 0, salaries, 0, -salaries]);
+    const scrap = scrapInRange(data, filters);
+    if (scrap) rows.push(["Tyre scrap sold", 0, scrap, 0, 0, 0, 0, scrap]);
   } else {
-    notes.push("Salaries are left out when one bus is picked.");
+    notes.push("Salaries and tyre scrap sales are left out when one bus is picked.");
   }
   notes.push("Bank and company costs are shared equally by the buses they were for, or by every bus when none was picked.");
   notes.push("Trip costs are approved trip sheets only: all diesel (cash and credit) plus cash expenses.");
@@ -216,7 +224,7 @@ export function pnlReport(data: ReportData, filters: ReportFilters): ReportTable
   const expense = Number(total[3]) + Number(total[4]) + Number(total[5]) + Number(total[6]);
   return {
     title: "Profit and loss",
-    columns: ["Bus", "Ledger income", "Intercity & tour income", "Ledger costs", "Trip costs", "Bank costs", "Tyres", "Profit"],
+    columns: ["Bus", "Ledger income", "Intercity, tour & scrap", "Ledger costs", "Trip costs", "Bank costs", "Tyres", "Profit"],
     moneyColumns: [1, 2, 3, 4, 5, 6, 7],
     shareColumns: [0, 7],
     rows,
@@ -585,6 +593,9 @@ export function tyresReport(data: ReportData, filters: ReportFilters): ReportTab
       { label: "Tyre cost", value: charged, tone: "out" },
       { label: "Km run", value: km },
       { label: "Tyres in use", value: data.tyres.filter((tyre) => tyre.status === "fitted" && busIds.has(tyre.currentBusId ?? "")).length },
+      ...(wholeCompany(filters) && scrapInRange(data, filters)
+        ? [{ label: "Scrap sold (company income)", value: scrapInRange(data, filters), tone: "in" as const }]
+        : []),
     ],
     notes: [
       "A tyre's price is charged to the first bus it is fitted on, and each retread bill to the next bus it goes on. Repairs go to the bus the tyre is on.",

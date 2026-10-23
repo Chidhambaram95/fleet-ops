@@ -7,5 +7,12 @@ export default async function ModuleTyresPage({ params }: { params: Promise<{ mo
   if (!access.membership) {
     return <AccessMessage message={access.message} />;
   }
-  return <TyresPage key={access.module} organizationId={access.membership.organizationId} module={access.module} />;
+  return (
+    <TyresPage
+      key={access.module}
+      organizationId={access.membership.organizationId}
+      module={access.module}
+      role={access.membership.role}
+    />
+  );
 }
