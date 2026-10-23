@@ -1,5 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { NewTyre, Tyre, TyreEvent, TyreEventKind, TyreMove, TyreStatus } from "@domain/tyres/types";
+import type { NewTyre, Tyre, TyreEvent, TyreEventKind, TyreLifeSettings, TyreMove, TyreStatus } from "@domain/tyres/types";
+
+/** Used until migration 0019 is run, or when the company has not changed them. */
+export const DEFAULT_TYRE_LIFE: TyreLifeSettings = { newLifeKm: 80000, retreadLifeKm: 40000 };
 
 const PHOTO_BUCKET = "trip-sheets";
 
@@ -35,6 +38,8 @@ function mapTyre(row: Row): Tyre {
     retreadCount: Number(row.retread_count ?? 0),
     totalKm: Number(row.total_km ?? 0),
     unchargedInr: Number(row.uncharged_inr ?? 0),
+    lifeKm: Number(row.life_km ?? row.total_km ?? 0),
+    lifeLimitKm: row.life_limit_km === undefined ? num(row.warranty_km) : num(row.life_limit_km),
   };
 }
 
@@ -56,6 +61,8 @@ function mapEvent(row: Row): TyreEvent {
     vendor: str(row.vendor),
     reason: str(row.reason),
     note: str(row.note),
+    warrantyKm: num(row.warranty_km),
+    warrantyMonths: num(row.warranty_months),
   };
 }
 
@@ -155,7 +162,7 @@ export async function deleteTyre(client: SupabaseClient, organizationId: string,
 
 /** Fit, rotate, remove, retread, repair or scrap. The database checks the move. */
 export async function moveTyre(client: SupabaseClient, tyreId: string, move: TyreMove) {
-  const { error } = await client.rpc("tyre_move", {
+  const { data, error } = await client.rpc("tyre_move", {
     p_tyre: tyreId,
     p_kind: move.kind,
     p_date: move.date,
@@ -168,6 +175,39 @@ export async function moveTyre(client: SupabaseClient, tyreId: string, move: Tyr
     p_note: move.note ?? "",
   });
   throwIfError(error);
+  if (move.kind === "retread_received" && (move.warrantyKm || move.warrantyMonths)) {
+    const result = await client.rpc("tyre_set_retread_warranty", {
+      p_event: data,
+      p_km: move.warrantyKm ?? null,
+      p_months: move.warrantyMonths ?? null,
+    });
+    throwIfError(result.error);
+  }
+}
+
+/** Expected km per life. Before 0019 is run, or if the read fails, the defaults apply. */
+export async function getTyreLifeSettings(client: SupabaseClient, organizationId: string): Promise<TyreLifeSettings> {
+  const { data, error } = await client
+    .from("organizations")
+    .select("tyre_new_life_km, tyre_retread_life_km")
+    .eq("id", organizationId)
+    .maybeSingle();
+  if (error || !data) return DEFAULT_TYRE_LIFE;
+  const row = data as Row;
+  return {
+    newLifeKm: Number(row.tyre_new_life_km ?? DEFAULT_TYRE_LIFE.newLifeKm),
+    retreadLifeKm: Number(row.tyre_retread_life_km ?? DEFAULT_TYRE_LIFE.retreadLifeKm),
+  };
+}
+
+export async function saveTyreLifeSettings(client: SupabaseClient, organizationId: string, input: TyreLifeSettings) {
+  const { data, error } = await client
+    .from("organizations")
+    .update({ tyre_new_life_km: input.newLifeKm, tyre_retread_life_km: input.retreadLifeKm })
+    .eq("id", organizationId)
+    .select("id");
+  throwIfError(error);
+  if (!data?.length) throw new Error("Could not save the tyre settings.");
 }
 
 export async function undoLastTyreMove(client: SupabaseClient, tyreId: string) {

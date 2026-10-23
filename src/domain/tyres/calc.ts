@@ -1,5 +1,5 @@
 import { positionLabel } from "./catalog";
-import type { Tyre, TyreEvent } from "./types";
+import type { Tyre, TyreEvent, TyreLifeSettings } from "./types";
 
 /** Km run in the current stint, when a newer odometer for the bus is known. */
 export function currentStintKm(tyre: Tyre, latestOdometerKm: number | null): number | null {
@@ -144,4 +144,33 @@ export function chargesByBus(events: TyreEvent[]): Map<string, number> {
 
 export function kmText(km: number) {
   return `${km.toLocaleString("en-IN")} km`;
+}
+
+/** Km this tyre should run in its current life: its warranty km, else the company default. */
+export function expectedLifeKm(tyre: Tyre, settings: TyreLifeSettings): number {
+  return tyre.lifeLimitKm ?? (tyre.retreadCount > 0 ? settings.retreadLifeKm : settings.newLifeKm);
+}
+
+/** Km in the current life, including the current stint so far. */
+export function lifeKmSoFar(tyre: Tyre, latestOdometerKm: number | null): number {
+  return tyre.lifeKm + (currentStintKm(tyre, latestOdometerKm) ?? 0);
+}
+
+export type TyreHealth = "good" | "watch" | "replace";
+
+/** Good below 70% of the expected km, watch from 70%, replace soon from 90%. */
+export function tyreHealth(lifeKm: number, expectedKm: number): { health: TyreHealth; percent: number } {
+  const percent = expectedKm > 0 ? Math.round((lifeKm / expectedKm) * 100) : 0;
+  return { health: percent >= 90 ? "replace" : percent >= 70 ? "watch" : "good", percent };
+}
+
+export const HEALTH_LABELS: Record<TyreHealth, string> = {
+  good: "Good",
+  watch: "Watch",
+  replace: "Replace soon",
+};
+
+/** "42.4k km" for the small labels under a tyre. */
+export function shortKm(km: number) {
+  return km >= 1000 ? `${(Math.round(km / 100) / 10).toLocaleString("en-IN")}k km` : `${km} km`;
 }

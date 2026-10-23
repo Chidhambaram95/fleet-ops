@@ -37,7 +37,14 @@ export type Tyre = {
   totalKm: number;
   /** Purchase, retread and off-bus repair money waiting for the next bus. */
   unchargedInr: number;
+  /** Km in the current life (since bought or last retread) over finished stints. */
+  lifeKm: number;
+  /** Warranty km for the current life, when one was given. */
+  lifeLimitKm: number | null;
 };
+
+/** Company defaults for how long a tyre should last, per life. */
+export type TyreLifeSettings = { newLifeKm: number; retreadLifeKm: number };
 
 export type NewTyre = Pick<
   Tyre,
@@ -74,6 +81,9 @@ export type TyreEvent = {
   vendor: string;
   reason: string;
   note: string;
+  /** Back from retread: the retreader's warranty. */
+  warrantyKm: number | null;
+  warrantyMonths: number | null;
 };
 
 export type TyreMove = {
@@ -86,4 +96,7 @@ export type TyreMove = {
   vendor?: string;
   reason?: string;
   note?: string;
+  /** Back from retread: the retreader's warranty. */
+  warrantyKm?: number | null;
+  warrantyMonths?: number | null;
 };

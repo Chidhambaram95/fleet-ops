@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { addTyre, moveTyre, updateTyre, uploadTyreBill } from "@data/tyres/repository";
+import { DEFAULT_TYRE_LIFE, addTyre, moveTyre, updateTyre, uploadTyreBill } from "@data/tyres/repository";
+import { kmText } from "@domain/tyres/calc";
 import { formatInr, todayInIst } from "@domain/operations/totals";
 import {
   REMOVAL_REASONS,
@@ -11,7 +12,7 @@ import {
   sparePosition,
   spareCount,
 } from "@domain/tyres/catalog";
-import type { NewTyre, Tyre, TyreMove } from "@domain/tyres/types";
+import type { NewTyre, Tyre, TyreLifeSettings, TyreMove } from "@domain/tyres/types";
 import { compressReceipt } from "@/lib/compressReceipt";
 import {
   Card,
@@ -72,6 +73,7 @@ export function MoveForm({
   tyres,
   buses,
   odometers,
+  lifeSettings = DEFAULT_TYRE_LIFE,
   onDone,
   onCancel,
 }: {
@@ -84,6 +86,8 @@ export function MoveForm({
   tyres: Tyre[];
   buses: BusOption[];
   odometers: Map<string, number>;
+  /** Company defaults for how far a tyre should run, for hints. */
+  lifeSettings?: TyreLifeSettings;
   onDone: () => void;
   onCancel: () => void;
 }) {
@@ -107,6 +111,9 @@ export function MoveForm({
   const [after, setAfter] = useState<"stock" | "retread" | "scrap">("retread");
   /** Back from retread: fit it straight away. */
   const [fitNow, setFitNow] = useState(false);
+  /** Back from retread: the retreader's warranty, when they give one. */
+  const [retreadKm, setRetreadKm] = useState("");
+  const [retreadMonths, setRetreadMonths] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -142,6 +149,12 @@ export function MoveForm({
       return setError("Enter the odometer reading. It is used to work out the km on this tyre.");
     }
     if (mode === "retread_in" && money.value == null) return setError("Enter the retread bill.");
+    const warrantyKm = optionalNumber(retreadKm);
+    const warrantyMonths = optionalNumber(retreadMonths);
+    if (!warrantyKm.ok || warrantyKm.value === 0) return setError("Enter the retread warranty km, or leave it empty.");
+    if (!warrantyMonths.ok || warrantyMonths.value === 0) {
+      return setError("Enter the retread warranty months, or leave it empty.");
+    }
     if (mode === "repair" && money.value == null) return setError("Enter the repair bill.");
 
     const moves: TyreMove[] = [];
@@ -161,7 +174,15 @@ export function MoveForm({
         moves.push({ kind: "sent_for_retread", date, vendor, note });
         break;
       case "retread_in":
-        moves.push({ kind: "retread_received", date, costInr: money.value, vendor, note });
+        moves.push({
+          kind: "retread_received",
+          date,
+          costInr: money.value,
+          vendor,
+          note,
+          warrantyKm: warrantyKm.value,
+          warrantyMonths: warrantyMonths.value,
+        });
         if (fitNow) moves.push({ kind: "fitted", date, busId, position, odometerKm: odo.value });
         break;
       case "repair":
@@ -361,6 +382,22 @@ export function MoveForm({
             ? `Charged to ${busName(moving.currentBusId)}.`
             : "The tyre is off a bus, so this is charged to the next bus it is fitted on."}
         </p>
+      ) : null}
+
+      {mode === "retread_in" ? (
+        <div className="grid grid-cols-2 gap-3">
+          <label className={LABEL}>
+            Retread warranty km (optional)
+            <input inputMode="numeric" className={FIELD} placeholder={`e.g. ${lifeSettings.retreadLifeKm}`} value={retreadKm} onChange={(event) => setRetreadKm(event.target.value)} />
+          </label>
+          <label className={LABEL}>
+            Warranty months (optional)
+            <input inputMode="numeric" className={FIELD} placeholder="e.g. 6" value={retreadMonths} onChange={(event) => setRetreadMonths(event.target.value)} />
+          </label>
+          <p className="col-span-2 -mt-1 text-xs text-muted">
+            Left empty, this life is expected to run {kmText(lifeSettings.retreadLifeKm)}, the company default.
+          </p>
+        </div>
       ) : null}
 
       {mode === "retread_in" ? (

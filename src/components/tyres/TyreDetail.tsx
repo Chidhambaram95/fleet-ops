@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import {
+  DEFAULT_TYRE_LIFE,
   deleteTyre,
   getTyre,
+  getTyreLifeSettings,
   latestOdometers,
   listTyreEvents,
   listTyres,
@@ -19,21 +21,25 @@ import type { UserRole } from "@domain/rbac/roles";
 import {
   costPerKm,
   currentStintKm,
+  expectedLifeKm,
   kmByBus,
   kmSoFar,
   kmText,
+  lifeKmSoFar,
   totalSpentInr,
+  tyreHealth,
   tyreLives,
   warrantyEndsOn,
   warrantyState,
   whereNow,
 } from "@domain/tyres/calc";
 import { EVENT_LABELS, positionLabel } from "@domain/tyres/catalog";
-import type { Tyre, TyreEvent } from "@domain/tyres/types";
+import type { Tyre, TyreEvent, TyreLifeSettings } from "@domain/tyres/types";
 import { useOrg } from "@/components/billing/OrgContext";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { StatusPill } from "@/components/tyres/TyresPage";
 import { MoveForm, TyreForm, type MoveMode } from "@/components/tyres/TyreForms";
+import { HealthPill, LifeBar } from "@/components/tyres/TyreSheet";
 import { Card, ErrorText, PRIMARY, SmallButton, messageFromUnknown, shortDay, useLoaded } from "@/components/ui/kit";
 
 const ACTIONS: Record<Tyre["status"], { mode: MoveMode; label: string }[]> = {
@@ -91,16 +97,24 @@ export function TyreDetail({
   const today = todayInIst();
   const { data, loading, error, reload } = useLoaded(
     async () => {
-      const [tyre, events, tyres, buses, odometers] = await Promise.all([
+      const [tyre, events, tyres, buses, odometers, settings] = await Promise.all([
         getTyre(supabase, organizationId, tyreId),
         listTyreEvents(supabase, organizationId, tyreId),
         listTyres(supabase, organizationId),
         createSupabaseOperationsRepository(supabase).listBuses(organizationId),
         latestOdometers(supabase, organizationId),
+        getTyreLifeSettings(supabase, organizationId),
       ]);
-      return { tyre, events, tyres, buses, odometers };
+      return { tyre, events, tyres, buses, odometers, settings };
     },
-    { tyre: null as Tyre | null, events: [] as TyreEvent[], tyres: [] as Tyre[], buses: [], odometers: new Map<string, number>() },
+    {
+      tyre: null as Tyre | null,
+      events: [] as TyreEvent[],
+      tyres: [] as Tyre[],
+      buses: [],
+      odometers: new Map<string, number>(),
+      settings: DEFAULT_TYRE_LIFE as TyreLifeSettings,
+    },
     tyreId,
   );
   const [panel, setPanel] = useState<MoveMode | "edit" | null>(null);
@@ -132,6 +146,12 @@ export function TyreDetail({
   const lives = tyreLives(tyre, data.events);
   const byBus = kmByBus(data.events);
   const busOptions = data.buses.map((bus) => ({ id: bus.id, registrationNumber: bus.registrationNumber }));
+  const health = tyreHealth(lifeKmSoFar(tyre, odometer), expectedLifeKm(tyre, data.settings)).health;
+  // The retreader's warranty on the latest retread, when one was entered.
+  const lastRetread = [...data.events].reverse().find((event) => event.kind === "retread_received");
+  const retreadEndsOn = lastRetread
+    ? warrantyEndsOn({ purchaseDate: lastRetread.eventDate, warrantyMonths: lastRetread.warrantyMonths })
+    : null;
 
   function done() {
     setPanel(null);
@@ -190,6 +210,7 @@ export function TyreDetail({
         tyres={data.tyres}
         buses={busOptions}
         odometers={data.odometers}
+        lifeSettings={data.settings}
         onDone={done}
         onCancel={() => setPanel(null)}
       />
@@ -260,6 +281,20 @@ export function TyreDetail({
       <div className="grid gap-4 md:grid-cols-[1fr_380px] md:items-start">
         <div className="flex min-w-0 flex-col gap-4">
           {form ? <div className="md:hidden">{form}</div> : null}
+
+          {tyre.status !== "scrapped" ? (
+            <Card
+              title={tyre.retreadCount ? `Wear since retread ${tyre.retreadCount}` : "Wear"}
+              action={<HealthPill health={health} />}
+            >
+              <LifeBar tyre={tyre} odometer={odometer} settings={data.settings} />
+              <p className="text-xs text-muted">
+                {tyre.lifeLimitKm
+                  ? `Expected km from the ${tyre.retreadCount ? "retread" : "tyre"} warranty.`
+                  : `Expected km is the company default for a ${tyre.retreadCount ? "retreaded" : "new"} tyre. Change it in Company settings.`}
+              </p>
+            </Card>
+          ) : null}
 
           <Card title="Life of this tyre">
             <ol className="flex flex-col">
@@ -352,6 +387,20 @@ export function TyreDetail({
               </p>
             )}
             {tyre.warrantyNote ? <p className="text-sm text-muted">{tyre.warrantyNote}</p> : null}
+            {lastRetread ? (
+              <p className="text-sm">
+                <span className="font-semibold">Retread {tyre.retreadCount}: </span>
+                {lastRetread.warrantyKm || retreadEndsOn
+                  ? [
+                      lastRetread.warrantyKm ? `${kmText(lastRetread.warrantyKm)} (${kmText(lifeKmSoFar(tyre, odometer))} used)` : "",
+                      retreadEndsOn ? `till ${shortDay(retreadEndsOn)}` : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" or ")
+                  : "no retread warranty entered"}
+                {lastRetread.vendor ? ` · ${lastRetread.vendor}` : ""}
+              </p>
+            ) : null}
           </Card>
           <Card title="Details">
             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">

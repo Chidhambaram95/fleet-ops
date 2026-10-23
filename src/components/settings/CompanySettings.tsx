@@ -6,6 +6,7 @@ import { saveCompanyAction } from "@/app/(app)/settings/company/actions";
 import { shortDate, subscriptionStatus } from "@domain/billing/subscription";
 import { BUS_TYPES, type BusType, type CompanyProfile } from "@domain/companies/types";
 import { TourQuoteSettings } from "@/components/tours/TourQuoteSettings";
+import { TyreLifeSettings } from "@/components/tyres/TyreLifeSettings";
 import { MODULE_TITLES } from "@domain/modules/modules";
 import { todayInIst } from "@domain/operations/totals";
 
@@ -129,6 +130,8 @@ export function CompanySettings({ profile, organizationId }: { profile: CompanyP
       {enabled.includes("tour") && allowed.includes("tour") ? (
         <TourQuoteSettings organizationId={organizationId} viewOnly={viewOnly} />
       ) : null}
+
+      <TyreLifeSettings organizationId={organizationId} viewOnly={viewOnly} />
 
       {profile.subscription ? (
         <section className="flex flex-col gap-1 rounded-3xl bg-white p-4 text-sm md:p-5">
