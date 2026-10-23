@@ -12,6 +12,7 @@ import { listRenewals } from "@data/renewals/repository";
 import { listEntriesBetween } from "@data/reports/repository";
 import { listBookings, listTourPayments } from "@data/tours/repository";
 import { listTripsWithLines } from "@data/trips/repository";
+import { listTyreEventsBetween, listTyres } from "@data/tyres/repository";
 import { hasScreen, MODULE_LABELS, type ModuleId } from "@domain/modules/modules";
 import { formatInr, shiftDate, todayInIst } from "@domain/operations/totals";
 import type { BusKind } from "@domain/operations/types";
@@ -56,6 +57,7 @@ const REPORTS: { id: ReportKind; label: string }[] = [
   { id: "renewals", label: "Documents due" },
   { id: "tours", label: "Profit per tour" },
   { id: "dues", label: "Customer dues" },
+  { id: "tyres", label: "Tyres" },
 ];
 
 const PRESETS: { id: Preset; label: string }[] = [
@@ -169,6 +171,8 @@ export function ReportsPage({
     renewals: [],
     tourBookings: [],
     tourPayments: [],
+    tyres: [],
+    tyreEvents: [],
   };
   const { data, loading, error } = useLoaded<ReportData>(
     async () => {
@@ -183,6 +187,8 @@ export function ReportsPage({
         renewals,
         tourBookings,
         tourPayments,
+        tyres,
+        tyreEvents,
       ] = await Promise.all([
         createSupabaseOperationsRepository(supabase).listBuses(organizationId),
         listCrewPeople(supabase, organizationId),
@@ -206,6 +212,9 @@ export function ReportsPage({
         // Tour tables exist only after migration 0016, and only tour companies use them.
         !module || module === "tour" ? listBookings(supabase, organizationId).catch(() => []) : Promise.resolve([]),
         !module || module === "tour" ? listTourPayments(supabase, organizationId).catch(() => []) : Promise.resolve([]),
+        // Tyre tables exist only after migration 0017.
+        listTyres(supabase, organizationId).catch(() => []),
+        listTyreEventsBetween(supabase, organizationId, range).catch(() => []),
       ]);
       return {
         buses,
@@ -219,6 +228,8 @@ export function ReportsPage({
         renewals,
         tourBookings,
         tourPayments,
+        tyres,
+        tyreEvents,
       };
     },
     empty,

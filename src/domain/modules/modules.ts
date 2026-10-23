@@ -31,13 +31,14 @@ export type Screen =
   | "buses"
   | "crew"
   | "renewals"
+  | "tyres"
   | "reports";
 
 /** Screens of each module, in menu order. Town's home is the day book itself. */
 export const MODULE_SCREENS: Record<ModuleId, readonly Screen[]> = {
-  town: ["home", "buses", "crew", "renewals", "reports"],
-  omni: ["home", "trips", "fuel", "intercity", "daybook", "buses", "crew", "renewals", "reports"],
-  tour: ["home", "enquiries", "bookings", "trips", "fuel", "buses", "crew", "renewals", "reports"],
+  town: ["home", "buses", "crew", "renewals", "tyres", "reports"],
+  omni: ["home", "trips", "fuel", "intercity", "daybook", "buses", "crew", "renewals", "tyres", "reports"],
+  tour: ["home", "enquiries", "bookings", "trips", "fuel", "buses", "crew", "renewals", "tyres", "reports"],
 };
 
 export const SCREEN_LABELS: Record<Screen, string> = {
@@ -51,6 +52,7 @@ export const SCREEN_LABELS: Record<Screen, string> = {
   buses: "Buses",
   crew: "Crew",
   renewals: "Documents due",
+  tyres: "Tyres",
   reports: "Reports",
 };
 
@@ -65,6 +67,7 @@ export const SCREEN_HINTS: Record<Screen, string> = {
   buses: "This module's buses",
   crew: "Salaries, advances, drivers and cleaners",
   renewals: "FC, insurance, permit, tax and licences",
+  tyres: "Tyres on each bus, km, retreads and warranty",
   reports: "Profit and loss, trips, fuel and more",
 };
 

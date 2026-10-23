@@ -153,12 +153,14 @@ export function CompanyCostsPage({
                 value={category}
                 onChange={(event) => setCategory(event.target.value as CompanyExpenseCategory)}
               >
-                {COMPANY_EXPENSE_CATEGORIES.map((item) => (
+                {/* Tyre bills are entered on the Tyres screen, so they are charged to the right bus. */}
+                {COMPANY_EXPENSE_CATEGORIES.filter((item) => item.id !== "tyre_retread").map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.label}
                   </option>
                 ))}
               </select>
+              <span className="text-xs font-normal text-muted">Tyre and retread bills go on the Tyres screen of each module.</span>
             </label>
             <fieldset className="flex flex-col gap-2">
               <legend className="mb-1.5 text-[13px] font-semibold">

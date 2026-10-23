@@ -16,8 +16,10 @@ import type { Trip } from "@domain/trips/types";
 import { balanceDue, receivedTotal } from "@domain/tours/calc";
 import { tripLine } from "@domain/tours/messages";
 import type { TourBooking, TourPayment } from "@domain/tours/types";
+import { EVENT_LABELS, positionLabel } from "@domain/tyres/catalog";
+import type { Tyre, TyreEvent } from "@domain/tyres/types";
 
-export type ReportKind = "pnl" | "trips" | "fuel" | "expenses" | "crew" | "renewals" | "tours" | "dues";
+export type ReportKind = "pnl" | "trips" | "fuel" | "expenses" | "crew" | "renewals" | "tours" | "dues" | "tyres";
 
 export type ReportFilters = {
   from: string;
@@ -43,6 +45,9 @@ export type ReportData = {
   renewals: Renewal[];
   tourBookings: TourBooking[];
   tourPayments: TourPayment[];
+  tyres: Tyre[];
+  /** Tyre moves in the date range; charge_inr is what each bus paid that day. */
+  tyreEvents: TyreEvent[];
 };
 
 export type Cell = string | number;
@@ -150,6 +155,16 @@ function intercityShares(data: ReportData, filters: ReportFilters) {
   return shares;
 }
 
+/** Tyre money charged to each bus in the range: purchases, retreads and repairs. */
+function tyreChargesByBus(data: ReportData, filters: ReportFilters) {
+  const byBus = new Map<string, number>();
+  for (const event of data.tyreEvents) {
+    if (!event.busId || !event.chargeInr || !inRange(event.eventDate, filters)) continue;
+    byBus.set(event.busId, (byBus.get(event.busId) ?? 0) + event.chargeInr);
+  }
+  return byBus;
+}
+
 function tripsInRange(data: ReportData, filters: ReportFilters, busIds: Set<string>) {
   return data.trips.filter(
     (trip) => trip.status === "approved" && busIds.has(trip.busId) && inRange(istDay(trip.startedAt), filters),
@@ -163,6 +178,7 @@ export function pnlReport(data: ReportData, filters: ReportFilters): ReportTable
   const trips = tripsInRange(data, filters, busIds);
   const entries = data.entries.filter((entry) => busIds.has(entry.busId) && inRange(entry.date, filters));
   const costs = costSharesByBus(data, filters);
+  const tyreCosts = tyreChargesByBus(data, filters);
 
   const rows: Cell[][] = buses.map((bus) => {
     const busEntries = entries.filter((entry) => entry.busId === bus.id);
@@ -177,30 +193,32 @@ export function pnlReport(data: ReportData, filters: ReportFilters): ReportTable
       }),
     );
     const bankOut = costs.get(bus.id) ?? 0;
+    const tyreOut = tyreCosts.get(bus.id) ?? 0;
     const income = ledgerIn + intercity;
-    const expense = ledgerOut + tripOut + bankOut;
-    return [bus.registrationNumber, ledgerIn, intercity, ledgerOut, tripOut, bankOut, income - expense];
+    const expense = ledgerOut + tripOut + bankOut + tyreOut;
+    return [bus.registrationNumber, ledgerIn, intercity, ledgerOut, tripOut, bankOut, tyreOut, income - expense];
   });
 
   const notes: string[] = [];
   if (wholeCompany(filters)) {
     const salaries = salariesInRange(data, filters);
-    rows.push(["Crew salaries", 0, 0, 0, 0, salaries, -salaries]);
+    rows.push(["Crew salaries", 0, 0, 0, 0, salaries, 0, -salaries]);
   } else {
     notes.push("Salaries are left out when one bus is picked.");
   }
   notes.push("Bank and company costs are shared equally by the buses they were for, or by every bus when none was picked.");
   notes.push("Trip costs are approved trip sheets only: all diesel (cash and credit) plus cash expenses.");
   notes.push("Intercity money is shared equally across the buses it covers. Tour payments count on the day they were received, for the bus on the booking.");
+  notes.push("Tyres: a tyre's price is charged to the first bus it is fitted on, and each retread bill to the next bus it goes on, on the day it is fitted. Repairs go to the bus the tyre is on.");
 
-  const total: Cell[] = ["Total", ...[1, 2, 3, 4, 5, 6].map((column) => sum(rows.map((row) => Number(row[column]))))];
+  const total: Cell[] = ["Total", ...[1, 2, 3, 4, 5, 6, 7].map((column) => sum(rows.map((row) => Number(row[column]))))];
   const income = Number(total[1]) + Number(total[2]);
-  const expense = Number(total[3]) + Number(total[4]) + Number(total[5]);
+  const expense = Number(total[3]) + Number(total[4]) + Number(total[5]) + Number(total[6]);
   return {
     title: "Profit and loss",
-    columns: ["Bus", "Ledger income", "Intercity & tour income", "Ledger costs", "Trip costs", "Bank costs", "Profit"],
-    moneyColumns: [1, 2, 3, 4, 5, 6],
-    shareColumns: [0, 6],
+    columns: ["Bus", "Ledger income", "Intercity & tour income", "Ledger costs", "Trip costs", "Bank costs", "Tyres", "Profit"],
+    moneyColumns: [1, 2, 3, 4, 5, 6, 7],
+    shareColumns: [0, 7],
     rows,
     total,
     summary: [
@@ -330,6 +348,11 @@ export function expensesReport(data: ReportData, filters: ReportFilters): Report
       if (busIds.has(busId)) share += amount;
     }
     if (share) add(companyExpenseLabel(item.category), "Bank & company", share);
+  }
+  for (const event of data.tyreEvents) {
+    if (event.busId && event.chargeInr && busIds.has(event.busId) && inRange(event.eventDate, filters)) {
+      add(event.kind === "repair" ? "Tyre repairs" : "Tyres and retreads", "Tyres", event.chargeInr);
+    }
   }
   const salaries = salariesInRange(data, filters);
   if (salaries) add("Crew salaries", "Salaries", salaries);
@@ -517,6 +540,59 @@ export function duesReport(data: ReportData, filters: ReportFilters): ReportTabl
   };
 }
 
+/**
+ * Tyre cost per bus: what each bus was charged in the range, and the km its
+ * tyres ran on it, with every charge listed underneath.
+ */
+export function tyresReport(data: ReportData, filters: ReportFilters): ReportTable {
+  const buses = selectedBuses(data, filters);
+  const busIds = new Set(buses.map((bus) => bus.id));
+  const events = data.tyreEvents.filter(
+    (event) => event.busId && busIds.has(event.busId) && inRange(event.eventDate, filters),
+  );
+  const tyreNumber = (id: string) => data.tyres.find((tyre) => tyre.id === id)?.tyreNumber ?? "Tyre";
+  const rows: Cell[][] = [];
+  for (const bus of buses) {
+    const theirs = events.filter((event) => event.busId === bus.id);
+    const charged = sum(theirs.map((event) => event.chargeInr));
+    const km = sum(theirs.map((event) => event.kmRun ?? 0));
+    const fitted = theirs.filter((event) => event.kind === "fitted").length;
+    const removed = theirs.filter((event) => event.kind === "removed").length;
+    if (!charged && !km && !fitted && !removed) continue;
+    rows.push([bus.registrationNumber, "", fitted, removed, km, charged]);
+    for (const event of theirs.filter((item) => item.chargeInr)) {
+      rows.push([
+        `  ${event.eventDate}`,
+        `${tyreNumber(event.tyreId)} · ${EVENT_LABELS[event.kind]}${event.position ? ` · ${positionLabel(event.position)}` : ""}`,
+        "",
+        "",
+        "",
+        event.chargeInr,
+      ]);
+    }
+  }
+  const busRows = rows.filter((row) => row[1] === "");
+  const charged = sum(busRows.map((row) => Number(row[5])));
+  const km = sum(busRows.map((row) => Number(row[4])));
+  return {
+    title: "Tyre cost per bus",
+    columns: ["Bus", "Tyre", "Fitted", "Removed", "Km run", "Charged"],
+    moneyColumns: [5],
+    shareColumns: [0, 1, 5],
+    rows,
+    total: ["Total", "", sum(busRows.map((row) => Number(row[2]))), sum(busRows.map((row) => Number(row[3]))), km, charged],
+    summary: [
+      { label: "Tyre cost", value: charged, tone: "out" },
+      { label: "Km run", value: km },
+      { label: "Tyres in use", value: data.tyres.filter((tyre) => tyre.status === "fitted" && busIds.has(tyre.currentBusId ?? "")).length },
+    ],
+    notes: [
+      "A tyre's price is charged to the first bus it is fitted on, and each retread bill to the next bus it goes on. Repairs go to the bus the tyre is on.",
+      "Km run counts tyres taken off or moved in these dates; tyres still running are counted when they come off.",
+    ],
+  };
+}
+
 export function buildReport(kind: ReportKind, data: ReportData, filters: ReportFilters, today: string): ReportTable {
   switch (kind) {
     case "pnl":
@@ -535,6 +611,8 @@ export function buildReport(kind: ReportKind, data: ReportData, filters: ReportF
       return toursReport(data, filters);
     case "dues":
       return duesReport(data, filters);
+    case "tyres":
+      return tyresReport(data, filters);
   }
 }
 
