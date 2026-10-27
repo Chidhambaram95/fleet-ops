@@ -4,6 +4,8 @@ import type {
   ScrapReceivedVia,
   Tyre,
   TyreEvent,
+  TyreClaim,
+  TyreClaimStatus,
   TyreEventKind,
   TyreLifeSettings,
   TyreMove,
@@ -51,6 +53,7 @@ function mapTyre(row: Row): Tyre {
     lifeKm: Number(row.life_km ?? row.total_km ?? 0),
     lifeLimitKm: row.life_limit_km === undefined ? num(row.warranty_km) : num(row.life_limit_km),
     scrapPileOn: typeof row.scrap_pile_on === "string" ? row.scrap_pile_on : null,
+    warrantyClaimOn: typeof row.warranty_claim_on === "string" ? row.warranty_claim_on : null,
   };
 }
 
@@ -75,6 +78,7 @@ function mapEvent(row: Row): TyreEvent {
     warrantyKm: num(row.warranty_km),
     warrantyMonths: num(row.warranty_months),
     scrapSaleId: typeof row.scrap_sale_id === "string" ? row.scrap_sale_id : null,
+    warrantyClaimId: typeof row.warranty_claim_id === "string" ? row.warranty_claim_id : null,
   };
 }
 
@@ -357,4 +361,103 @@ export async function listScrapSales(
     tyreCount: Number(row.tyre_count ?? 0),
     note: str(row.note),
   }));
+}
+
+function mapClaim(row: Row): TyreClaim {
+  return {
+    id: str(row.id),
+    tyreId: str(row.tyre_id),
+    raisedOn: str(row.raised_on),
+    dealer: str(row.dealer),
+    reason: str(row.reason),
+    note: str(row.note),
+    kmAtClaim: Number(row.km_at_claim ?? 0),
+    lifeKmAtClaim: Number(row.life_km_at_claim ?? 0),
+    status: str(row.status) as TyreClaimStatus,
+    closedOn: typeof row.closed_on === "string" ? row.closed_on : null,
+    outcomeNote: str(row.outcome_note),
+    creditInr: num(row.credit_inr),
+    creditBusId: typeof row.credit_bus_id === "string" ? row.credit_bus_id : null,
+    creditBusLabel: str(row.credit_bus_label),
+    replacementTyreId: typeof row.replacement_tyre_id === "string" ? row.replacement_tyre_id : null,
+    topUpInr: num(row.top_up_inr),
+  };
+}
+
+/** Warranty claims, newest first: for one tyre, or every claim of the company. */
+export async function listClaims(
+  client: SupabaseClient,
+  organizationId: string,
+  tyreId?: string,
+): Promise<TyreClaim[]> {
+  let query = client.from("tyre_warranty_claims").select("*").eq("organization_id", organizationId);
+  if (tyreId) query = query.eq("tyre_id", tyreId);
+  const { data, error } = await query.order("raised_on", { ascending: false }).limit(2000);
+  throwIfError(error);
+  return ((data ?? []) as Row[]).map(mapClaim);
+}
+
+/** Credits settled between two dates (inclusive), for reports. */
+export async function listWarrantyCredits(
+  client: SupabaseClient,
+  organizationId: string,
+  range: { from: string; to: string },
+): Promise<TyreClaim[]> {
+  const { data, error } = await client
+    .from("tyre_warranty_claims")
+    .select("*")
+    .eq("organization_id", organizationId)
+    .eq("status", "credited")
+    .gte("closed_on", range.from)
+    .lte("closed_on", range.to)
+    .limit(2000);
+  throwIfError(error);
+  return ((data ?? []) as Row[]).map(mapClaim);
+}
+
+export async function raiseClaim(
+  client: SupabaseClient,
+  tyreId: string,
+  input: { date: string; dealer: string; reason: string; note: string },
+): Promise<string> {
+  const { data, error } = await client.rpc("tyre_raise_claim", {
+    p_tyre: tyreId,
+    p_date: input.date,
+    p_dealer: input.dealer,
+    p_reason: input.reason,
+    p_note: input.note,
+  });
+  throwIfError(error);
+  return String(data);
+}
+
+export async function cancelClaim(client: SupabaseClient, claimId: string) {
+  const { error } = await client.rpc("tyre_cancel_claim", { p_claim: claimId });
+  throwIfError(error);
+}
+
+/** The dealer's answer. Returns the new tyre's id when the tyre was replaced. */
+export async function closeClaim(
+  client: SupabaseClient,
+  claimId: string,
+  input: {
+    outcome: "replaced" | "credited" | "rejected";
+    date: string;
+    amountInr: number | null;
+    newTyreNumber: string;
+    after: "stock" | "pile";
+    note: string;
+  },
+): Promise<string | null> {
+  const { data, error } = await client.rpc("tyre_close_claim", {
+    p_claim: claimId,
+    p_outcome: input.outcome,
+    p_date: input.date,
+    p_amount: input.amountInr,
+    p_new_number: input.newTyreNumber,
+    p_after: input.after,
+    p_note: input.note,
+  });
+  throwIfError(error);
+  return typeof data === "string" ? data : null;
 }

@@ -43,6 +43,8 @@ export type Tyre = {
   lifeLimitKm: number | null;
   /** Off the bus and waiting to be sold as scrap, since this day. */
   scrapPileOn: string | null;
+  /** With the dealer on a pending warranty claim, since this day. */
+  warrantyClaimOn: string | null;
 };
 
 /** Company defaults for how long a tyre should last, per life. */
@@ -88,6 +90,32 @@ export type TyreEvent = {
   warrantyMonths: number | null;
   /** Scrapped as part of this scrap sale. */
   scrapSaleId: string | null;
+  /** Scrapped when this warranty claim was settled. */
+  warrantyClaimId: string | null;
+};
+
+export type TyreClaimStatus = "pending" | "replaced" | "credited" | "rejected" | "cancelled";
+
+/** A warranty claim with the dealer and how it ended. */
+export type TyreClaim = {
+  id: string;
+  tyreId: string;
+  raisedOn: string;
+  dealer: string;
+  reason: string;
+  note: string;
+  kmAtClaim: number;
+  lifeKmAtClaim: number;
+  status: TyreClaimStatus;
+  closedOn: string | null;
+  outcomeNote: string;
+  /** Credited: the money, which goes back to the bus that paid for this life of the tyre. */
+  creditInr: number | null;
+  creditBusId: string | null;
+  creditBusLabel: string;
+  /** Replaced: the new tyre and the top-up paid for it. */
+  replacementTyreId: string | null;
+  topUpInr: number | null;
 };
 
 export type ScrapReceivedVia = "cash" | "account";

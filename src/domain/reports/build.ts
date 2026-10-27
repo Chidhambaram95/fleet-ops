@@ -17,7 +17,7 @@ import { balanceDue, receivedTotal } from "@domain/tours/calc";
 import { tripLine } from "@domain/tours/messages";
 import type { TourBooking, TourPayment } from "@domain/tours/types";
 import { EVENT_LABELS, positionLabel } from "@domain/tyres/catalog";
-import type { Tyre, TyreEvent, TyreScrapSale } from "@domain/tyres/types";
+import type { Tyre, TyreClaim, TyreEvent, TyreScrapSale } from "@domain/tyres/types";
 
 export type ReportKind = "pnl" | "trips" | "fuel" | "expenses" | "crew" | "renewals" | "tours" | "dues" | "tyres";
 
@@ -50,6 +50,8 @@ export type ReportData = {
   tyreEvents: TyreEvent[];
   /** Tyres sold as scrap in the date range: company income. */
   scrapSales: TyreScrapSale[];
+  /** Warranty credits settled in the date range: money back to the bus that paid. */
+  warrantyCredits: TyreClaim[];
 };
 
 export type Cell = string | number;
@@ -164,7 +166,16 @@ function tyreChargesByBus(data: ReportData, filters: ReportFilters) {
     if (!event.busId || !event.chargeInr || !inRange(event.eventDate, filters)) continue;
     byBus.set(event.busId, (byBus.get(event.busId) ?? 0) + event.chargeInr);
   }
+  for (const credit of creditsInRange(data, filters)) {
+    byBus.set(credit.creditBusId!, (byBus.get(credit.creditBusId!) ?? 0) - (credit.creditInr ?? 0));
+  }
   return byBus;
+}
+
+function creditsInRange(data: ReportData, filters: ReportFilters) {
+  return data.warrantyCredits.filter(
+    (claim) => claim.creditBusId && claim.creditInr && claim.closedOn && inRange(claim.closedOn, filters),
+  );
 }
 
 function scrapInRange(data: ReportData, filters: ReportFilters) {
@@ -217,7 +228,7 @@ export function pnlReport(data: ReportData, filters: ReportFilters): ReportTable
   notes.push("Bank and company costs are shared equally by the buses they were for, or by every bus when none was picked.");
   notes.push("Trip costs are approved trip sheets only: all diesel (cash and credit) plus cash expenses.");
   notes.push("Intercity money is shared equally across the buses it covers. Tour payments count on the day they were received, for the bus on the booking.");
-  notes.push("Tyres: a tyre's price is charged to the first bus it is fitted on, and each retread bill to the next bus it goes on, on the day it is fitted. Repairs go to the bus the tyre is on.");
+  notes.push("Tyres: a tyre's price is charged to the first bus it is fitted on, and each retread bill to the next bus it goes on, on the day it is fitted. Repairs go to the bus the tyre is on. A warranty credit is taken off the bus that paid for the tyre.");
 
   const total: Cell[] = ["Total", ...[1, 2, 3, 4, 5, 6, 7].map((column) => sum(rows.map((row) => Number(row[column]))))];
   const income = Number(total[1]) + Number(total[2]);
@@ -361,6 +372,9 @@ export function expensesReport(data: ReportData, filters: ReportFilters): Report
     if (event.busId && event.chargeInr && busIds.has(event.busId) && inRange(event.eventDate, filters)) {
       add(event.kind === "repair" ? "Tyre repairs" : "Tyres and retreads", "Tyres", event.chargeInr);
     }
+  }
+  for (const credit of creditsInRange(data, filters)) {
+    if (busIds.has(credit.creditBusId!)) add("Tyre warranty credits", "Tyres", -(credit.creditInr ?? 0));
   }
   const salaries = salariesInRange(data, filters);
   if (salaries) add("Crew salaries", "Salaries", salaries);
@@ -566,8 +580,10 @@ export function tyresReport(data: ReportData, filters: ReportFilters): ReportTab
     const km = sum(theirs.map((event) => event.kmRun ?? 0));
     const fitted = theirs.filter((event) => event.kind === "fitted").length;
     const removed = theirs.filter((event) => event.kind === "removed").length;
-    if (!charged && !km && !fitted && !removed) continue;
-    rows.push([bus.registrationNumber, "", fitted, removed, km, charged]);
+    const credits = creditsInRange(data, filters).filter((claim) => claim.creditBusId === bus.id);
+    const credited = sum(credits.map((claim) => claim.creditInr ?? 0));
+    if (!charged && !km && !fitted && !removed && !credited) continue;
+    rows.push([bus.registrationNumber, "", fitted, removed, km, charged - credited]);
     for (const event of theirs.filter((item) => item.chargeInr)) {
       rows.push([
         `  ${event.eventDate}`,
@@ -577,6 +593,9 @@ export function tyresReport(data: ReportData, filters: ReportFilters): ReportTab
         "",
         event.chargeInr,
       ]);
+    }
+    for (const claim of credits) {
+      rows.push([`  ${claim.closedOn}`, `${tyreNumber(claim.tyreId)} · Warranty credit`, "", "", "", -(claim.creditInr ?? 0)]);
     }
   }
   const busRows = rows.filter((row) => row[1] === "");

@@ -85,6 +85,7 @@ export function TyreSheet({
   onRotate,
   onRemove,
   onRepair,
+  onClaim,
   onClose,
 }: {
   tyre: Tyre;
@@ -97,6 +98,7 @@ export function TyreSheet({
   onRotate: () => void;
   onRemove: () => void;
   onRepair: () => void;
+  onClaim: () => void;
   onClose: () => void;
 }) {
   const health = tyreHealth(lifeKmSoFar(tyre, odometer), expectedLifeKm(tyre, settings)).health;
@@ -158,6 +160,11 @@ export function TyreSheet({
           History
         </Link>
       </div>
+      {!readOnly ? (
+        <button type="button" className={`${act} border-2 border-brand-pale text-brand`} onClick={onClaim}>
+          Warranty claim
+        </button>
+      ) : null}
     </div>
   );
 }

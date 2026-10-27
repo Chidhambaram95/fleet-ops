@@ -9,6 +9,7 @@ import {
   deleteTyre,
   getTyre,
   getTyreLifeSettings,
+  listClaims,
   latestOdometers,
   listTyreEvents,
   listTyres,
@@ -36,10 +37,11 @@ import {
   whereNow,
 } from "@domain/tyres/calc";
 import { EVENT_LABELS, positionLabel } from "@domain/tyres/catalog";
-import type { Tyre, TyreEvent, TyreLifeSettings } from "@domain/tyres/types";
+import type { Tyre, TyreClaim, TyreEvent, TyreLifeSettings } from "@domain/tyres/types";
 import { useOrg } from "@/components/billing/OrgContext";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { StatusPill } from "@/components/tyres/TyresPage";
+import { ClaimForm, CloseClaimForm, claimOutcome } from "@/components/tyres/TyreClaims";
 import { MoveForm, TyreForm, type MoveMode } from "@/components/tyres/TyreForms";
 import { HealthPill, LifeBar } from "@/components/tyres/TyreSheet";
 import { Card, ErrorText, PRIMARY, SmallButton, messageFromUnknown, shortDay, useLoaded } from "@/components/ui/kit";
@@ -99,15 +101,17 @@ export function TyreDetail({
   const today = todayInIst();
   const { data, loading, error, reload } = useLoaded(
     async () => {
-      const [tyre, events, tyres, buses, odometers, settings] = await Promise.all([
+      const [tyre, events, tyres, buses, odometers, settings, claims] = await Promise.all([
         getTyre(supabase, organizationId, tyreId),
         listTyreEvents(supabase, organizationId, tyreId),
         listTyres(supabase, organizationId),
         createSupabaseOperationsRepository(supabase).listBuses(organizationId),
         latestOdometers(supabase, organizationId),
         getTyreLifeSettings(supabase, organizationId),
+        // Warranty claims exist only after migration 0021.
+        listClaims(supabase, organizationId, tyreId).catch((): TyreClaim[] => []),
       ]);
-      return { tyre, events, tyres, buses, odometers, settings };
+      return { tyre, events, tyres, buses, odometers, settings, claims };
     },
     {
       tyre: null as Tyre | null,
@@ -116,10 +120,11 @@ export function TyreDetail({
       buses: [],
       odometers: new Map<string, number>(),
       settings: DEFAULT_TYRE_LIFE as TyreLifeSettings,
+      claims: [] as TyreClaim[],
     },
     tyreId,
   );
-  const [panel, setPanel] = useState<MoveMode | "edit" | null>(null);
+  const [panel, setPanel] = useState<MoveMode | "edit" | "claim" | "answer" | null>(null);
   const [actionError, setActionError] = useState("");
   const listHref = moduleHref(module, "tyres");
   const admin = role === "admin";
@@ -141,7 +146,10 @@ export function TyreDetail({
   const odometer = tyre.currentBusId ? (data.odometers.get(tyre.currentBusId) ?? null) : null;
   const km = kmSoFar(tyre, odometer);
   const stint = currentStintKm(tyre, odometer);
-  const spent = totalSpentInr(tyre, data.events);
+  const credits = data.claims.reduce((total, claim) => total + (claim.status === "credited" ? (claim.creditInr ?? 0) : 0), 0);
+  const spent = totalSpentInr(tyre, data.events) - credits;
+  const pendingClaim = data.claims.find((claim) => claim.status === "pending") ?? null;
+  const tyreNumberOf = (id: string | null) => data.tyres.find((item) => item.id === id)?.tyreNumber ?? "a new tyre";
   const perKm = costPerKm(spent, km);
   const endsOn = warrantyEndsOn(tyre);
   const warranty = warrantyState(tyre, km, today);
@@ -150,7 +158,12 @@ export function TyreDetail({
   const busOptions = data.buses.map((bus) => ({ id: bus.id, registrationNumber: bus.registrationNumber }));
   const onPile = onScrapPile(tyre);
   // A tyre on the scrap pile can only come back off it or be scrapped on its own.
-  const actions = onPile ? ACTIONS.in_stock.filter((action) => action.mode === "scrap") : ACTIONS[tyre.status];
+  const actions = pendingClaim
+    ? []
+    : onPile
+      ? ACTIONS.in_stock.filter((action) => action.mode === "scrap")
+      : ACTIONS[tyre.status];
+  const canClaim = !pendingClaim && !onPile && (tyre.status === "fitted" || tyre.status === "in_stock");
   const health = tyreHealth(lifeKmSoFar(tyre, odometer), expectedLifeKm(tyre, data.settings)).health;
   // The retreader's warranty on the latest retread, when one was entered.
   const lastRetread = [...data.events].reverse().find((event) => event.kind === "retread_received");
@@ -205,7 +218,18 @@ export function TyreDetail({
   }
 
   const form =
-    panel === "edit" ? (
+    panel === "claim" ? (
+      <ClaimForm
+        supabase={supabase}
+        tyre={tyre}
+        busName={busName(tyre.currentBusId)}
+        odometer={odometer}
+        onDone={done}
+        onCancel={() => setPanel(null)}
+      />
+    ) : panel === "answer" && pendingClaim ? (
+      <CloseClaimForm supabase={supabase} claim={pendingClaim} tyre={tyre} onDone={done} onCancel={() => setPanel(null)} />
+    ) : panel === "edit" ? (
       <TyreForm
         supabase={supabase}
         organizationId={organizationId}
@@ -216,7 +240,7 @@ export function TyreDetail({
         onDone={done}
         onCancel={() => setPanel(null)}
       />
-    ) : panel ? (
+    ) : panel && panel !== "answer" ? (
       <MoveForm
         key={panel}
         supabase={supabase}
@@ -254,7 +278,7 @@ export function TyreDetail({
                 "No brand entered"}
             </p>
           </div>
-          <StatusPill status={tyre.status} onPile={!!tyre.scrapPileOn} />
+          <StatusPill status={tyre.status} onPile={!!tyre.scrapPileOn} onClaim={!!tyre.warrantyClaimOn} />
         </div>
         <p className="font-semibold">{whereNow(tyre, busName)}</p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -268,7 +292,7 @@ export function TyreDetail({
           </div>
           <div>
             <p className="text-xl font-extrabold">{formatInr(spent)}</p>
-            <p className="text-xs text-brand-pale">Spent (price, retreads, repairs)</p>
+            <p className="text-xs text-brand-pale">{credits ? "Spent, less warranty credit" : "Spent (price, retreads, repairs)"}</p>
           </div>
           <div>
             <p className="text-xl font-extrabold">{perKm != null ? `₹${perKm.toFixed(2)}` : "–"}</p>
@@ -277,9 +301,27 @@ export function TyreDetail({
         </div>
       </section>
 
-      {!org.viewOnly && ACTIONS[tyre.status].length ? (
-        <div className={`grid grid-cols-2 gap-2 ${actions.length > 3 ? "sm:grid-cols-5" : "sm:grid-cols-4"}`}>
-          {tyre.status === "in_stock" ? (
+      {pendingClaim ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-warn-bg px-4 py-3 text-warn-ink md:px-5">
+          <p className="text-sm font-semibold">
+            Warranty claim with {pendingClaim.dealer || "the dealer"} since {shortDay(pendingClaim.raisedOn)} · {pendingClaim.reason}
+          </p>
+          {!org.viewOnly ? (
+            <button type="button" className={PRIMARY} onClick={() => setPanel("answer")}>
+              Dealer answered
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
+      {!org.viewOnly && (actions.length || canClaim) ? (
+        <div className={`grid grid-cols-2 gap-2 ${actions.length > 2 ? "sm:grid-cols-6" : "sm:grid-cols-4"}`}>
+          {canClaim ? (
+            <button type="button" onClick={() => setPanel("claim")} className="h-12 rounded-2xl bg-white px-5 text-[15px] font-bold text-brand">
+              Warranty claim
+            </button>
+          ) : null}
+          {tyre.status === "in_stock" && !pendingClaim ? (
             <button
               type="button"
               onClick={() => void togglePile()}
@@ -411,6 +453,14 @@ export function TyreDetail({
               </p>
             )}
             {tyre.warrantyNote ? <p className="text-sm text-muted">{tyre.warrantyNote}</p> : null}
+            {data.claims
+              .filter((claim) => claim.status !== "pending" && claim.status !== "cancelled")
+              .map((claim) => (
+                <p key={claim.id} className="text-sm">
+                  <span className="font-semibold">Claim {shortDay(claim.raisedOn)}: </span>
+                  {claim.reason} · {claimOutcome(claim, tyreNumberOf)}
+                </p>
+              ))}
             {lastRetread ? (
               <p className="text-sm">
                 <span className="font-semibold">Retread {tyre.retreadCount}: </span>

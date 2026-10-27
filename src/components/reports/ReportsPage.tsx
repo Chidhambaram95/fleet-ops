@@ -12,7 +12,7 @@ import { listRenewals } from "@data/renewals/repository";
 import { listEntriesBetween } from "@data/reports/repository";
 import { listBookings, listTourPayments } from "@data/tours/repository";
 import { listTripsWithLines } from "@data/trips/repository";
-import { listScrapSales, listTyreEventsBetween, listTyres } from "@data/tyres/repository";
+import { listScrapSales, listTyreEventsBetween, listTyres, listWarrantyCredits } from "@data/tyres/repository";
 import { hasScreen, MODULE_LABELS, type ModuleId } from "@domain/modules/modules";
 import { formatInr, shiftDate, todayInIst } from "@domain/operations/totals";
 import type { BusKind } from "@domain/operations/types";
@@ -174,6 +174,7 @@ export function ReportsPage({
     tyres: [],
     tyreEvents: [],
     scrapSales: [],
+    warrantyCredits: [],
   };
   const { data, loading, error } = useLoaded<ReportData>(
     async () => {
@@ -191,6 +192,7 @@ export function ReportsPage({
         tyres,
         tyreEvents,
         scrapSales,
+        warrantyCredits,
       ] = await Promise.all([
         createSupabaseOperationsRepository(supabase).listBuses(organizationId),
         listCrewPeople(supabase, organizationId),
@@ -219,6 +221,8 @@ export function ReportsPage({
         listTyreEventsBetween(supabase, organizationId, range).catch(() => []),
         // Scrap sales exist only after migration 0020.
         listScrapSales(supabase, organizationId, range).catch(() => []),
+        // Warranty claims exist only after migration 0021.
+        listWarrantyCredits(supabase, organizationId, range).catch(() => []),
       ]);
       return {
         buses,
@@ -235,6 +239,7 @@ export function ReportsPage({
         tyres,
         tyreEvents,
         scrapSales,
+        warrantyCredits,
       };
     },
     empty,
