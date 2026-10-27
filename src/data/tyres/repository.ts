@@ -232,15 +232,15 @@ export async function undoLastTyreMove(client: SupabaseClient, tyreId: string) {
 }
 
 /**
- * The latest odometer known for a bus: its newest trip-sheet closing km or
- * tyre reading, whichever is higher. Null when there is none.
+ * The latest odometer known for a bus: its newest trip-sheet closing km, tyre
+ * reading or crew odometer reading, whichever is higher. Null when there is none.
  */
 export async function latestOdometer(
   client: SupabaseClient,
   organizationId: string,
   busId: string,
 ): Promise<number | null> {
-  const [trips, tyres] = await Promise.all([
+  const [trips, tyres, readings] = await Promise.all([
     client
       .from("trips")
       .select("end_km")
@@ -257,19 +257,28 @@ export async function latestOdometer(
       .not("odometer_km", "is", null)
       .order("odometer_km", { ascending: false })
       .limit(1),
+    client
+      .from("odometer_readings")
+      .select("odometer_km")
+      .eq("organization_id", organizationId)
+      .eq("bus_id", busId)
+      .order("odometer_km", { ascending: false })
+      .limit(1),
   ]);
   throwIfError(trips.error);
   throwIfError(tyres.error);
-  const readings = [
+  throwIfError(readings.error);
+  const known = [
     num((trips.data?.[0] as Row | undefined)?.end_km),
     num((tyres.data?.[0] as Row | undefined)?.odometer_km),
+    num((readings.data?.[0] as Row | undefined)?.odometer_km),
   ].filter((value): value is number => value != null);
-  return readings.length ? Math.max(...readings) : null;
+  return known.length ? Math.max(...known) : null;
 }
 
 /** Latest odometer for every bus at once, for the km-so-far figures. */
 export async function latestOdometers(client: SupabaseClient, organizationId: string): Promise<Map<string, number>> {
-  const [trips, tyres] = await Promise.all([
+  const [trips, tyres, readings] = await Promise.all([
     client
       .from("trips")
       .select("bus_id, end_km")
@@ -285,9 +294,16 @@ export async function latestOdometers(client: SupabaseClient, organizationId: st
       .not("odometer_km", "is", null)
       .order("odometer_km", { ascending: false })
       .limit(5000),
+    client
+      .from("odometer_readings")
+      .select("bus_id, odometer_km")
+      .eq("organization_id", organizationId)
+      .order("odometer_km", { ascending: false })
+      .limit(5000),
   ]);
   throwIfError(trips.error);
   throwIfError(tyres.error);
+  throwIfError(readings.error);
   const latest = new Map<string, number>();
   const note = (busId: unknown, km: unknown) => {
     if (typeof busId !== "string" || km == null) return;
@@ -295,6 +311,7 @@ export async function latestOdometers(client: SupabaseClient, organizationId: st
   };
   for (const row of (trips.data ?? []) as Row[]) note(row.bus_id, row.end_km);
   for (const row of (tyres.data ?? []) as Row[]) note(row.bus_id, row.odometer_km);
+  for (const row of (readings.data ?? []) as Row[]) note(row.bus_id, row.odometer_km);
   return latest;
 }
 

@@ -179,29 +179,33 @@ export class SupabaseOperationsRepository
     }
 
     const createdBy = await getAuthenticatedUserId(this.client);
+    // Crew can add entries but not read them back, so the row is built here
+    // instead of returned by the insert.
+    const row: DailyEntryRow = {
+      id: crypto.randomUUID(),
+      bus_id: input.busId,
+      entry_date: input.date,
+      kind: input.kind,
+      category: input.category,
+      amount_inr: amountInr,
+      note: input.note.trim(),
+      created_at: new Date().toISOString(),
+    };
 
-    const { data, error } = await this.client
-      .from("daily_entries")
-      .insert({
-        organization_id: organizationId,
-        bus_id: input.busId,
-        entry_date: input.date,
-        kind: input.kind,
-        category: input.category,
-        amount_inr: amountInr,
-        note: input.note.trim(),
-        created_by: createdBy,
-      })
-      .select(
-        "id, bus_id, entry_date, kind, category, amount_inr, note, created_at",
-      )
-      .single();
+    const { error } = await this.client.from("daily_entries").insert({
+      id: row.id,
+      organization_id: organizationId,
+      bus_id: row.bus_id,
+      entry_date: row.entry_date,
+      kind: row.kind,
+      category: row.category,
+      amount_inr: row.amount_inr,
+      note: row.note,
+      created_by: createdBy,
+    });
 
     throwIfError(error);
-    if (!data) {
-      throw new Error("Save did not return an entry.");
-    }
-    return mapDailyEntry(data as DailyEntryRow);
+    return mapDailyEntry(row);
   }
 
   async removeEntry(organizationId: string, id: string) {

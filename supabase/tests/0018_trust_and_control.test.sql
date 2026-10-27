@@ -230,10 +230,13 @@ end $$;
 -- U2: frozen days
 -- ---------------------------------------------------------------------------
 select pg_temp.act_as('00000000-0000-0000-0000-0000000000c1');
-do $$ begin
+-- Since 0022 crew can't change entries at all, so the update finds no row.
+do $$ declare n int; begin
   begin
     update public.daily_entries set amount_inr = 1 where id = '00000000-0000-0000-0000-00000000e001';
-    raise exception 'FAIL U2-1 crew changed a 5-day-old entry';
+    get diagnostics n = row_count;
+    if n > 0 then raise exception 'FAIL U2-1 crew changed a 5-day-old entry'; end if;
+    raise notice 'PASS U2-1 crew cannot change an old entry';
   exception when raise_exception then
     if sqlerrm like 'FAIL%' then raise; end if;
     raise notice 'PASS U2-1 old day frozen for crew: %', sqlerrm;

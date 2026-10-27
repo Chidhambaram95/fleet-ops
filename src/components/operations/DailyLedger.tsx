@@ -5,6 +5,8 @@ import type { ModuleId } from "@domain/modules/modules";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { getActiveMembership } from "@data/auth/session";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
+import { addOdometerReading } from "@data/operations/odometer";
+import { latestOdometers } from "@data/tyres/repository";
 import { hasPublicSupabaseEnv } from "@data/supabase/env";
 import {
   categoryLabel,
@@ -86,6 +88,12 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
   const [scanning, setScanning] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [dayLocked, setDayLocked] = useState(false);
+  // Crew see only what they just saved, never the day's totals or entries.
+  const [lastSaved, setLastSaved] = useState("");
+  const [odometerKm, setOdometerKm] = useState("");
+  const [odometerSaving, setOdometerSaving] = useState(false);
+  const [odometerError, setOdometerError] = useState("");
+  const [odometers, setOdometers] = useState<Map<string, number>>(new Map());
   const sideAmountRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -194,7 +202,11 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
   }, [repo, organizationId, role, assignedBusId, module]);
 
   useEffect(() => {
-    if (!organizationId) {
+    if (!organizationId || !role) {
+      return;
+    }
+    if (role === "crew") {
+      setLoading(false);
       return;
     }
 
@@ -225,7 +237,24 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
     return () => {
       cancelled = true;
     };
-  }, [repo, organizationId, date]);
+  }, [repo, organizationId, role, date]);
+
+  useEffect(() => {
+    if (!organizationId || !role || role === "crew") {
+      return;
+    }
+    let cancelled = false;
+    latestOdometers(supabase, organizationId)
+      .then((next) => {
+        if (!cancelled) setOdometers(next);
+      })
+      .catch(() => {
+        // The bus cards still work without the km.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase, organizationId, role]);
 
   const entries = useMemo(() => {
     if (!module) return allEntries;
@@ -303,6 +332,11 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
       setEntries((current) =>
         current.map((entry) => (entry.id === optimistic.id ? saved : entry)),
       );
+      const bus = buses.find((item) => item.id === saved.busId);
+      setLastSaved(
+        `Saved: ${categoryLabel(saved.kind, saved.category)} ${formatInr(saved.amountInr)}` +
+          (bus ? ` for ${bus.registrationNumber}` : ""),
+      );
     } catch (saveError) {
       setEntries((current) =>
         current.filter((entry) => entry.id !== optimistic.id),
@@ -310,6 +344,33 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
       setError(messageFromUnknown(saveError));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function saveOdometer() {
+    const km = Number(odometerKm.replace(/[\s,]/g, ""));
+    if (!organizationId || !busId) {
+      setOdometerError("No bus is given to you yet. Ask your admin.");
+      return;
+    }
+    if (!odometerKm.trim() || !Number.isInteger(km) || km < 0) {
+      setOdometerError("Enter the odometer in km.");
+      return;
+    }
+    setOdometerSaving(true);
+    setOdometerError("");
+    try {
+      await addOdometerReading(supabase, organizationId, busId, km);
+      const bus = buses.find((item) => item.id === busId);
+      setLastSaved(
+        `Saved: odometer ${km.toLocaleString("en-IN")} km` +
+          (bus ? ` for ${bus.registrationNumber}` : ""),
+      );
+      setOdometerKm("");
+    } catch (saveError) {
+      setOdometerError(messageFromUnknown(saveError));
+    } finally {
+      setOdometerSaving(false);
     }
   }
 
@@ -549,6 +610,167 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
     );
   }
 
+  const actionButtons = canWrite ? (
+        <div className="flex flex-col gap-2.5 lg:hidden">
+          <label className="flex min-h-16 cursor-pointer items-center justify-center gap-3 rounded-3xl bg-white px-4 text-base font-bold text-brand shadow-[0_1px_0_rgba(26,27,46,0.04)] active:bg-brand-soft">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-soft">
+              <CameraIcon />
+            </span>
+            {scanning ? "Reading the bill…" : "Scan a bill"}
+            {scanInput()}
+          </label>
+          <div className="grid grid-cols-2 gap-2.5">
+            <button
+              type="button"
+              onClick={() => openSheet("income")}
+              className="flex min-h-14 items-center justify-center gap-2 rounded-3xl bg-white text-[15px] font-bold text-money-in"
+            >
+              <ArrowIcon direction="in" />
+              Money in
+            </button>
+            <button
+              type="button"
+              onClick={() => openSheet("expense")}
+              className="flex min-h-14 items-center justify-center gap-2 rounded-3xl bg-white text-[15px] font-bold text-money-out"
+            >
+              <ArrowIcon direction="out" />
+              Money out
+            </button>
+          </div>
+        </div>
+  ) : null;
+
+  const entryPanels = (
+    <>
+      <aside className="hidden flex-col gap-4 rounded-3xl bg-white p-5 lg:sticky lg:top-24 lg:flex">
+        <h2 className="text-lg font-extrabold">Add cash entry</h2>
+        {renderForm("side")}
+      </aside>
+
+      {sheetOpen ? (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-ink/45 lg:hidden">
+          <button
+            type="button"
+            aria-label="Close"
+            className="flex-1"
+            onClick={() => setSheetOpen(false)}
+          />
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-label="Add cash entry"
+            className="mx-auto flex max-h-[90dvh] w-full max-w-lg flex-col gap-4 overflow-y-auto rounded-t-[28px] bg-white px-5 pb-[max(24px,env(safe-area-inset-bottom))] pt-5"
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-extrabold">Add cash entry</h2>
+              <button
+                type="button"
+                className="px-2 text-sm font-bold text-brand"
+                onClick={() => setSheetOpen(false)}
+              >
+                Cancel
+              </button>
+            </div>
+            {renderForm("sheet")}
+          </section>
+        </div>
+      ) : null}
+    </>
+  );
+
+  if (crewLocked) {
+    const myBus = visibleBuses[0];
+    return (
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+        <div className="flex min-w-0 flex-col gap-4">
+          <section className="flex flex-col gap-1 rounded-3xl bg-brand p-5 text-white">
+            <span className="text-[13px] font-semibold text-brand-pale">
+              Your bus · Today, {displayDate(todayInIst())}
+            </span>
+            <span className="text-2xl font-extrabold tracking-tight">
+              {myBus ? myBus.registrationNumber : loading ? "…" : "No bus yet"}
+            </span>
+            {myBus?.routeLabel ? (
+              <span className="text-sm text-brand-pale">{myBus.routeLabel}</span>
+            ) : null}
+          </section>
+
+          {organizationId ? (
+            <RecordLock
+              supabase={supabase}
+              organizationId={organizationId}
+              target={{ day: date }}
+              role={role}
+              onLockedChange={setDayLocked}
+            />
+          ) : null}
+
+          {!loading && !myBus && !error ? (
+            <p className="rounded-[20px] bg-white px-4 py-4 text-muted">
+              No bus is given to you yet. Ask your admin.
+            </p>
+          ) : null}
+
+          {myBus ? actionButtons : null}
+
+          {lastSaved ? (
+            <p
+              role="status"
+              className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-money-in"
+            >
+              {lastSaved}
+            </p>
+          ) : null}
+
+          {error && !sheetOpen ? (
+            <p className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-money-out lg:hidden">
+              {error}
+            </p>
+          ) : null}
+
+          {myBus ? (
+            <form
+              className="flex flex-col gap-3 rounded-3xl bg-white p-5"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void saveOdometer();
+              }}
+            >
+              <h2 className="font-bold">Odometer</h2>
+              <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
+                Odometer reading (km)
+                <input
+                  inputMode="numeric"
+                  pattern="[0-9 ,]*"
+                  value={odometerKm}
+                  onChange={(event) => setOdometerKm(event.target.value)}
+                  placeholder="Read it off the bus"
+                  className={FIELD}
+                />
+              </label>
+              {odometerError ? (
+                <p className="text-sm font-semibold text-money-out">{odometerError}</p>
+              ) : null}
+              <button
+                type="submit"
+                disabled={odometerSaving || org.viewOnly}
+                className="h-12 rounded-2xl bg-brand px-4 text-base font-bold text-white disabled:opacity-50"
+              >
+                {org.viewOnly
+                  ? "View only until payment is received"
+                  : odometerSaving
+                    ? "Saving…"
+                    : "Save odometer"}
+              </button>
+            </form>
+          ) : null}
+        </div>
+
+        {myBus ? entryPanels : null}
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
       <div className="flex min-w-0 flex-col gap-4">
@@ -632,37 +854,9 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
           </div>
         </section>
 
-        {canWrite ? (
-          <div className="flex flex-col gap-2.5 lg:hidden">
-            <label className="flex min-h-16 cursor-pointer items-center justify-center gap-3 rounded-3xl bg-white px-4 text-base font-bold text-brand shadow-[0_1px_0_rgba(26,27,46,0.04)] active:bg-brand-soft">
-              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-soft">
-                <CameraIcon />
-              </span>
-              {scanning ? "Reading the bill…" : "Scan a bill"}
-              {scanInput()}
-            </label>
-            <div className="grid grid-cols-2 gap-2.5">
-              <button
-                type="button"
-                onClick={() => openSheet("income")}
-                className="flex min-h-14 items-center justify-center gap-2 rounded-3xl bg-white text-[15px] font-bold text-money-in"
-              >
-                <ArrowIcon direction="in" />
-                Money in
-              </button>
-              <button
-                type="button"
-                onClick={() => openSheet("expense")}
-                className="flex min-h-14 items-center justify-center gap-2 rounded-3xl bg-white text-[15px] font-bold text-money-out"
-              >
-                <ArrowIcon direction="out" />
-                Money out
-              </button>
-            </div>
-          </div>
-        ) : null}
+        {actionButtons}
 
-        {organizationId && role && role !== "crew" ? (
+        {organizationId && role ? (
           <RenewalsDueCard supabase={supabase} organizationId={organizationId} module={module} />
         ) : null}
 
@@ -695,6 +889,11 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
                   >
                     {formatInr(net)}
                   </span>
+                  {odometers.has(bus.id) ? (
+                    <span className="truncate text-xs text-muted">
+                      Odometer {odometers.get(bus.id)?.toLocaleString("en-IN")} km
+                    </span>
+                  ) : null}
                 </div>
               );
             })}
@@ -797,39 +996,7 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
         </section>
       </div>
 
-      <aside className="hidden flex-col gap-4 rounded-3xl bg-white p-5 lg:sticky lg:top-24 lg:flex">
-        <h2 className="text-lg font-extrabold">Add cash entry</h2>
-        {renderForm("side")}
-      </aside>
-
-      {sheetOpen ? (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-ink/45 lg:hidden">
-          <button
-            type="button"
-            aria-label="Close"
-            className="flex-1"
-            onClick={() => setSheetOpen(false)}
-          />
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-label="Add cash entry"
-            className="mx-auto flex max-h-[90dvh] w-full max-w-lg flex-col gap-4 overflow-y-auto rounded-t-[28px] bg-white px-5 pb-[max(24px,env(safe-area-inset-bottom))] pt-5"
-          >
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-extrabold">Add cash entry</h2>
-              <button
-                type="button"
-                className="px-2 text-sm font-bold text-brand"
-                onClick={() => setSheetOpen(false)}
-              >
-                Cancel
-              </button>
-            </div>
-            {renderForm("sheet")}
-          </section>
-        </div>
-      ) : null}
+      {entryPanels}
     </div>
   );
 }
