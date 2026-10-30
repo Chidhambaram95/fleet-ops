@@ -27,6 +27,7 @@ export type Screen =
   | "bookings"
   | "trips"
   | "fuel"
+  | "mileage"
   | "intercity"
   | "buses"
   | "crew"
@@ -36,9 +37,9 @@ export type Screen =
 
 /** Screens of each module, in menu order. Town's home is the day book itself. */
 export const MODULE_SCREENS: Record<ModuleId, readonly Screen[]> = {
-  town: ["home", "buses", "crew", "renewals", "tyres", "reports"],
-  omni: ["home", "trips", "fuel", "intercity", "daybook", "buses", "crew", "renewals", "tyres", "reports"],
-  tour: ["home", "enquiries", "bookings", "trips", "fuel", "buses", "crew", "renewals", "tyres", "reports"],
+  town: ["home", "buses", "mileage", "crew", "renewals", "tyres", "reports"],
+  omni: ["home", "trips", "fuel", "mileage", "intercity", "daybook", "buses", "crew", "renewals", "tyres", "reports"],
+  tour: ["home", "enquiries", "bookings", "trips", "fuel", "mileage", "buses", "crew", "renewals", "tyres", "reports"],
 };
 
 export const SCREEN_LABELS: Record<Screen, string> = {
@@ -48,6 +49,7 @@ export const SCREEN_LABELS: Record<Screen, string> = {
   bookings: "Bookings",
   trips: "Trip sheets",
   fuel: "Diesel & pumps",
+  mileage: "Mileage",
   intercity: "Intercity payments",
   buses: "Buses",
   crew: "Crew",
@@ -62,7 +64,8 @@ export const SCREEN_HINTS: Record<Screen, string> = {
   enquiries: "New enquiries, quotes and advances",
   bookings: "Confirmed tours, payments and balances",
   trips: "Trip sheets, approvals and advances",
-  fuel: "Pump credit and mileage",
+  fuel: "Pump credit owed",
+  mileage: "Km per litre and alerts for each bus",
   intercity: "Fortnightly Intercity payments",
   buses: "This module's buses",
   crew: "Salaries, advances and your crew",

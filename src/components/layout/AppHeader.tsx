@@ -13,6 +13,7 @@ import {
 } from "@domain/modules/modules";
 import { ROLE_LABELS, type UserRole } from "@domain/rbac/roles";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
+import { MileageBell } from "@/components/mileage/MileageAlerts";
 import { addEntryHref, currentModule, initials, isActive, navLinksFor } from "./navLinks";
 
 /** Phone: company name and account button. Laptop: logo, top menu and account. */
@@ -26,6 +27,7 @@ export function AppHeader({
   modules = [],
   defaultModule = null,
   companyArea = false,
+  organizationId = "",
 }: {
   organizationName: string;
   email: string;
@@ -39,6 +41,8 @@ export function AppHeader({
   defaultModule?: ModuleId | null;
   /** Bank and company costs and the combined report. */
   companyArea?: boolean;
+  /** For the mileage bell. */
+  organizationId?: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -126,6 +130,9 @@ export function AppHeader({
         </nav>
 
         <div className="flex shrink-0 items-center gap-2">
+          {(role === "admin" || role === "manager") && organizationId ? (
+            <MileageBell organizationId={organizationId} module={openModule} />
+          ) : null}
           {canAdd ? (
             <Link
               href={addEntryHref(role, openModule)}

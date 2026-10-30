@@ -50,6 +50,10 @@ export type DailyEntry = {
   amountInr: number;
   note: string;
   createdAt: string;
+  /** Diesel only, for mileage: litres put in, odometer, and whether the tank was filled to full. */
+  litres?: number | null;
+  odometerKm?: number | null;
+  fullTank?: boolean;
 };
 
 export type NewDailyEntry = Omit<DailyEntry, "id" | "createdAt">;

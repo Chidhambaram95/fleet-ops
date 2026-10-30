@@ -11,7 +11,7 @@ import {
   listPumpStatements,
 } from "@data/money/repository";
 import { listTripsWithLines } from "@data/trips/repository";
-import { busMileage, pumpBalances } from "@domain/money/fuel";
+import { pumpBalances } from "@domain/money/fuel";
 import { moduleHref, type ModuleId } from "@domain/modules/modules";
 import { formatInr, todayInIst } from "@domain/operations/totals";
 import { useOrg } from "@/components/billing/OrgContext";
@@ -63,9 +63,6 @@ export function FuelPage({ organizationId, module }: { organizationId: string; m
     () => pumpBalances(data.trips, data.payments, data.statements),
     [data],
   );
-  const mileage = useMemo(() => busMileage(data.trips), [data.trips]);
-  const busName = (id: string) =>
-    data.buses.find((bus) => bus.id === id)?.registrationNumber ?? "Bus";
 
   const [mode, setMode] = useState<Mode>("statement");
   const [pump, setPump] = useState("");
@@ -195,28 +192,18 @@ export function FuelPage({ organizationId, module }: { organizationId: string; m
             )}
           </Card>
 
-          <Card title="Km per litre by bus">
-            {mileage.length === 0 ? (
-              <p className="text-muted">
-                Mileage shows once approved trips have km and diesel litres.
-              </p>
-            ) : (
-              mileage.map((item, index) => (
-                <ListRow
-                  key={item.busId}
-                  first={index === 0}
-                  title={busName(item.busId)}
-                  detail={
-                    item.low
-                      ? `Last trip ${item.last?.toFixed(1)} km/L, well below usual. Check sheet ${item.lastSheetNo || "last trip"}.`
-                      : `${item.trips} trips · ${Math.round(item.km).toLocaleString("en-IN")} km · last ${item.last?.toFixed(1)} km/L`
-                  }
-                  amount={`${item.usual?.toFixed(1) ?? "–"} km/L`}
-                  tone={item.low ? "out" : "ink"}
-                />
-              ))
-            )}
-          </Card>
+          <Link
+            href={moduleHref(module, "mileage")}
+            className="flex items-center justify-between gap-3 rounded-3xl bg-white p-4 md:p-5"
+          >
+            <span>
+              <span className="block font-extrabold">Mileage of each bus</span>
+              <span className="block text-sm text-muted">Km per litre, and buses that need a look</span>
+            </span>
+            <span aria-hidden="true" className="text-xl text-brand">
+              ›
+            </span>
+          </Link>
         </div>
 
         <div className="flex min-w-0 flex-col gap-4">

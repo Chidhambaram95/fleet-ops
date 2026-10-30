@@ -45,6 +45,7 @@ export default async function AppShellLayout({
   let modules: ModuleId[] = [];
   let defaultModule: ModuleId | null = null;
   let companyArea = false;
+  let organizationId = "";
   if (user) {
     superAdmin = await isSuperAdmin(supabase, user.id);
     if (superAdmin) {
@@ -54,6 +55,7 @@ export default async function AppShellLayout({
     try {
       const membership = await getActiveMembership(supabase);
       role = membership.role;
+      organizationId = membership.organizationId;
       const [profileInfo, { data: profile }] = await Promise.all([
         getCompanyProfile(supabase, membership.organizationId),
         supabase
@@ -145,6 +147,7 @@ export default async function AppShellLayout({
         modules={modules}
         defaultModule={defaultModule}
         companyArea={companyArea}
+        organizationId={organizationId}
       />
       {notice}
       <OrgProvider value={{ name: organizationName, whatsappNumber, viewOnly }}>

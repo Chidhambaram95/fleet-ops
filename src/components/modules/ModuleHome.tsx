@@ -10,6 +10,7 @@ import { hasScreen, MODULE_TITLES, moduleHref, type ModuleId } from "@domain/mod
 import { formatInr, todayInIst } from "@domain/operations/totals";
 import { tripTotals } from "@domain/trips/checks";
 import { useOrg } from "@/components/billing/OrgContext";
+import { MileageCard } from "@/components/mileage/MileageAlerts";
 import { RenewalsDueCard } from "@/components/renewals/RenewalsDueCard";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { ErrorText, PageHeader, useLoaded } from "@/components/ui/kit";
@@ -134,6 +135,7 @@ export function ModuleHome({ organizationId, module }: { organizationId: string;
         ))}
       </div>
       <RenewalsDueCard supabase={supabase} organizationId={organizationId} module={module} />
+      <MileageCard supabase={supabase} organizationId={organizationId} module={module} />
       {!loading && data.buses === 0 ? (
         <p className="rounded-3xl bg-white px-4 py-6 text-muted">
           No buses in this module yet.{" "}

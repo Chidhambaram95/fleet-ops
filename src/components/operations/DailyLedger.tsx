@@ -40,6 +40,7 @@ import type { UserRole } from "@domain/rbac/roles";
 import { compressReceipt } from "@/lib/compressReceipt";
 import { downloadTextFile } from "@/lib/downloadTextFile";
 import { useOrg } from "@/components/billing/OrgContext";
+import { MileageCard } from "@/components/mileage/MileageAlerts";
 import { RenewalsDueCard } from "@/components/renewals/RenewalsDueCard";
 import { DayCrewCard } from "@/components/operations/DayCrewCard";
 import { LastChangeLine, RecordLock } from "@/components/history/RecordLock";
@@ -81,6 +82,9 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
   const [category, setCategory] = useState<string>("ticket_collection");
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
+  const [dieselKm, setDieselKm] = useState("");
+  const [dieselLitres, setDieselLitres] = useState("");
+  const [fullTank, setFullTank] = useState(false);
   const [buses, setBuses] = useState<Bus[]>([]);
   const [allEntries, setEntries] = useState<DailyEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -302,6 +306,22 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
       setError("Enter an amount greater than 0.");
       return;
     }
+    // Diesel can carry the odometer and litres, for mileage.
+    const isDiesel = kind === "expense" && category === "diesel";
+    const litres = isDiesel && dieselLitres.trim() ? Number(dieselLitres.replace(/[\s,]/g, "")) : null;
+    const odometerKm = isDiesel && dieselKm.trim() ? Number(dieselKm.replace(/[\s,]/g, "")) : null;
+    if (litres != null && (!Number.isFinite(litres) || litres <= 0 || litres > 2000)) {
+      setError("Enter the litres, for example 85.5.");
+      return;
+    }
+    if (odometerKm != null && (!Number.isInteger(odometerKm) || odometerKm < 0)) {
+      setError("Enter the odometer in km.");
+      return;
+    }
+    if (isDiesel && fullTank && (litres == null || odometerKm == null)) {
+      setError("For a full tank, enter both the odometer and the litres.");
+      return;
+    }
 
     const optimistic: DailyEntry = {
       id: `optimistic-${crypto.randomUUID()}`,
@@ -316,10 +336,23 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
 
     setSaving(true);
     setError("");
+    if (odometerKm != null) {
+      // Saved as a reading too, so the database refuses a figure below the last one.
+      try {
+        await addOdometerReading(supabase, organizationId, busId, odometerKm);
+      } catch (readingError) {
+        setError(messageFromUnknown(readingError));
+        setSaving(false);
+        return;
+      }
+    }
     setSheetOpen(false);
     setEntries((current) => [optimistic, ...current]);
     setAmount("");
     setNote("");
+    setDieselKm("");
+    setDieselLitres("");
+    setFullTank(false);
 
     try {
       const saved = await repo.addEntry(organizationId, {
@@ -329,6 +362,7 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
         category: optimistic.category,
         amountInr,
         note: optimistic.note,
+        ...(isDiesel && (litres != null || odometerKm != null) ? { litres, odometerKm, fullTank } : {}),
       });
       setEntries((current) =>
         current.map((entry) => (entry.id === optimistic.id ? saved : entry)),
@@ -577,6 +611,47 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
             className="h-14 rounded-2xl bg-canvas px-4 text-2xl font-bold"
           />
         </label>
+
+        {kind === "expense" && category === "diesel" ? (
+          <fieldset className="flex flex-col gap-3 rounded-2xl bg-canvas p-3">
+            <legend className="sr-only">For mileage</legend>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="flex min-w-0 flex-col gap-1.5 text-[13px] font-semibold">
+                Odometer (km)
+                <input
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={dieselKm}
+                  onChange={(event) => setDieselKm(event.target.value)}
+                  placeholder={odometers.get(busId)?.toString() ?? "e.g. 120500"}
+                  className="h-12 w-full min-w-0 rounded-2xl bg-white px-4 text-base"
+                />
+              </label>
+              <label className="flex min-w-0 flex-col gap-1.5 text-[13px] font-semibold">
+                Litres
+                <input
+                  inputMode="decimal"
+                  value={dieselLitres}
+                  onChange={(event) => setDieselLitres(event.target.value)}
+                  placeholder="e.g. 85"
+                  className="h-12 w-full min-w-0 rounded-2xl bg-white px-4 text-base"
+                />
+              </label>
+            </div>
+            <label className="flex min-h-11 items-center gap-3 text-sm font-semibold">
+              <input
+                type="checkbox"
+                checked={fullTank}
+                onChange={(event) => setFullTank(event.target.checked)}
+                className="h-5 min-h-0 w-5 accent-brand"
+              />
+              Filled the tank to full
+            </label>
+            <span className="text-xs font-normal text-muted">
+              Optional. Fill to full and enter the odometer and litres to see this bus&apos;s mileage.
+            </span>
+          </fieldset>
+        ) : null}
 
         <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
           Note (optional)
@@ -859,6 +934,10 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
 
         {organizationId && role ? (
           <RenewalsDueCard supabase={supabase} organizationId={organizationId} module={module} />
+        ) : null}
+
+        {organizationId && module && (role === "admin" || role === "manager") ? (
+          <MileageCard supabase={supabase} organizationId={organizationId} module={module} />
         ) : null}
 
         {error && !sheetOpen ? (

@@ -202,10 +202,14 @@ export class SupabaseOperationsRepository
       amount_inr: row.amount_inr,
       note: row.note,
       created_by: createdBy,
+      // Only sent when given, so entries still save before migration 0024.
+      ...(input.litres != null || input.odometerKm != null
+        ? { litres: input.litres ?? null, odometer_km: input.odometerKm ?? null, full_tank: Boolean(input.fullTank) }
+        : {}),
     });
 
     throwIfError(error);
-    return mapDailyEntry(row);
+    return { ...mapDailyEntry(row), litres: input.litres ?? null, odometerKm: input.odometerKm ?? null, fullTank: Boolean(input.fullTank) };
   }
 
   async removeEntry(organizationId: string, id: string) {

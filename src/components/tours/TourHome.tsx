@@ -8,6 +8,7 @@ import { formatInr, todayInIst } from "@domain/operations/totals";
 import { balanceDue, isRunning, isUpcoming } from "@domain/tours/calc";
 import { quoteNumber, tripLine, whenLine } from "@domain/tours/messages";
 import { useOrg } from "@/components/billing/OrgContext";
+import { MileageCard } from "@/components/mileage/MileageAlerts";
 import { RenewalsDueCard } from "@/components/renewals/RenewalsDueCard";
 import { Card, ErrorText, PageHeader, useLoaded } from "@/components/ui/kit";
 import { StatusPill, useTourData } from "./shared";
@@ -126,6 +127,7 @@ export function TourHome({ organizationId }: { organizationId: string }) {
         )}
       </Card>
       <RenewalsDueCard supabase={supabase} organizationId={organizationId} module="tour" />
+      <MileageCard supabase={supabase} organizationId={organizationId} module="tour" />
       {!loading && data.buses.length === 0 ? (
         <p className="rounded-3xl bg-white px-4 py-6 text-muted">
           No tour buses yet.{" "}
