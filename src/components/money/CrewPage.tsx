@@ -13,6 +13,7 @@ import {
 } from "@data/money/repository";
 import { listTripsWithLines } from "@data/trips/repository";
 import type { CrewJob, CrewPerson } from "@domain/money/types";
+import { JOB_LABELS } from "@domain/crew/dayCrew";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import { hasScreen, MODULE_LABELS, moduleHref, type ModuleId } from "@domain/modules/modules";
 import { formatInr, todayInIst } from "@domain/operations/totals";
@@ -47,6 +48,11 @@ const EMPTY_PERSON: Omit<CrewPerson, "id"> = {
   licenceNo: "",
   active: true,
 };
+
+/** Town buses carry a conductor; Omni and Tour buses don't. */
+function jobsFor(module: ModuleId): CrewJob[] {
+  return module === "town" ? ["driver", "conductor", "cleaner"] : ["driver", "cleaner"];
+}
 
 function monthLabel(month: string) {
   const [year, value] = month.split("-").map(Number);
@@ -186,7 +192,7 @@ export function CrewPage({
     <div className="flex flex-col gap-4">
       <PageHeader
         title="Crew"
-        hint={hasTrips ? "Salaries, trip advances and your drivers and cleaners." : "Salaries and your drivers and conductors."}
+        hint={hasTrips ? "Salaries, trip advances and your drivers and cleaners." : "Salaries and your drivers, conductors and cleaners."}
       />
       <Tabs<Section>
         value={section}
@@ -199,7 +205,7 @@ export function CrewPage({
           ...(hasTrips
             ? [{ id: "advances" as const, label: `Advances to settle${openAdvances.length ? ` (${openAdvances.length})` : ""}` }]
             : []),
-          { id: "people", label: "Drivers & cleaners" },
+          { id: "people", label: module === "town" ? "People" : "Drivers & cleaners" },
         ]}
       />
       <ErrorText message={error} />
@@ -231,7 +237,7 @@ export function CrewPage({
           {loading ? (
             <p className="text-muted">Loading…</p>
           ) : active.length === 0 ? (
-            <p className="text-muted">Add your drivers and cleaners under People first.</p>
+            <p className="text-muted">Add your crew under People first.</p>
           ) : (
             active.map((item, index) => {
               const payments = paymentsOf(item.id);
@@ -251,7 +257,7 @@ export function CrewPage({
                         : `Paid ${formatInr(paidInr)} in ${payments.length} parts, last on ${shortDay(latest.paidOn)}`
                       : payments.length
                         ? `Paid ${formatInr(paidInr)} of ${formatInr(item.monthlySalaryInr)} · ${formatInr(leftInr)} still to pay`
-                        : `${item.job === "driver" ? "Driver" : "Cleaner"} · ${formatInr(item.monthlySalaryInr)} a month`
+                        : `${JOB_LABELS[item.job]} · ${formatInr(item.monthlySalaryInr)} a month`
                   }
                   tone={fullyPaid ? "in" : "ink"}
                   amount={fullyPaid ? "Paid" : undefined}
@@ -340,7 +346,7 @@ export function CrewPage({
       {section === "people" ? (
         <div className="grid gap-4 md:grid-cols-[1fr_360px]">
           <Card
-            title="Drivers and cleaners"
+            title={module === "town" ? "Drivers, conductors and cleaners" : "Drivers and cleaners"}
             action={
               !org.viewOnly ? (
                 <SmallButton tone="brand" onClick={() => startEdit(null)}>
@@ -357,7 +363,7 @@ export function CrewPage({
                   key={item.id}
                   first={index === 0}
                   title={`${item.name}${item.active ? "" : " (left)"}`}
-                  detail={[item.job === "driver" ? "Driver" : "Cleaner", item.phone, item.licenceNo && `Licence ${item.licenceNo}`]
+                  detail={[JOB_LABELS[item.job], item.phone, item.licenceNo && `Licence ${item.licenceNo}`]
                     .filter(Boolean)
                     .join(" · ")}
                   amount={item.monthlySalaryInr ? formatInr(item.monthlySalaryInr) : undefined}
@@ -376,8 +382,8 @@ export function CrewPage({
                 Name
                 <input className={FIELD} value={person.name} onChange={(event) => setPerson({ ...person, name: event.target.value })} />
               </label>
-              <div className="grid grid-cols-2 gap-2" role="group" aria-label="Job">
-                {(["driver", "cleaner"] as CrewJob[]).map((job) => (
+              <div className={`grid gap-2 ${person.module === "town" ? "grid-cols-3" : "grid-cols-2"}`} role="group" aria-label="Job">
+                {jobsFor(person.module).map((job) => (
                   <button
                     key={job}
                     type="button"
@@ -387,7 +393,7 @@ export function CrewPage({
                       person.job === job ? "bg-brand text-white" : "bg-canvas text-muted"
                     }`}
                   >
-                    {job === "driver" ? "Driver" : "Cleaner"}
+                    {JOB_LABELS[job]}
                   </button>
                 ))}
               </div>
@@ -407,7 +413,10 @@ export function CrewPage({
                   <select
                     className={FIELD}
                     value={person.module}
-                    onChange={(event) => setPerson({ ...person, module: event.target.value as ModuleId })}
+                    onChange={(event) => {
+                      const next = event.target.value as ModuleId;
+                      setPerson({ ...person, module: next, job: jobsFor(next).includes(person.job) ? person.job : "driver" });
+                    }}
                   >
                     {modules.map((item) => (
                       <option key={item} value={item}>

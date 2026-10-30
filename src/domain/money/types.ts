@@ -44,7 +44,7 @@ export type PumpPayment = {
   module: ModuleId;
 };
 
-export type CrewJob = "driver" | "cleaner";
+export type CrewJob = "driver" | "conductor" | "cleaner";
 
 export type CrewPerson = {
   id: string;

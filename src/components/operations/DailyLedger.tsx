@@ -41,6 +41,7 @@ import { compressReceipt } from "@/lib/compressReceipt";
 import { downloadTextFile } from "@/lib/downloadTextFile";
 import { useOrg } from "@/components/billing/OrgContext";
 import { RenewalsDueCard } from "@/components/renewals/RenewalsDueCard";
+import { DayCrewCard } from "@/components/operations/DayCrewCard";
 import { LastChangeLine, RecordLock } from "@/components/history/RecordLock";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { friendlyErrorMessage } from "@domain/platform/errors";
@@ -909,6 +910,17 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
             </p>
           ) : null}
         </section>
+
+        {module === "town" && organizationId && (role === "admin" || role === "manager") && visibleBuses.length ? (
+          <DayCrewCard
+            supabase={supabase}
+            organizationId={organizationId}
+            day={date}
+            buses={visibleBuses}
+            busesWithEntries={new Set(entries.map((entry) => entry.busId))}
+            canWrite={canWrite}
+          />
+        ) : null}
 
         <section className="flex flex-col gap-2.5">
           <div className="flex flex-wrap items-center justify-between gap-2">

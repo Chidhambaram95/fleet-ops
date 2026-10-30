@@ -65,7 +65,7 @@ export const SCREEN_HINTS: Record<Screen, string> = {
   fuel: "Pump credit and mileage",
   intercity: "Fortnightly Intercity payments",
   buses: "This module's buses",
-  crew: "Salaries, advances, drivers and cleaners",
+  crew: "Salaries, advances and your crew",
   renewals: "FC, insurance, permit, tax and licences",
   tyres: "Tyres on each bus, km, retreads and warranty",
   reports: "Profit and loss, trips, fuel and more",
