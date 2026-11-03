@@ -1,18 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import {
-  listCompanyExpenses,
-  listCrewPeople,
-  listIntercityIncome,
-  listSalaryPayments,
-} from "@data/money/repository";
-import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
-import { listRenewals } from "@data/renewals/repository";
-import { listEntriesBetween } from "@data/reports/repository";
-import { listBookings, listTourPayments } from "@data/tours/repository";
-import { listTripsWithLines } from "@data/trips/repository";
-import { listScrapSales, listTyreEventsBetween, listTyres, listWarrantyCredits } from "@data/tyres/repository";
+import { useEffect, useMemo, useState } from "react";
+import { EMPTY_REPORT_DATA, loadReportData } from "@data/reports/repository";
 import { hasScreen, MODULE_LABELS, type ModuleId } from "@domain/modules/modules";
 import { formatInr, shiftDate, todayInIst } from "@domain/operations/totals";
 import type { BusKind } from "@domain/operations/types";
@@ -49,7 +38,8 @@ type Preset =
   | "custom";
 
 const REPORTS: { id: ReportKind; label: string }[] = [
-  { id: "pnl", label: "Profit per bus" },
+  { id: "pnl", label: "Profit & loss" },
+  { id: "bus_profit", label: "Profit by bus" },
   { id: "trips", label: "Trip sheets" },
   { id: "fuel", label: "Fuel" },
   { id: "expenses", label: "Where the money went" },
@@ -93,10 +83,19 @@ function presetRange(
   }
 }
 
+/** Rupees with paise, such as ₹10.70 or −₹0.72. */
+export function formatRate(value: number) {
+  const text = `₹${Math.abs(value).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return value < 0 ? `−${text}` : text;
+}
+
 function show(table: ReportTable, column: number, value: Cell) {
+  if (table.rateColumns?.includes(column) && typeof value === "number") return formatRate(value);
+  if (table.bracketColumns?.includes(column) && typeof value === "number") return `(${formatInr(value)})`;
   if (table.moneyColumns.includes(column) && typeof value === "number") return formatInr(value);
   // Dates stay YYYY-MM-DD in the Excel file but read as "13 Oct 2026" on screen.
-  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) ? shortDay(value) : String(value);
+  if (typeof value === "number") return value.toLocaleString("en-IN");
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? shortDay(value) : value;
 }
 
 function whatsappText(
@@ -108,10 +107,7 @@ function whatsappText(
     `*${table.title}*`,
     `${shortDay(filters.from)} to ${shortDay(filters.to)} · ${scope}`,
     "",
-    ...table.summary.map(
-      (item) =>
-        `${item.label}: ${item.tone ? formatInr(item.value) : item.value.toLocaleString("en-IN")}`,
-    ),
+    ...table.summary.map((item) => `${item.label}: ${summaryValue(item)}${item.detail ? ` · ${item.detail}` : ""}`),
     "",
     ...table.rows
       .slice(0, 20)
@@ -127,6 +123,63 @@ function whatsappText(
   ];
   if (table.rows.length > 20) lines.push(`…and ${table.rows.length - 20} more`);
   return lines.join("\n");
+}
+
+function summaryValue(item: ReportTable["summary"][number]) {
+  if (item.format === "rate") return formatRate(item.value);
+  if (item.format === "bracket") return `(${formatInr(item.value)})`;
+  return item.tone ? formatInr(item.value) : item.value.toLocaleString("en-IN");
+}
+
+/** Green for a profit, red for a loss. */
+function toneClass(value: Cell) {
+  if (typeof value !== "number" || value === 0) return "";
+  return value > 0 ? "text-money-in" : "text-money-out";
+}
+
+/** Phone view of Profit by bus: one card per bus with the three lines. */
+function BusProfitCards({ table }: { table: ReportTable }) {
+  const line = (label: string, value: string, valueClass = "") => (
+    <div className="flex items-center justify-between gap-3 text-sm text-muted">
+      <span>{label}</span>
+      <span className={`tabular-nums ${valueClass}`}>{value}</span>
+    </div>
+  );
+  const card = (row: Cell[], key: string | number, total = false) => {
+    const rate = typeof row[9] === "number" ? `${formatRate(row[9])}/km` : "";
+    return (
+      <div key={key} className={`flex flex-col gap-2 rounded-2xl p-4 ${total ? "bg-brand-soft" : "bg-canvas"}`}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-start gap-3">
+            {typeof row[0] === "number" ? (
+              <span className="grid size-7 shrink-0 place-items-center rounded-full bg-white text-xs font-bold text-brand">
+                {row[0]}
+              </span>
+            ) : null}
+            <div className="min-w-0">
+              <p className="truncate font-extrabold">{String(row[1])}</p>
+              <p className="text-xs text-muted">
+                {[row[2], row[8] !== "" ? `${Number(row[8]).toLocaleString("en-IN")} km` : ""].filter(Boolean).join(" · ")}
+              </p>
+            </div>
+          </div>
+          {rate ? <span className="shrink-0 text-xs text-muted">{rate}</span> : null}
+        </div>
+        {line("Bus profit (no company costs)", show(table, 5, row[5]))}
+        {line("Share of company costs", show(table, 6, row[6]), `font-semibold ${toneClass(row[6])}`)}
+        <div className="flex items-center justify-between gap-3 pt-1 font-extrabold">
+          <span>Profit after shared costs</span>
+          <span className={`tabular-nums ${toneClass(row[7])}`}>{show(table, 7, row[7])}</span>
+        </div>
+      </div>
+    );
+  };
+  return (
+    <div className="flex flex-col gap-3 md:hidden print:hidden">
+      {table.rows.map((row, index) => card(row, index))}
+      {table.total ? card(table.total, "total", true) : null}
+    </div>
+  );
 }
 
 /**
@@ -146,6 +199,11 @@ export function ReportsPage({
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const today = todayInIst();
   const [kind, setKind] = useState<ReportKind>("pnl");
+  // The home card links straight to a report with ?report=bus_profit.
+  useEffect(() => {
+    const wanted = new URLSearchParams(window.location.search).get("report");
+    if (wanted && REPORTS.some((report) => report.id === wanted)) setKind(wanted as ReportKind);
+  }, []);
   const [preset, setPreset] = useState<Preset>("this_month");
   const [range, setRange] = useState(() => presetRange("this_month", today));
   const [busId, setBusId] = useState("");
@@ -159,90 +217,9 @@ export function ReportsPage({
   });
   const [renewalDays, setRenewalDays] = useState<30 | 60 | 90>(30);
 
-  const empty: ReportData = {
-    buses: [],
-    allBusIds: [],
-    people: [],
-    entries: [],
-    trips: [],
-    companyExpenses: [],
-    salaries: [],
-    intercity: [],
-    renewals: [],
-    tourBookings: [],
-    tourPayments: [],
-    tyres: [],
-    tyreEvents: [],
-    scrapSales: [],
-    warrantyCredits: [],
-  };
   const { data, loading, error } = useLoaded<ReportData>(
-    async () => {
-      const [
-        buses,
-        people,
-        entries,
-        trips,
-        companyExpenses,
-        salaries,
-        intercity,
-        renewals,
-        tourBookings,
-        tourPayments,
-        tyres,
-        tyreEvents,
-        scrapSales,
-        warrantyCredits,
-      ] = await Promise.all([
-        createSupabaseOperationsRepository(supabase).listBuses(organizationId),
-        listCrewPeople(supabase, organizationId),
-        listEntriesBetween(supabase, organizationId, range.from, range.to),
-        listTripsWithLines(supabase, organizationId, {
-          ...range,
-          approvedOnly: true,
-          limit: 5000,
-        }),
-        listCompanyExpenses(supabase, organizationId, range),
-        // Salaries count on the day they were paid, so fetch a month either side.
-        listSalaryPayments(supabase, organizationId, {
-          from: shiftDate(range.from, -62),
-          to: shiftDate(range.to, 31),
-        }),
-        listIntercityIncome(supabase, organizationId, {
-          from: range.from,
-          to: range.to,
-        }),
-        listRenewals(supabase, organizationId),
-        // Tour tables exist only after migration 0016, and only tour companies use them.
-        !module || module === "tour" ? listBookings(supabase, organizationId).catch(() => []) : Promise.resolve([]),
-        !module || module === "tour" ? listTourPayments(supabase, organizationId).catch(() => []) : Promise.resolve([]),
-        // Tyre tables exist only after migration 0017.
-        listTyres(supabase, organizationId).catch(() => []),
-        listTyreEventsBetween(supabase, organizationId, range).catch(() => []),
-        // Scrap sales exist only after migration 0020.
-        listScrapSales(supabase, organizationId, range).catch(() => []),
-        // Warranty claims exist only after migration 0021.
-        listWarrantyCredits(supabase, organizationId, range).catch(() => []),
-      ]);
-      return {
-        buses,
-        allBusIds: buses.map((bus) => bus.id),
-        people,
-        entries,
-        trips,
-        companyExpenses,
-        salaries,
-        intercity,
-        renewals,
-        tourBookings,
-        tourPayments,
-        tyres,
-        tyreEvents,
-        scrapSales,
-        warrantyCredits,
-      };
-    },
-    empty,
+    () => loadReportData(supabase, organizationId, range, module),
+    EMPTY_REPORT_DATA,
     `${range.from}:${range.to}`,
   );
 
@@ -382,7 +359,7 @@ export function ReportsPage({
         </div>
         <ErrorText message={error} />
 
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+        <div className={`grid grid-cols-2 gap-3 ${table.summary.length === 4 ? "md:grid-cols-4" : "md:grid-cols-3"}`}>
           {table.summary.map((item) => (
             <div key={item.label} className="rounded-2xl bg-canvas p-3">
               <p className="text-xs text-muted">{item.label}</p>
@@ -395,9 +372,10 @@ export function ReportsPage({
                       : ""
                 }`}
               >
-                {item.tone
-                  ? formatInr(item.value)
-                  : item.value.toLocaleString("en-IN")}
+                {summaryValue(item)}
+                {item.detail ? (
+                  <span className="text-xs font-semibold text-muted"> · {item.detail}</span>
+                ) : null}
               </p>
             </div>
           ))}
@@ -410,7 +388,8 @@ export function ReportsPage({
         ) : (
           <>
             {/* Phone: one short line per row; the full table is on laptop, in print and in the Excel file. */}
-            <div className="flex flex-col md:hidden print:hidden">
+            {kind === "bus_profit" ? <BusProfitCards table={table} /> : null}
+            <div className={`flex flex-col md:hidden print:hidden ${kind === "bus_profit" ? "hidden" : ""}`}>
               {table.rows.map((row, rowIndex) => (
                 <div
                   key={rowIndex}
@@ -445,17 +424,20 @@ export function ReportsPage({
                 </thead>
                 <tbody>
                   {table.rows.map((row, rowIndex) => (
-                    <tr key={rowIndex} className="border-b border-line">
+                    <tr
+                      key={rowIndex}
+                      className={`border-b border-line ${table.extraRows?.includes(rowIndex) ? "text-muted" : ""}`}
+                    >
                       {row.map((cell, index) => (
                         <td
                           key={index}
-                          className={`px-2 py-2.5 ${typeof cell === "number" ? "text-right tabular-nums" : ""} ${index === 0 ? "font-semibold" : ""} ${
-                            table.moneyColumns.includes(index) &&
-                            typeof cell === "number" &&
-                            cell < 0
-                              ? "text-money-out"
-                              : ""
-                          }`}
+                          className={`px-2 py-2.5 ${typeof cell === "number" ? "text-right tabular-nums" : ""} ${index === (table.bracketColumns ? 1 : 0) ? "font-semibold" : ""} ${
+                            table.toneColumns?.includes(index)
+                              ? `font-bold ${toneClass(cell)}`
+                              : table.moneyColumns.includes(index) && typeof cell === "number" && cell < 0
+                                ? "text-money-out"
+                                : ""
+                          } ${table.bracketColumns?.includes(index) ? "text-muted" : ""}`}
                         >
                           {show(table, index, cell)}
                         </td>
@@ -469,7 +451,9 @@ export function ReportsPage({
                       {table.total.map((cell, index) => (
                         <td
                           key={index}
-                          className={`px-2 py-2.5 ${typeof cell === "number" ? "text-right tabular-nums" : ""}`}
+                          className={`px-2 py-2.5 ${typeof cell === "number" ? "text-right tabular-nums" : ""} ${
+                            table.toneColumns?.includes(index) ? toneClass(cell) : ""
+                          }`}
                         >
                           {show(table, index, cell)}
                         </td>

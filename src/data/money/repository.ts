@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   CompanyExpense,
   CompanyExpenseCategory,
+  CostAppliesTo,
   CrewJob,
   CrewPerson,
   IntercityIncome,
@@ -85,30 +86,79 @@ export async function listCompanyExpenses(
   range?: Range,
 ): Promise<CompanyExpense[]> {
   const rows = await listRows<Row>(client, "company_expenses", organizationId, "spent_on", range);
-  return rows.map((row) => ({
-    id: str(row.id),
-    busIds: ids(row.bus_ids).length ? ids(row.bus_ids) : typeof row.bus_id === "string" ? [row.bus_id] : [],
-    spentOn: str(row.spent_on),
-    category: str(row.category) as CompanyExpenseCategory,
-    amountInr: num(row.amount_inr),
-    paidVia: (str(row.paid_via) || "bank") as PaidVia,
-    note: str(row.note),
-  }));
+  return rows.map((row) => {
+    const busIds = ids(row.bus_ids).length ? ids(row.bus_ids) : typeof row.bus_id === "string" ? [row.bus_id] : [];
+    // Before migration 0025 there is no applies_to: picked buses, or all buses.
+    const appliesType = isModuleId(row.applies_type) ? row.applies_type : null;
+    const appliesTo: CostAppliesTo =
+      row.applies_to === "type" && appliesType ? "type" : busIds.length ? "buses" : "all";
+    return {
+      id: str(row.id),
+      appliesTo,
+      appliesType: appliesTo === "type" ? appliesType : null,
+      busIds: appliesTo === "buses" ? busIds : [],
+      spentOn: str(row.spent_on),
+      category: str(row.category) as CompanyExpenseCategory,
+      amountInr: num(row.amount_inr),
+      paidVia: (str(row.paid_via) || "bank") as PaidVia,
+      note: str(row.note),
+    };
+  });
 }
 
-export function addCompanyExpense(
+/**
+ * Saves a cost. `typeBusIds` are the buses of the picked type today, used
+ * only if the database doesn't have migration 0025 yet (then a type cost is
+ * saved as those buses).
+ */
+export async function addCompanyExpense(
   client: SupabaseClient,
   organizationId: string,
   input: Omit<CompanyExpense, "id">,
+  typeBusIds: string[] = [],
 ) {
-  return insertRow(client, "company_expenses", organizationId, {
-    bus_ids: input.busIds,
+  const base = {
     spent_on: input.spentOn,
     category: input.category,
     amount_inr: input.amountInr,
     paid_via: input.paidVia,
     note: input.note,
+  };
+  const { error } = await client.from("company_expenses").insert({
+    organization_id: organizationId,
+    ...base,
+    applies_to: input.appliesTo,
+    applies_type: input.appliesTo === "type" ? input.appliesType : null,
+    bus_ids: input.appliesTo === "buses" ? input.busIds : [],
   });
+  if (error && /applies_(to|type)/.test(error.message)) {
+    return insertRow(client, "company_expenses", organizationId, {
+      ...base,
+      bus_ids: input.appliesTo === "buses" ? input.busIds : input.appliesTo === "type" ? typeBusIds : [],
+    });
+  }
+  throwIfError(error);
+}
+
+/** Odometer readings between two dates, for km on buses without trip sheets. Empty before migration 0022. */
+export async function listOdometerReadings(
+  client: SupabaseClient,
+  organizationId: string,
+  range: { from: string; to: string },
+): Promise<{ busId: string; date: string; km: number }[]> {
+  const { data, error } = await client
+    .from("odometer_readings")
+    .select("bus_id, reading_date, odometer_km")
+    .eq("organization_id", organizationId)
+    .gte("reading_date", range.from)
+    .lte("reading_date", range.to)
+    .limit(10000);
+  if (error) return [];
+  return ((data ?? []) as Row[]).map((row) => ({
+    busId: str(row.bus_id),
+    date: str(row.reading_date),
+    km: num(row.odometer_km),
+  }));
 }
 
 // Pumps

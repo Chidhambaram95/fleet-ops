@@ -13,9 +13,19 @@ export type CompanyExpenseCategory =
 
 export type PaidVia = "bank" | "upi" | "cash";
 
-/** A cost paid from the bank or for the company. No buses picked means it is shared by every bus. */
+/**
+ * Who a company cost is shared by: every bus, every bus of one type (buses
+ * added later included), or the buses picked.
+ */
+export type CostAppliesTo = "all" | "type" | "buses";
+
+/** A cost paid from the bank or for the company. */
 export type CompanyExpense = {
   id: string;
+  appliesTo: CostAppliesTo;
+  /** Set only when appliesTo is "type". */
+  appliesType: ModuleId | null;
+  /** The picked buses when appliesTo is "buses"; empty otherwise. */
   busIds: string[];
   spentOn: string;
   category: CompanyExpenseCategory;

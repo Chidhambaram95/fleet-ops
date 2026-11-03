@@ -7,6 +7,7 @@ import type {
 } from "@domain/money/types";
 import { costShares } from "@domain/modules/modules";
 import { categoryLabel } from "@domain/operations/catalog";
+import { shiftDate } from "@domain/operations/totals";
 import type { Bus, BusKind, DailyEntry } from "@domain/operations/types";
 import { currentRenewals, daysLeft, dueText, renewalLabel } from "@domain/renewals/catalog";
 import type { Renewal } from "@domain/renewals/types";
@@ -19,7 +20,7 @@ import type { TourBooking, TourPayment } from "@domain/tours/types";
 import { EVENT_LABELS, positionLabel } from "@domain/tyres/catalog";
 import type { Tyre, TyreClaim, TyreEvent, TyreScrapSale } from "@domain/tyres/types";
 
-export type ReportKind = "pnl" | "trips" | "fuel" | "expenses" | "crew" | "renewals" | "tours" | "dues" | "tyres";
+export type ReportKind = "pnl" | "bus_profit" | "trips" | "fuel" | "expenses" | "crew" | "renewals" | "tours" | "dues" | "tyres";
 
 export type ReportFilters = {
   from: string;
@@ -52,6 +53,14 @@ export type ReportData = {
   scrapSales: TyreScrapSale[];
   /** Warranty credits settled in the date range: money back to the bus that paid. */
   warrantyCredits: TyreClaim[];
+  /** Odometer readings in the date range: km for buses without trip sheets. */
+  odometers: { busId: string; date: string; km: number }[];
+  /**
+   * Days run by every bus of the company, from the database (migration 0025).
+   * A manager limited to one module can't read other buses' entries, so this
+   * keeps their shares the same as the admin's. Null: work it out from entries.
+   */
+  companyBusDays: { busId: string; busType: BusKind; days: number }[] | null;
 };
 
 export type Cell = string | number;
@@ -67,8 +76,24 @@ export type ReportTable = {
   rows: Cell[][];
   total?: Cell[];
   /** Headline figures shown above the table. */
-  summary: { label: string; value: number; tone?: "in" | "out" }[];
+  summary: {
+    label: string;
+    value: number;
+    tone?: "in" | "out";
+    /** "bracket" shows (₹1,000); "rate" shows ₹ with paise. */
+    format?: "bracket" | "rate";
+    /** Small text after the figure. */
+    detail?: string;
+  }[];
   notes: string[];
+  /** Money columns shown in brackets: a figure before company costs. */
+  bracketColumns?: number[];
+  /** Money columns shown green when positive and red when negative. */
+  toneColumns?: number[];
+  /** Rupee columns with paise, such as profit per km. */
+  rateColumns?: number[];
+  /** Rows (by index) that are not buses, such as "Other buses". */
+  extraRows?: number[];
 };
 
 const sum = (values: number[]) => values.reduce((total, value) => total + value, 0);
@@ -119,15 +144,22 @@ function salariesInRange(data: ReportData, filters: ReportFilters) {
   );
 }
 
+/** The buses a company cost is shared by, from its "Applies to". */
+export function costTargets(cost: CompanyExpense, buses: readonly Pick<Bus, "id" | "busType">[]): string[] {
+  if (cost.appliesTo === "buses" && cost.busIds.length) return cost.busIds;
+  if (cost.appliesTo === "type") return buses.filter((bus) => bus.busType === cost.appliesType).map((bus) => bus.id);
+  return buses.map((bus) => bus.id);
+}
+
 /**
- * Each bus's part of the bank and company costs in the range. A cost for
- * several buses is shared equally by them; one with none by every bus.
+ * Each bus's part of the bank and company costs in the range, split equally
+ * by the buses each cost applies to (every bus when it applies to none left).
  */
 function costSharesByBus(data: ReportData, filters: ReportFilters) {
   const byBus = new Map<string, number>();
   for (const cost of data.companyExpenses) {
     if (!inRange(cost.spentOn, filters)) continue;
-    for (const [busId, share] of costShares(cost.amountInr, cost.busIds, data.allBusIds)) {
+    for (const [busId, share] of costShares(cost.amountInr, costTargets(cost, data.buses), data.allBusIds)) {
       byBus.set(busId, (byBus.get(busId) ?? 0) + share);
     }
   }
@@ -225,7 +257,7 @@ export function pnlReport(data: ReportData, filters: ReportFilters): ReportTable
   } else {
     notes.push("Salaries and tyre scrap sales are left out when one bus is picked.");
   }
-  notes.push("Bank and company costs are shared equally by the buses they were for, or by every bus when none was picked.");
+  notes.push("Bank and company costs are shared equally by the buses they apply to (all buses, one bus type, or the buses picked). Profit by bus splits them by days run instead.");
   notes.push("Trip costs are approved trip sheets only: all diesel (cash and credit) plus cash expenses.");
   notes.push("Intercity money is shared equally across the buses it covers. Tour payments count on the day they were received, for the bus on the booking.");
   notes.push("Tyres: a tyre's price is charged to the first bus it is fitted on, and each retread bill to the next bus it goes on, on the day it is fitted. Repairs go to the bus the tyre is on. A warranty credit is taken off the bus that paid for the tyre.");
@@ -363,7 +395,7 @@ export function expensesReport(data: ReportData, filters: ReportFilters): Report
   for (const item of data.companyExpenses) {
     if (!inRange(item.spentOn, filters)) continue;
     let share = 0;
-    for (const [busId, amount] of costShares(item.amountInr, item.busIds, data.allBusIds)) {
+    for (const [busId, amount] of costShares(item.amountInr, costTargets(item, data.buses), data.allBusIds)) {
       if (busIds.has(busId)) share += amount;
     }
     if (share) add(companyExpenseLabel(item.category), "Bank & company", share);
@@ -623,10 +655,289 @@ export function tyresReport(data: ReportData, filters: ReportFilters): ReportTab
   };
 }
 
+// ---------------------------------------------------------------------------
+// Profit by bus: each bus's own profit, its share of company costs, and both
+// ---------------------------------------------------------------------------
+
+/** Days in the range each bus ran: a day with an approved trip on the road, or a ledger entry. */
+export function daysRunByBus(data: ReportData, filters: ReportFilters): Map<string, number> {
+  if (data.companyBusDays) {
+    return new Map(data.companyBusDays.filter((item) => item.days > 0).map((item) => [item.busId, item.days]));
+  }
+  const days = new Map<string, Set<string>>();
+  const add = (busId: string, day: string) => {
+    if (!day || day < filters.from || day > filters.to) return;
+    const set = days.get(busId) ?? new Set<string>();
+    set.add(day);
+    days.set(busId, set);
+  };
+  for (const entry of data.entries) add(entry.busId, entry.date);
+  for (const trip of data.trips) {
+    if (trip.status !== "approved") continue;
+    const start = istDay(trip.startedAt);
+    if (!start) continue;
+    const end = istDay(trip.endedAt) || start;
+    let day = start < filters.from ? filters.from : start;
+    const last = end > filters.to ? filters.to : end;
+    // A trip sheet is a few days at most; the cap guards against a mistyped end date.
+    for (let guard = 0; day <= last && guard < 400; guard += 1) {
+      add(trip.busId, day);
+      day = shiftDate(day, 1);
+    }
+  }
+  return new Map([...days].map(([busId, set]) => [busId, set.size]));
+}
+
+/**
+ * Splits whole rupees in proportion to the weights. Leftover rupees go to the
+ * largest remainders (then list order), so the parts always add up.
+ */
+export function splitByWeight(amountInr: number, weights: readonly (readonly [string, number])[]): Map<string, number> {
+  const parts = new Map<string, number>();
+  const used = weights.filter(([, weight]) => weight > 0);
+  const total = sum(used.map(([, weight]) => weight));
+  if (!total) return parts;
+  const exact = used.map(([id, weight], index) => ({ id, index, value: (amountInr * weight) / total }));
+  for (const item of exact) parts.set(item.id, (parts.get(item.id) ?? 0) + Math.floor(item.value));
+  let left = amountInr - sum(exact.map((item) => Math.floor(item.value)));
+  const order = [...exact].sort(
+    (a, b) => b.value - Math.floor(b.value) - (a.value - Math.floor(a.value)) || a.index - b.index,
+  );
+  for (const item of order) {
+    if (left <= 0) break;
+    parts.set(item.id, (parts.get(item.id) ?? 0) + 1);
+    left -= 1;
+  }
+  return parts;
+}
+
+/**
+ * Company costs and salaries paid in the range, shared among the buses each
+ * applies to, weighted by days run. A bus that didn't run takes no share; a
+ * cost none of its buses ran for is left as "not shared".
+ */
+export function sharedCostsByBus(data: ReportData, filters: ReportFilters, days: Map<string, number>) {
+  const byBus = new Map<string, number>();
+  let unshared = 0;
+  const share = (amountInr: number, targets: string[]) => {
+    const parts = splitByWeight(
+      amountInr,
+      targets.map((id) => [id, days.get(id) ?? 0] as const),
+    );
+    if (parts.size === 0) {
+      unshared += amountInr;
+      return;
+    }
+    for (const [busId, part] of parts) byBus.set(busId, (byBus.get(busId) ?? 0) + part);
+  };
+  // Every bus of the company, even ones this login can't see.
+  const fleet = data.companyBusDays?.map((item) => ({ id: item.busId, busType: item.busType })) ?? data.buses;
+  for (const cost of data.companyExpenses) {
+    if (inRange(cost.spentOn, filters)) share(cost.amountInr, costTargets(cost, fleet));
+  }
+  // Salaries aren't entered against a bus: each is shared by the buses of the person's type.
+  for (const salary of data.salaries) {
+    if (!inRange(salary.paidOn, filters)) continue;
+    const person = data.people.find((item) => item.id === salary.personId);
+    const targets = fleet.filter((bus) => !person || bus.busType === person.module).map((bus) => bus.id);
+    share(salary.amountInr, targets);
+  }
+  return { byBus, unshared };
+}
+
+export type BusProfitLine = {
+  bus: Bus;
+  moneyIn: number;
+  ownCosts: number;
+  /** Money in minus own costs, before company costs. */
+  busProfit: number;
+  /** This bus's share of company costs and salaries. */
+  shared: number;
+  /** Bus profit minus its share. */
+  profit: number;
+  km: number;
+  daysRun: number;
+};
+
+/**
+ * Every bus's figures for the date range (the bus and type filters are not
+ * applied, so shares are the same whatever is picked), plus the company
+ * money that falls on no bus.
+ */
+export function busProfitLines(data: ReportData, filters: ReportFilters) {
+  const all = new Set(data.buses.map((bus) => bus.id));
+  const days = daysRunByBus(data, filters);
+  const { byBus, unshared } = sharedCostsByBus(data, filters, days);
+  const income = intercityShares(data, filters);
+  const tyres = tyreChargesByBus(data, filters);
+  const trips = tripsInRange(data, filters, all);
+  const entries = data.entries.filter((entry) => inRange(entry.date, filters));
+  const lines: BusProfitLine[] = data.buses.map((bus) => {
+    const busEntries = entries.filter((entry) => entry.busId === bus.id);
+    const busTrips = trips.filter((trip) => trip.busId === bus.id);
+    const moneyIn =
+      sum(busEntries.filter((entry) => entry.kind === "income").map((entry) => entry.amountInr)) +
+      (income.get(bus.id) ?? 0);
+    const ownCosts =
+      sum(busEntries.filter((entry) => entry.kind === "expense").map((entry) => entry.amountInr)) +
+      sum(
+        busTrips.map((trip) => {
+          const totals = tripTotals(trip);
+          return totals.dieselInr + totals.cashExpensesInr;
+        }),
+      ) +
+      (tyres.get(bus.id) ?? 0);
+    const tripKm = sum(busTrips.map((trip) => tripTotals(trip).kmRun ?? 0));
+    const readings = data.odometers.filter((item) => item.busId === bus.id).map((item) => item.km);
+    const km = tripKm || (readings.length > 1 ? Math.max(...readings) - Math.min(...readings) : 0);
+    const shared = byBus.get(bus.id) ?? 0;
+    return {
+      bus,
+      moneyIn,
+      ownCosts,
+      busProfit: moneyIn - ownCosts,
+      shared,
+      profit: moneyIn - ownCosts - shared,
+      km,
+      daysRun: days.get(bus.id) ?? 0,
+    };
+  });
+  return { lines, unshared, scrap: scrapInRange(data, filters) };
+}
+
+const idle = (line: BusProfitLine) => !line.daysRun && !line.moneyIn && !line.ownCosts && !line.shared;
+
+/** Most profitable first, after shared costs; buses with nothing in the range go last. */
+function byProfit(left: BusProfitLine, right: BusProfitLine) {
+  return (
+    Number(idle(left)) - Number(idle(right)) ||
+    right.profit - left.profit ||
+    left.bus.registrationNumber.localeCompare(right.bus.registrationNumber)
+  );
+}
+
+/** Best and worst bus of the given buses, by profit after shared costs. */
+export function bestAndWorst(lines: readonly BusProfitLine[]) {
+  const ran = lines.filter((line) => !idle(line)).sort(byProfit);
+  if (ran.length === 0) return null;
+  return { best: ran[0], worst: ran.length > 1 ? ran[ran.length - 1] : null };
+}
+
+const perKm = (profit: number, km: number) => (km > 0 ? Math.round((profit / km) * 100) / 100 : "");
+
+export function busProfitReport(data: ReportData, filters: ReportFilters): ReportTable {
+  const { lines, unshared, scrap } = busProfitLines(data, filters);
+  const picked = new Set(selectedBuses(data, filters).map((bus) => bus.id));
+  const shown = lines.filter((line) => picked.has(line.bus.id)).sort(byProfit);
+  const others = lines.filter((line) => !picked.has(line.bus.id));
+  const rows: Cell[][] = shown.map((line, index) => [
+    index + 1,
+    line.bus.registrationNumber,
+    BUS_TYPE_LABELS[line.bus.busType],
+    line.moneyIn,
+    line.ownCosts,
+    line.busProfit,
+    -line.shared,
+    line.profit,
+    line.km,
+    perKm(line.profit, line.km),
+    line.daysRun,
+  ]);
+  const extraRows: number[] = [];
+  const extra = (row: Cell[]) => {
+    extraRows.push(rows.length);
+    rows.push(row);
+  };
+  // Filtered to some buses: the rest of the company, so the total is still the company's profit.
+  if (others.length) {
+    const otherTypes = [...new Set(others.map((line) => BUS_TYPE_LABELS[line.bus.busType]))].join(", ");
+    const t = (pick: (line: BusProfitLine) => number) => sum(others.map(pick));
+    extra([
+      "",
+      filters.busId ? "Other buses" : `Other types (${otherTypes})`,
+      `${others.length} bus${others.length === 1 ? "" : "es"}`,
+      t((line) => line.moneyIn),
+      t((line) => line.ownCosts),
+      t((line) => line.busProfit),
+      -t((line) => line.shared),
+      t((line) => line.profit),
+      t((line) => line.km),
+      perKm(t((line) => line.profit), t((line) => line.km)),
+      t((line) => line.daysRun),
+    ]);
+  }
+  if (unshared) extra(["", "Company costs no bus ran for", "", 0, 0, 0, -unshared, -unshared, "", "", ""]);
+  if (scrap) extra(["", "Tyre scrap sold", "", scrap, 0, scrap, 0, scrap, "", "", ""]);
+
+  const column = (index: number) => sum(rows.map((row) => Number(row[index]) || 0));
+  const total: Cell[] = [
+    "",
+    extraRows.length ? "Company total" : `Total · ${shown.length} bus${shown.length === 1 ? "" : "es"}`,
+    "",
+    column(3),
+    column(4),
+    column(5),
+    column(6),
+    column(7),
+    column(8),
+    perKm(column(7), column(8)),
+    "",
+  ];
+  const own = (pick: (line: BusProfitLine) => number) => sum(shown.map(pick));
+  const km = own((line) => line.km);
+  const profit = own((line) => line.profit);
+  const notes = [
+    "Bus profit = the bus's money in minus its own costs (ledger, trip sheets, tyres), before company costs. Shown in brackets.",
+    "Share of company costs: each bank or company cost, and each salary, is split among the buses it applies to by days run in these dates. A day counts if the bus had an approved trip or a ledger entry. A bus that didn't run takes no share; a cost for one bus goes to that bus.",
+    "Salaries are shared by the buses of the person's type. Intercity money is split equally across its buses; tour payments go to the bus on the booking.",
+  ];
+  if (extraRows.length) {
+    notes.push("The company total includes other buses, costs no bus ran for and tyre scrap, so it matches the company's profit in Profit & loss.");
+  }
+  return {
+    title: "Profit by bus",
+    columns: [
+      "#",
+      "Bus",
+      "Type",
+      "Money in",
+      "Own costs",
+      "Bus profit (no company costs)",
+      "Share of company costs",
+      "Profit after shared costs",
+      "Km",
+      "Profit / km",
+      "Days run",
+    ],
+    moneyColumns: [3, 4, 5, 6, 7],
+    bracketColumns: [5],
+    toneColumns: [6, 7],
+    rateColumns: [9],
+    shareColumns: [1, 5, 6, 7],
+    rows,
+    total,
+    extraRows,
+    summary: [
+      { label: "Bus profit (no company costs)", value: own((line) => line.busProfit), format: "bracket" },
+      { label: "Company costs shared", value: -own((line) => line.shared), tone: "out" },
+      { label: "Profit after shared costs", value: profit, tone: profit >= 0 ? "in" : "out" },
+      {
+        label: "Profit per km",
+        value: km > 0 ? Number(perKm(profit, km)) : 0,
+        format: "rate",
+        detail: `${km.toLocaleString("en-IN")} km`,
+      },
+    ],
+    notes,
+  };
+}
+
 export function buildReport(kind: ReportKind, data: ReportData, filters: ReportFilters, today: string): ReportTable {
   switch (kind) {
     case "pnl":
       return pnlReport(data, filters);
+    case "bus_profit":
+      return busProfitReport(data, filters);
     case "trips":
       return tripsReport(data, filters);
     case "fuel":

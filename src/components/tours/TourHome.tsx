@@ -9,6 +9,7 @@ import { balanceDue, isRunning, isUpcoming } from "@domain/tours/calc";
 import { quoteNumber, tripLine, whenLine } from "@domain/tours/messages";
 import { useOrg } from "@/components/billing/OrgContext";
 import { MileageCard } from "@/components/mileage/MileageAlerts";
+import { BestWorstCard } from "@/components/reports/BestWorstCard";
 import { RenewalsDueCard } from "@/components/renewals/RenewalsDueCard";
 import { Card, ErrorText, PageHeader, useLoaded } from "@/components/ui/kit";
 import { StatusPill, useTourData } from "./shared";
@@ -126,6 +127,7 @@ export function TourHome({ organizationId }: { organizationId: string }) {
           ))
         )}
       </Card>
+      <BestWorstCard supabase={supabase} organizationId={organizationId} module="tour" />
       <RenewalsDueCard supabase={supabase} organizationId={organizationId} module="tour" />
       <MileageCard supabase={supabase} organizationId={organizationId} module="tour" />
       {!loading && data.buses.length === 0 ? (
