@@ -763,7 +763,7 @@ export function splitByWeight(amountInr: number, weights: readonly (readonly [st
 }
 
 /** EMIs, insurance and permits: what a bus costs just by being owned. */
-const FIXED_COSTS = new Set(["loan_emi", "insurance", "permit_tax"]);
+const FIXED_COSTS = new Set(["loan_emi", "insurance", "permit_tax", "bank_fees"]);
 
 export type CostGroup = "fixed" | "overhead" | "salary";
 

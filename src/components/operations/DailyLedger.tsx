@@ -42,6 +42,7 @@ import { downloadTextFile } from "@/lib/downloadTextFile";
 import { useOrg } from "@/components/billing/OrgContext";
 import { MileageCard } from "@/components/mileage/MileageAlerts";
 import { BestWorstCard } from "@/components/reports/BestWorstCard";
+import { EmiDueCard } from "@/components/renewals/EmiDueCard";
 import { RenewalsDueCard } from "@/components/renewals/RenewalsDueCard";
 import { DayCrewCard } from "@/components/operations/DayCrewCard";
 import { LastChangeLine, RecordLock } from "@/components/history/RecordLock";
@@ -932,6 +933,10 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
         </section>
 
         {actionButtons}
+
+        {organizationId && module && (role === "admin" || role === "manager") ? (
+          <EmiDueCard supabase={supabase} organizationId={organizationId} module={module} />
+        ) : null}
 
         {organizationId && module && (role === "admin" || role === "manager") ? (
           <BestWorstCard supabase={supabase} organizationId={organizationId} module={module} />

@@ -11,6 +11,7 @@ export const COMPANY_EXPENSE_CATEGORIES: { id: CompanyExpenseCategory; label: st
   { id: "loan_emi", label: "Loan EMI" },
   { id: "insurance", label: "Insurance" },
   { id: "permit_tax", label: "Permit / FC / tax" },
+  { id: "bank_fees", label: "Bank fees & fines" },
   { id: "other", label: "Other" },
 ];
 

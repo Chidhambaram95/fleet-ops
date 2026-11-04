@@ -9,6 +9,7 @@ import { mileageSummary, type BusMileageView } from "@domain/mileage/mileage";
 import { moduleHref, type ModuleId } from "@domain/modules/modules";
 import { shiftDate, todayInIst } from "@domain/operations/totals";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
+import { emiHref, useEmiAlerts } from "@/components/renewals/EmiDueCard";
 
 /** Buses with an open mileage alert in the last 30 days, worst first. */
 function useMileageProblems(supabase: SupabaseClient, organizationId: string, module: ModuleId | null, refreshKey = "") {
@@ -75,18 +76,26 @@ export function MileageCard({
 export function MileageBell({ organizationId, module }: { organizationId: string; module: ModuleId | null }) {
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
   // Loads once per module, and again on leaving the mileage page, where alerts get checked.
   const problems = useMileageProblems(supabase, organizationId, module, pathname.endsWith("/mileage") ? "on" : "off");
+  // Again on each page change, so marking an EMI paid clears the bell.
+  const emis = useEmiAlerts(supabase, organizationId, module, pathname);
+  useEffect(() => setOpen(false), [pathname]);
   if (!module) {
     return null;
   }
-  const count = problems.length;
-  return (
-    <Link
-      href={moduleHref(module, "mileage")}
-      aria-label={count ? `Mileage: ${count} ${count === 1 ? "bus needs" : "buses need"} a look` : "Mileage alerts"}
-      className="relative inline-flex h-11 w-11 items-center justify-center rounded-full bg-white md:bg-canvas"
-    >
+  const count = problems.length + emis.length;
+  const label = count
+    ? [
+        problems.length ? `Mileage: ${problems.length} ${problems.length === 1 ? "bus needs" : "buses need"} a look` : "",
+        emis.length ? `EMIs: ${emis.length} to look at` : "",
+      ]
+        .filter(Boolean)
+        .join(". ")
+    : "Alerts";
+  const bell = (
+    <>
       <svg
         aria-hidden="true"
         viewBox="0 0 24 24"
@@ -105,6 +114,40 @@ export function MileageBell({ organizationId, module }: { organizationId: string
           {count}
         </span>
       ) : null}
-    </Link>
+    </>
+  );
+  const bellClass = "relative inline-flex h-11 w-11 items-center justify-center rounded-full bg-white md:bg-canvas";
+  // Only mileage (or nothing): the bell goes straight to the mileage page, as before.
+  if (!emis.length) {
+    return (
+      <Link href={moduleHref(module, "mileage")} aria-label={label} className={bellClass}>
+        {bell}
+      </Link>
+    );
+  }
+  return (
+    <div className="relative">
+      <button type="button" aria-label={label} aria-expanded={open} onClick={() => setOpen((value) => !value)} className={bellClass}>
+        {bell}
+      </button>
+      {open ? (
+        <div className="absolute right-0 top-12 z-50 flex w-72 max-w-[calc(100vw-2rem)] flex-col gap-1 rounded-2xl bg-white p-2 shadow-lg ring-1 ring-line">
+          <Link href={emiHref(module)} className="flex flex-col gap-1 rounded-xl px-3 py-2 hover:bg-canvas">
+            <span className="text-sm font-extrabold">EMIs · {emis.length}</span>
+            {emis.slice(0, 2).map((line, index) => (
+              <span key={index} className={`text-xs ${line.kind === "overdue" ? "font-bold text-money-out" : "text-muted"}`}>
+                {line.text}
+              </span>
+            ))}
+          </Link>
+          <Link href={moduleHref(module, "mileage")} className="flex flex-col gap-1 rounded-xl px-3 py-2 hover:bg-canvas">
+            <span className="text-sm font-extrabold">Mileage · {problems.length}</span>
+            <span className="text-xs text-muted">
+              {problems.length ? `${problems.length} ${problems.length === 1 ? "bus needs" : "buses need"} a look` : "All buses look fine"}
+            </span>
+          </Link>
+        </div>
+      ) : null}
+    </div>
   );
 }

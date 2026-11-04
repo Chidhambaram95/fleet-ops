@@ -11,6 +11,7 @@ export type CompanyExpenseCategory =
   | "loan_emi"
   | "insurance"
   | "permit_tax"
+  | "bank_fees"
   | "other";
 
 export type PaidVia = "bank" | "upi" | "cash";

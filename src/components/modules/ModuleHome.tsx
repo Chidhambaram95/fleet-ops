@@ -13,6 +13,7 @@ import { useOrg } from "@/components/billing/OrgContext";
 import { MileageCard } from "@/components/mileage/MileageAlerts";
 import { BestWorstCard } from "@/components/reports/BestWorstCard";
 import { RenewalsDueCard } from "@/components/renewals/RenewalsDueCard";
+import { EmiDueCard } from "@/components/renewals/EmiDueCard";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { ErrorText, PageHeader, useLoaded } from "@/components/ui/kit";
 
@@ -135,6 +136,7 @@ export function ModuleHome({ organizationId, module }: { organizationId: string;
           </Link>
         ))}
       </div>
+      <EmiDueCard supabase={supabase} organizationId={organizationId} module={module} />
       <BestWorstCard supabase={supabase} organizationId={organizationId} module={module} />
       <RenewalsDueCard supabase={supabase} organizationId={organizationId} module={module} />
       <MileageCard supabase={supabase} organizationId={organizationId} module={module} />

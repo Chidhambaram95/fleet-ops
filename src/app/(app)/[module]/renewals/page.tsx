@@ -12,6 +12,7 @@ export default async function ModuleRenewalsPage({ params }: { params: Promise<{
       key={access.module}
       organizationId={access.membership.organizationId}
       module={access.module}
+      isAdmin={access.membership.role === "admin"}
     />
   );
 }

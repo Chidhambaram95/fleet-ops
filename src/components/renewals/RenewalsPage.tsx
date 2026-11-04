@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { deleteRow, listCrewPeople } from "@data/money/repository";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import {
@@ -24,9 +24,11 @@ import {
   type DueStatus,
 } from "@domain/renewals/catalog";
 import type { Renewal, RenewalKind } from "@domain/renewals/types";
+import type { Bus } from "@domain/operations/types";
 import { useOrg } from "@/components/billing/OrgContext";
 import { compressReceipt } from "@/lib/compressReceipt";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
+import { LoansPanel } from "@/components/renewals/LoansPanel";
 import {
   Card,
   ErrorText,
@@ -44,7 +46,7 @@ import {
   wholeNumber,
 } from "@/components/ui/kit";
 
-type Section = "buses" | "drivers" | "history";
+type Section = "buses" | "drivers" | "loans" | "history";
 
 const STATUS_CLASS: Record<DueStatus, string> = {
   expired: "bg-money-out text-white",
@@ -77,7 +79,15 @@ function emptyDraft(kind: RenewalKind = "fc", ownerId = ""): Draft {
   };
 }
 
-export function RenewalsPage({ organizationId, module }: { organizationId: string; module: ModuleId }) {
+export function RenewalsPage({
+  organizationId,
+  module,
+  isAdmin = false,
+}: {
+  organizationId: string;
+  module: ModuleId;
+  isAdmin?: boolean;
+}) {
   const org = useOrg();
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const { data, loading, error, reload } = useLoaded(
@@ -92,9 +102,9 @@ export function RenewalsPage({ organizationId, module }: { organizationId: strin
       const people = allPeople.filter((person) => person.module === module);
       const owners = new Set([...buses.map((bus) => bus.id), ...people.map((person) => person.id)]);
       const renewals = allRenewals.filter((renewal) => owners.has(renewal.busId ?? renewal.personId ?? ""));
-      return { renewals, buses, people };
+      return { renewals, buses, people, allBuses };
     },
-    { renewals: [], buses: [], people: [] },
+    { renewals: [], buses: [], people: [], allBuses: [] as Bus[] },
   );
   const today = todayInIst();
   const drivers = data.people.filter((person) => person.job === "driver" && person.active);
@@ -114,6 +124,10 @@ export function RenewalsPage({ organizationId, module }: { organizationId: strin
   };
 
   const [section, setSection] = useState<Section>("buses");
+  // Alerts link straight to the loans tab.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("section") === "loans") setSection("loans");
+  }, []);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
@@ -362,6 +376,7 @@ export function RenewalsPage({ organizationId, module }: { organizationId: strin
             options={[
               { id: "buses", label: "Bus documents" },
               { id: "drivers", label: "Driver licences" },
+              { id: "loans", label: "Loans & EMIs" },
               { id: "history", label: "Past renewals" },
             ]}
           />
@@ -384,6 +399,9 @@ export function RenewalsPage({ organizationId, module }: { organizationId: strin
                   </Card>
                 ))
             : null}
+          {section === "loans" ? (
+            <LoansPanel supabase={supabase} organizationId={organizationId} module={module} buses={data.allBuses} isAdmin={isAdmin} />
+          ) : null}
           {section === "history" ? (
             <Card title="Every renewal">
               {data.renewals.length === 0 ? (
