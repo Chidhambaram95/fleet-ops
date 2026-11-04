@@ -1,3 +1,5 @@
+-- Run once, in order, on a new database. Not safe to re-run on a live one:
+-- later migrations replace parts of it. Kept unchanged as the history of the schema.
 -- Granular roles: admin (and legacy owner), manager, and crew.
 -- Crew can work only the bus recorded in crew_assignments.
 

@@ -10,6 +10,7 @@ import type { Bus, BusKind, NewBus, SeatLayout } from "@domain/operations/types"
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { useOrg } from "@/components/billing/OrgContext";
 import { friendlyErrorMessage } from "@domain/platform/errors";
+import { OffRoadDays } from "@/components/operations/OffRoadDays";
 
 const inputClass =
   "h-12 rounded-2xl bg-canvas px-4 text-base font-normal";
@@ -399,6 +400,10 @@ export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; m
           </p>
         ) : null}
       </section>
+
+      {organizationId && !loading ? (
+        <OffRoadDays supabase={supabase} organizationId={organizationId} buses={buses} canEdit={!viewOnly} />
+      ) : null}
     </div>
   );
 }

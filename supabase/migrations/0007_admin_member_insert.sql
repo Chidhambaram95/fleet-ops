@@ -1,3 +1,5 @@
+-- Run once, in order, on a new database. Not safe to re-run on a live one:
+-- later migrations replace parts of it. Kept unchanged as the history of the schema.
 -- Admins can add an existing auth user to their organization.
 -- Account creation itself happens through Supabase Auth.
 

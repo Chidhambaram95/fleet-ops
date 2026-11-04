@@ -5,7 +5,7 @@ import { companyAccess } from "@/app/(app)/moduleAccess";
 export default async function CompanyCostsRoute() {
   const access = await companyAccess();
   if (!access.membership) {
-    return <AccessMessage message={access.message} />;
+    return <AccessMessage message={access.message} link={access.link} />;
   }
   return <CompanyCostsPage organizationId={access.membership.organizationId} modules={access.companyModules} />;
 }

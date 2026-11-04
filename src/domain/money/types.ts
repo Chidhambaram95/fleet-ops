@@ -9,6 +9,8 @@ export type CompanyExpenseCategory =
   | "auditor"
   | "office"
   | "loan_emi"
+  | "insurance"
+  | "permit_tax"
   | "other";
 
 export type PaidVia = "bank" | "upi" | "cash";
@@ -32,7 +34,16 @@ export type CompanyExpense = {
   amountInr: number;
   paidVia: PaidVia;
   note: string;
+  /**
+   * Months the cost is spread over in reports, from the month it was paid:
+   * 1, 3, 6 or 12. Each month's part is spread day by day.
+   */
+  spreadMonths: SpreadMonths;
+  /** Offered again every month on the costs screen (EMIs and the like). */
+  repeatMonthly: boolean;
 };
+
+export type SpreadMonths = 1 | 3 | 6 | 12;
 
 export type PumpStatement = {
   id: string;

@@ -4,11 +4,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import {
   addCompanyExpense,
+  updateCompanyExpense,
   deleteRow,
   listCompanyExpenses,
 } from "@data/money/repository";
 import { COMPANY_EXPENSE_CATEGORIES, PAID_VIA, companyExpenseLabel } from "@domain/money/catalog";
-import type { CompanyExpense, CompanyExpenseCategory, CostAppliesTo, PaidVia } from "@domain/money/types";
+import type { CompanyExpense, CompanyExpenseCategory, CostAppliesTo, PaidVia, SpreadMonths } from "@domain/money/types";
 import type { Bus } from "@domain/operations/types";
 import { MODULE_LABELS, type ModuleId } from "@domain/modules/modules";
 import { formatInr, todayInIst } from "@domain/operations/totals";
@@ -110,6 +111,14 @@ function AppliesToPicker({
     </span>
   );
   const covered = coveredBuses(value, buses);
+  // Every bus of one type ticked by hand: a type choice would also cover buses added later.
+  const wholeType =
+    value.appliesTo === "buses" && types.length > 1
+      ? (types.find((type) => {
+          const ofType = buses.filter((bus) => bus.busType === type);
+          return ofType.length > 0 && ofType.length === covered.length && ofType.every((bus) => ticked.has(bus.id));
+        }) ?? null)
+      : null;
   const typeName = value.appliesType ? MODULE_LABELS[value.appliesType] : "";
 
   return (
@@ -128,7 +137,18 @@ function AppliesToPicker({
         </span>
       </button>
       {open ? (
-        <div className="absolute inset-x-0 top-full z-20 mt-1 flex max-h-[60vh] flex-col gap-0.5 overflow-y-auto rounded-2xl bg-white p-2 shadow-xl ring-1 ring-line">
+        // Phone: a sheet from the bottom, above the menu bar. Laptop: a list under the box.
+        <button
+          type="button"
+          aria-label="Close"
+          tabIndex={-1}
+          onClick={() => setOpen(false)}
+          className="fixed inset-0 z-40 bg-black/30 md:hidden"
+        />
+      ) : null}
+      {open ? (
+        <div className="fixed inset-x-0 bottom-0 z-50 flex max-h-[80vh] flex-col gap-0.5 overflow-y-auto rounded-t-3xl bg-white p-3 pb-0 shadow-xl ring-1 ring-line md:absolute md:inset-x-0 md:top-full md:bottom-auto md:z-20 md:mt-1 md:max-h-[60vh] md:rounded-2xl md:p-2">
+          <span className="px-3 pt-1 pb-2 text-base font-extrabold md:hidden">Applies to</span>
           <button
             type="button"
             className={option(value.appliesTo === "all")}
@@ -179,26 +199,64 @@ function AppliesToPicker({
               <span className="text-xs text-muted">{MODULE_LABELS[bus.busType]}</span>
             </label>
           ))}
-          <button
-            type="button"
-            className="mt-1 h-10 rounded-full bg-canvas text-sm font-bold text-brand"
-            onClick={() => setOpen(false)}
-          >
-            Done
-          </button>
+          <div className="sticky bottom-0 -mx-3 mt-1 bg-white px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:-mx-2 md:px-2 md:pb-2">
+            <button
+              type="button"
+              className="h-11 w-full rounded-full bg-brand text-sm font-bold text-white md:h-10 md:bg-canvas md:text-brand"
+              onClick={() => setOpen(false)}
+            >
+              Done
+            </button>
+          </div>
         </div>
       ) : null}
       <p className="text-xs text-muted">
         {value.appliesTo === "all"
           ? `Split among all ${plural(buses.length)} in reports, by the days each bus ran.`
           : value.appliesTo === "type"
-            ? `Split among the ${plural(covered.length)} ${typeName} buses (and any added later), by the days each ran.`
+            ? `Split among the ${covered.length} ${typeName} bus${covered.length === 1 ? "" : "es"} (and any added later), by the days each ran.`
             : covered.length === 1
               ? `Counted against ${covered[0].registrationNumber} only.`
               : `Split among these ${plural(covered.length)} by the days each ran.`}
       </p>
+      {wholeType ? (
+        <p className="text-xs text-warn-ink">
+          All {MODULE_LABELS[wholeType]} buses are ticked. Choose &ldquo;{MODULE_LABELS[wholeType]} buses&rdquo; instead to
+          include buses added later.
+        </p>
+      ) : null}
     </div>
   );
+}
+
+/** "Nov 2026" for the month a date falls in, moved on by some months. */
+function monthLabel(date: string, plusMonths: number) {
+  const year = Number(date.slice(0, 4));
+  const month = Number(date.slice(5, 7));
+  return new Intl.DateTimeFormat("en-IN", { month: "short", year: "numeric", timeZone: "UTC" }).format(
+    new Date(Date.UTC(year, month - 1 + plusMonths, 1)),
+  );
+}
+
+const sameCost = (a: CompanyExpense, b: CompanyExpense) =>
+  a.category === b.category &&
+  a.amountInr === b.amountInr &&
+  a.appliesTo === b.appliesTo &&
+  a.appliesType === b.appliesType &&
+  a.busIds.join() === b.busIds.join();
+
+/** Repeating costs not yet added this month: the latest of each, once. */
+function dueRepeats(expenses: CompanyExpense[], today: string): CompanyExpense[] {
+  const month = today.slice(0, 7);
+  const due: CompanyExpense[] = [];
+  const latestFirst = [...expenses].sort((a, b) => b.spentOn.localeCompare(a.spentOn));
+  for (const item of latestFirst) {
+    if (!item.repeatMonthly || item.spentOn.slice(0, 7) >= month) continue;
+    if (latestFirst.some((other) => other.spentOn.slice(0, 7) === month && sameCost(other, item))) continue;
+    if (due.some((other) => sameCost(other, item))) continue;
+    due.push(item);
+  }
+  return due;
 }
 
 /**
@@ -237,6 +295,37 @@ export function CompanyCostsPage({
   const [amount, setAmount] = useState("");
   const [paidVia, setPaidVia] = useState<PaidVia>("bank");
   const [note, setNote] = useState("");
+  const [spreadMonths, setSpreadMonths] = useState<SpreadMonths>(1);
+  const [repeatMonthly, setRepeatMonthly] = useState(false);
+  // The cost being changed, or null when adding a new one.
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  /** Back to an empty form for the next cost: all buses, one month, no repeat. */
+  function resetForm() {
+    setEditingId(null);
+    setCategory("workshop");
+    setAppliesTo({ appliesTo: "all", appliesType: null, busIds: [] });
+    setAmount("");
+    setNote("");
+    setSpentOn(todayInIst());
+    setPaidVia("bank");
+    setSpreadMonths(1);
+    setRepeatMonthly(false);
+  }
+
+  function startEdit(item: CompanyExpense) {
+    setEditingId(item.id);
+    setCategory(item.category);
+    setAppliesTo({ appliesTo: item.appliesTo, appliesType: item.appliesType, busIds: item.busIds });
+    setAmount(String(item.amountInr));
+    setNote(item.note);
+    setSpentOn(item.spentOn);
+    setPaidVia(item.paidVia);
+    setSpreadMonths(item.spreadMonths);
+    setRepeatMonthly(item.repeatMonthly);
+    setFormError("");
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   async function run(action: () => Promise<void>) {
     setSaving(true);
@@ -254,23 +343,24 @@ export function CompanyCostsPage({
   function saveCost() {
     const value = wholeNumber(amount);
     if (!value) return setFormError("Enter the amount in rupees.");
+    const input = { ...appliesTo, spentOn, category, amountInr: value, paidVia, note, spreadMonths, repeatMonthly };
     void run(async () => {
-      await addCompanyExpense(
-        supabase,
-        organizationId,
-        {
-          ...appliesTo,
-          spentOn,
-        category,
-        amountInr: value,
-          paidVia,
-          note,
-        },
-        coveredBuses(appliesTo, data.buses).map((bus) => bus.id),
-      );
-      setAmount("");
-      setNote("");
+      if (editingId) {
+        await updateCompanyExpense(supabase, organizationId, editingId, input);
+      } else {
+        await addCompanyExpense(supabase, organizationId, input, coveredBuses(appliesTo, data.buses).map((bus) => bus.id));
+      }
+      resetForm();
     });
+  }
+
+  /** Adds this month's copy of a repeating cost, dated today. */
+  function addRepeat(item: CompanyExpense) {
+    const { id: _id, ...rest } = item;
+    void _id;
+    void run(() =>
+      addCompanyExpense(supabase, organizationId, { ...rest, spentOn: todayInIst() }, coveredBuses(item, data.buses).map((bus) => bus.id)),
+    );
   }
 
   function remove(id: string) {
@@ -279,6 +369,14 @@ export function CompanyCostsPage({
   }
 
   const costTotal = data.expenses.reduce((total, item) => total + item.amountInr, 0);
+  const due = dueRepeats(data.expenses, todayInIst());
+  const value = wholeNumber(amount);
+  const spreadLine =
+    value && spreadMonths > 1
+      ? `${formatInr(Math.round(value / spreadMonths))} a month, ${monthLabel(spentOn, 0)} to ${monthLabel(spentOn, spreadMonths - 1)}, spread day by day in reports.`
+      : value
+        ? `Counted over ${monthLabel(spentOn, 0)}, day by day, in reports.`
+        : "";
 
   return (
     <div className="flex flex-col gap-4">
@@ -287,6 +385,26 @@ export function CompanyCostsPage({
         hint="Loan EMIs, auditor, office and workshop bills. Say which buses each cost applies to: all, one bus type, or picked buses."
       />
       <ErrorText message={error} />
+
+      {due.length && !org.viewOnly ? (
+        <Card title={`Repeating costs due for ${monthLabel(todayInIst(), 0)}`}>
+          {due.map((item, index) => (
+            <ListRow
+              key={item.id}
+              first={index === 0}
+              title={companyExpenseLabel(item.category)}
+              detail={`Last added ${shortDay(item.spentOn)} · ${appliesLabel(item, data.buses)}`}
+              amount={formatInr(item.amountInr)}
+              tone="out"
+              actions={
+                <SmallButton disabled={saving} onClick={() => addRepeat(item)}>
+                  Add for this month
+                </SmallButton>
+              }
+            />
+          ))}
+        </Card>
+      ) : null}
 
       <div className="grid gap-4 md:grid-cols-[1fr_360px]">
         <Card title="Costs" action={<span className="font-bold text-money-out">{formatInr(costTotal)}</span>}>
@@ -305,10 +423,20 @@ export function CompanyCostsPage({
                 detail={
                   <>
                     {[shortDay(item.spentOn), item.paidVia.toUpperCase(), item.note].filter(Boolean).join(" · ")}
-                    <span
-                      className={`mt-1.5 block w-fit max-w-full truncate rounded-full px-2.5 py-0.5 text-xs font-bold ${CHIP[item.appliesTo]}`}
-                    >
-                      {appliesLabel(item, data.buses)}
+                    <span className="mt-1.5 flex flex-wrap gap-1.5">
+                      <span
+                        className={`block w-fit max-w-full truncate rounded-full px-2.5 py-0.5 text-xs font-bold ${CHIP[item.appliesTo]}`}
+                      >
+                        {appliesLabel(item, data.buses)}
+                      </span>
+                      {item.spreadMonths > 1 ? (
+                        <span className="rounded-full bg-canvas px-2.5 py-0.5 text-xs font-bold text-muted">
+                          Spread over {item.spreadMonths} months
+                        </span>
+                      ) : null}
+                      {item.repeatMonthly ? (
+                        <span className="rounded-full bg-canvas px-2.5 py-0.5 text-xs font-bold text-muted">Repeats monthly</span>
+                      ) : null}
                     </span>
                   </>
                 }
@@ -316,9 +444,14 @@ export function CompanyCostsPage({
                 tone="out"
                 actions={
                   !org.viewOnly ? (
-                    <SmallButton disabled={saving} onClick={() => remove(item.id)}>
-                      Delete
-                    </SmallButton>
+                    <>
+                      <SmallButton disabled={saving} onClick={() => startEdit(item)}>
+                        Edit
+                      </SmallButton>
+                      <SmallButton disabled={saving} onClick={() => remove(item.id)}>
+                        Delete
+                      </SmallButton>
+                    </>
                   ) : null
                 }
               />
@@ -326,7 +459,7 @@ export function CompanyCostsPage({
           )}
         </Card>
         {!org.viewOnly ? (
-          <Card title="Add a cost">
+          <Card title={editingId ? "Change this cost" : "Add a cost"}>
             <label className={LABEL}>
               What for
               <select
@@ -354,6 +487,29 @@ export function CompanyCostsPage({
                 <input inputMode="numeric" className={FIELD} value={amount} onChange={(event) => setAmount(event.target.value)} />
               </label>
             </div>
+            <label className={LABEL}>
+              Spread over
+              <select
+                className={FIELD}
+                value={spreadMonths}
+                onChange={(event) => setSpreadMonths(Number(event.target.value) as SpreadMonths)}
+              >
+                <option value={1}>1 month</option>
+                <option value={3}>3 months</option>
+                <option value={6}>6 months</option>
+                <option value={12}>12 months (yearly insurance, permit, FC)</option>
+              </select>
+              {spreadLine ? <span className="text-xs font-normal text-muted">{spreadLine}</span> : null}
+            </label>
+            <label className="flex min-h-11 items-center gap-3 text-sm font-semibold">
+              <input
+                type="checkbox"
+                className="size-5 accent-brand"
+                checked={repeatMonthly}
+                onChange={(event) => setRepeatMonthly(event.target.checked)}
+              />
+              Repeat every month (shows as due at the top each month)
+            </label>
             <div className="grid grid-cols-3 gap-2" role="group" aria-label="Paid by">
               {PAID_VIA.map((item) => (
                 <button
@@ -375,8 +531,13 @@ export function CompanyCostsPage({
             </label>
             <ErrorText message={formError} />
             <button type="button" className={PRIMARY} disabled={saving} onClick={saveCost}>
-              {saving ? "Saving…" : "Save cost"}
+              {saving ? "Saving…" : editingId ? "Save changes" : "Save cost"}
             </button>
+            {editingId ? (
+              <button type="button" className="text-sm font-bold text-brand" onClick={resetForm}>
+                Cancel
+              </button>
+            ) : null}
           </Card>
         ) : null}
       </div>

@@ -17,6 +17,7 @@ import {
 } from "@domain/reports/build";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { downloadTextFile } from "@/lib/downloadTextFile";
+import { BusDetailPanel, BusProfitCards, busProfitWhatsapp, formatRate, toneClass } from "@/components/reports/BusProfitView";
 import {
   BusSelect,
   Card,
@@ -83,15 +84,8 @@ function presetRange(
   }
 }
 
-/** Rupees with paise, such as ₹10.70 or −₹0.72. */
-export function formatRate(value: number) {
-  const text = `₹${Math.abs(value).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  return value < 0 ? `−${text}` : text;
-}
-
 function show(table: ReportTable, column: number, value: Cell) {
   if (table.rateColumns?.includes(column) && typeof value === "number") return formatRate(value);
-  if (table.bracketColumns?.includes(column) && typeof value === "number") return `(${formatInr(value)})`;
   if (table.moneyColumns.includes(column) && typeof value === "number") return formatInr(value);
   // Dates stay YYYY-MM-DD in the Excel file but read as "13 Oct 2026" on screen.
   if (typeof value === "number") return value.toLocaleString("en-IN");
@@ -109,6 +103,9 @@ function whatsappText(
     "",
     ...table.summary.map((item) => `${item.label}: ${summaryValue(item)}${item.detail ? ` · ${item.detail}` : ""}`),
     "",
+  ];
+  if (table.title === "Profit by bus") return [...lines, ...busProfitWhatsapp(table)].join("\n");
+  lines.push(
     ...table.rows
       .slice(0, 20)
       .map(
@@ -120,66 +117,16 @@ function whatsappText(
             )
             .join(" · ")}`,
       ),
-  ];
+  );
   if (table.rows.length > 20) lines.push(`…and ${table.rows.length - 20} more`);
   return lines.join("\n");
 }
 
 function summaryValue(item: ReportTable["summary"][number]) {
   if (item.format === "rate") return formatRate(item.value);
-  if (item.format === "bracket") return `(${formatInr(item.value)})`;
+  if (item.format === "none") return "—";
+  if (item.format === "money") return formatInr(item.value);
   return item.tone ? formatInr(item.value) : item.value.toLocaleString("en-IN");
-}
-
-/** Green for a profit, red for a loss. */
-function toneClass(value: Cell) {
-  if (typeof value !== "number" || value === 0) return "";
-  return value > 0 ? "text-money-in" : "text-money-out";
-}
-
-/** Phone view of Profit by bus: one card per bus with the three lines. */
-function BusProfitCards({ table }: { table: ReportTable }) {
-  const line = (label: string, value: string, valueClass = "") => (
-    <div className="flex items-center justify-between gap-3 text-sm text-muted">
-      <span>{label}</span>
-      <span className={`tabular-nums ${valueClass}`}>{value}</span>
-    </div>
-  );
-  const card = (row: Cell[], key: string | number, total = false) => {
-    const rate = typeof row[9] === "number" ? `${formatRate(row[9])}/km` : "";
-    return (
-      <div key={key} className={`flex flex-col gap-2 rounded-2xl p-4 ${total ? "bg-brand-soft" : "bg-canvas"}`}>
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex min-w-0 items-start gap-3">
-            {typeof row[0] === "number" ? (
-              <span className="grid size-7 shrink-0 place-items-center rounded-full bg-white text-xs font-bold text-brand">
-                {row[0]}
-              </span>
-            ) : null}
-            <div className="min-w-0">
-              <p className="truncate font-extrabold">{String(row[1])}</p>
-              <p className="text-xs text-muted">
-                {[row[2], row[8] !== "" ? `${Number(row[8]).toLocaleString("en-IN")} km` : ""].filter(Boolean).join(" · ")}
-              </p>
-            </div>
-          </div>
-          {rate ? <span className="shrink-0 text-xs text-muted">{rate}</span> : null}
-        </div>
-        {line("Bus profit (no company costs)", show(table, 5, row[5]))}
-        {line("Share of company costs", show(table, 6, row[6]), `font-semibold ${toneClass(row[6])}`)}
-        <div className="flex items-center justify-between gap-3 pt-1 font-extrabold">
-          <span>Profit after shared costs</span>
-          <span className={`tabular-nums ${toneClass(row[7])}`}>{show(table, 7, row[7])}</span>
-        </div>
-      </div>
-    );
-  };
-  return (
-    <div className="flex flex-col gap-3 md:hidden print:hidden">
-      {table.rows.map((row, index) => card(row, index))}
-      {table.total ? card(table.total, "total", true) : null}
-    </div>
-  );
 }
 
 /**
@@ -216,6 +163,8 @@ export function ReportsPage({
     return true;
   });
   const [renewalDays, setRenewalDays] = useState<30 | 60 | 90>(30);
+  // Profit by bus: the row whose breakdown is open.
+  const [openRow, setOpenRow] = useState<number | null>(null);
 
   const { data, loading, error } = useLoaded<ReportData>(
     () => loadReportData(supabase, organizationId, range, module),
@@ -224,6 +173,8 @@ export function ReportsPage({
   );
 
   const filters: ReportFilters = { ...range, busId, busType, renewalDays };
+  // A new report, dates or filter changes the rows, so close any open breakdown.
+  useEffect(() => setOpenRow(null), [kind, range.from, range.to, busId, busType]);
   const table = buildReport(kind, data, filters, today);
   const scope = busId
     ? (data.buses.find((bus) => bus.id === busId)?.registrationNumber ??
@@ -388,7 +339,10 @@ export function ReportsPage({
         ) : (
           <>
             {/* Phone: one short line per row; the full table is on laptop, in print and in the Excel file. */}
-            {kind === "bus_profit" ? <BusProfitCards table={table} /> : null}
+            {kind === "bus_profit" ? <BusProfitCards table={table} onOpen={setOpenRow} /> : null}
+            {kind === "bus_profit" && openRow != null && table.details?.[openRow] ? (
+              <BusDetailPanel detail={table.details[openRow]!} onClose={() => setOpenRow(null)} />
+            ) : null}
             <div className={`flex flex-col md:hidden print:hidden ${kind === "bus_profit" ? "hidden" : ""}`}>
               {table.rows.map((row, rowIndex) => (
                 <div
@@ -409,7 +363,7 @@ export function ReportsPage({
               ))}
             </div>
             <div className="-mx-4 hidden overflow-x-auto px-4 md:mx-0 md:block md:px-0 print:block">
-              <table className="w-full min-w-max text-sm">
+              <table className={`w-full min-w-max ${kind === "bus_profit" ? "text-[13px]" : "text-sm"}`}>
                 <thead>
                   <tr className="text-left text-xs text-muted">
                     {table.columns.map((column, index) => (
@@ -426,18 +380,20 @@ export function ReportsPage({
                   {table.rows.map((row, rowIndex) => (
                     <tr
                       key={rowIndex}
-                      className={`border-b border-line ${table.extraRows?.includes(rowIndex) ? "text-muted" : ""}`}
+                      onClick={table.details?.[rowIndex] ? () => setOpenRow(rowIndex) : undefined}
+                      title={table.details?.[rowIndex] ? "See the breakdown for this row" : undefined}
+                      className={`border-b border-line ${table.extraRows?.includes(rowIndex) ? "text-muted" : ""} ${table.details?.[rowIndex] ? "cursor-pointer hover:bg-canvas" : ""} ${openRow === rowIndex && kind === "bus_profit" ? "bg-brand-soft" : ""}`}
                     >
                       {row.map((cell, index) => (
                         <td
                           key={index}
-                          className={`px-2 py-2.5 ${typeof cell === "number" ? "text-right tabular-nums" : ""} ${index === (table.bracketColumns ? 1 : 0) ? "font-semibold" : ""} ${
+                          className={`px-2 py-2.5 ${typeof cell === "number" ? "text-right tabular-nums" : ""} ${index === 0 ? "font-semibold" : ""} ${
                             table.toneColumns?.includes(index)
                               ? `font-bold ${toneClass(cell)}`
                               : table.moneyColumns.includes(index) && typeof cell === "number" && cell < 0
                                 ? "text-money-out"
                                 : ""
-                          } ${table.bracketColumns?.includes(index) ? "text-muted" : ""}`}
+                          }`}
                         >
                           {show(table, index, cell)}
                         </td>

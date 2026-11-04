@@ -4,10 +4,12 @@ import type { DailyEntry } from "@domain/operations/types";
 import {
   listCompanyExpenses,
   listCrewPeople,
+  listDayCrewBetween,
   listIntercityIncome,
   listOdometerReadings,
   listSalaryPayments,
 } from "@data/money/repository";
+import { listOffRoadDays } from "@data/operations/offRoad";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import { listRenewals } from "@data/renewals/repository";
 import { listBookings, listTourPayments } from "@data/tours/repository";
@@ -18,6 +20,13 @@ import { shiftDate } from "@domain/operations/totals";
 import type { ReportData } from "@domain/reports/build";
 
 const PAGE = 1000;
+
+/** Last day of the month a date falls in. */
+function endOfMonth(date: string): string {
+  const year = Number(date.slice(0, 4));
+  const month = Number(date.slice(5, 7));
+  return new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10);
+}
 
 /** Daily ledger entries between two dates (inclusive), a page at a time. */
 export async function listEntriesBetween(
@@ -65,10 +74,12 @@ export const EMPTY_REPORT_DATA: ReportData = {
   warrantyCredits: [],
   odometers: [],
   companyBusDays: null,
+  dayCrew: [],
+  offRoad: [],
 };
 
 /** Days run by every bus (see ReportData.companyBusDays). Null before migration 0025. */
-async function companyBusDays(client: SupabaseClient, organizationId: string, range: { from: string; to: string }) {
+export async function companyBusDays(client: SupabaseClient, organizationId: string, range: { from: string; to: string }) {
   const { data, error } = await client.rpc("company_bus_days", {
     p_org: organizationId,
     p_from: range.from,
@@ -85,15 +96,21 @@ async function companyBusDays(client: SupabaseClient, organizationId: string, ra
 /**
  * Everything the reports need for a date range. `module` is the module the
  * report is opened from (null for the whole company); it only skips tour
- * tables that module doesn't use.
+ * tables that module doesn't use. `profitOnly` skips what the profit
+ * figures don't need (renewals and the tyre list), for the home card.
  */
 export async function loadReportData(
   client: SupabaseClient,
   organizationId: string,
   range: { from: string; to: string },
   module: ModuleId | null,
+  options: { profitOnly?: boolean } = {},
 ): Promise<ReportData> {
   const tours = !module || module === "tour";
+  const full = !options.profitOnly;
+  // Costs paid up to a year back can be spread into this range; a cost paid
+  // later in the last month is spread over that whole month.
+  const costRange = { from: shiftDate(range.from, -370), to: endOfMonth(range.to) };
   const [
     buses,
     people,
@@ -111,28 +128,34 @@ export async function loadReportData(
     warrantyCredits,
     odometers,
     busDays,
+    dayCrew,
+    offRoad,
   ] = await Promise.all([
     createSupabaseOperationsRepository(client).listBuses(organizationId),
     listCrewPeople(client, organizationId),
     listEntriesBetween(client, organizationId, range.from, range.to),
     listTripsWithLines(client, organizationId, { ...range, approvedOnly: true, limit: 5000 }),
-    listCompanyExpenses(client, organizationId, range),
+    listCompanyExpenses(client, organizationId, costRange),
     // Salaries count on the day they were paid, so fetch a month either side.
     listSalaryPayments(client, organizationId, { from: shiftDate(range.from, -62), to: shiftDate(range.to, 31) }),
     listIntercityIncome(client, organizationId, range),
-    listRenewals(client, organizationId),
+    full ? listRenewals(client, organizationId) : Promise.resolve([]),
     // Tour tables exist only after migration 0016, and only tour companies use them.
     tours ? listBookings(client, organizationId).catch(() => []) : Promise.resolve([]),
     tours ? listTourPayments(client, organizationId).catch(() => []) : Promise.resolve([]),
     // Tyre tables exist only after migration 0017.
-    listTyres(client, organizationId).catch(() => []),
+    full ? listTyres(client, organizationId).catch(() => []) : Promise.resolve([]),
     listTyreEventsBetween(client, organizationId, range).catch(() => []),
     // Scrap sales exist only after migration 0020.
     listScrapSales(client, organizationId, range).catch(() => []),
     // Warranty claims exist only after migration 0021.
     listWarrantyCredits(client, organizationId, range).catch(() => []),
-    listOdometerReadings(client, organizationId, range),
+    // A few months back too, so a reading can be compared with the one before it.
+    listOdometerReadings(client, organizationId, { from: shiftDate(range.from, -120), to: range.to }),
     companyBusDays(client, organizationId, range),
+    // Salaries can be for the month before the range, so day crew from then on.
+    listDayCrewBetween(client, organizationId, { from: shiftDate(range.from, -62), to: range.to }),
+    listOffRoadDays(client, organizationId, range),
   ]);
   return {
     buses,
@@ -152,5 +175,7 @@ export async function loadReportData(
     warrantyCredits,
     odometers,
     companyBusDays: busDays,
+    dayCrew,
+    offRoad: offRoad.map((item) => ({ busId: item.busId, date: item.date })),
   };
 }

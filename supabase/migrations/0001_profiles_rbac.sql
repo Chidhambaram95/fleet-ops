@@ -1,3 +1,5 @@
+-- Run once, in order, on a new database. Not safe to re-run on a live one:
+-- later migrations replace parts of it. Kept unchanged as the history of the schema.
 -- Identity profiles plus organization membership.
 -- Apply in the Supabase SQL editor after creating a project.
 -- Roles live on organization_members, not on profiles.

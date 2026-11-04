@@ -8,6 +8,7 @@ import {
   hasScreen,
   isModuleId,
   LAST_MODULE_COOKIE,
+  MODULE_TITLES,
   moduleHref,
   modulesForMember,
   type ModuleId,
@@ -89,7 +90,7 @@ export async function moduleAccess(
  */
 export async function companyAccess(): Promise<
   | { membership: ActiveMembership; companyModules: ModuleId[]; message?: never }
-  | { membership?: never; companyModules?: never; message: string }
+  | { membership?: never; companyModules?: never; message: string; link?: { href: string; label: string } }
 > {
   if (!hasPublicSupabaseEnv()) {
     return { message: "Add Supabase keys to .env.local first." };
@@ -103,7 +104,12 @@ export async function companyAccess(): Promise<
   if (membership.role === "crew") redirect("/");
   const info = await moduleInfo(membership);
   if (membership.role !== "admin" && info.limited) {
-    return { message: "Only admins can open the company pages." };
+    const own = info.mine.find((module) => hasScreen(module, "reports"));
+    return {
+      message:
+        "Company pages cover every bus type, so they're for admins and managers of all bus types. Ask your admin if you need Company costs or the all-buses report.",
+      link: own ? { href: moduleHref(own, "reports"), label: `Open ${MODULE_TITLES[own]} reports ›` } : undefined,
+    };
   }
   return { membership, companyModules: info.active };
 }

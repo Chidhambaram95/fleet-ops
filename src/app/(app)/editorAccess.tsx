@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getActiveMembership, type ActiveMembership } from "@data/auth/session";
 import { hasPublicSupabaseEnv } from "@data/supabase/env";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -20,6 +21,15 @@ export async function editorAccess(): Promise<
   }
 }
 
-export function AccessMessage({ message }: { message: string }) {
-  return <p className="rounded-3xl bg-white px-4 py-6 text-muted">{message}</p>;
+export function AccessMessage({ message, link }: { message: string; link?: { href: string; label: string } }) {
+  return (
+    <div className="flex flex-col gap-3 rounded-3xl bg-white px-4 py-6">
+      <p className="text-muted">{message}</p>
+      {link ? (
+        <Link href={link.href} className="self-start text-sm font-bold text-brand">
+          {link.label}
+        </Link>
+      ) : null}
+    </div>
+  );
 }

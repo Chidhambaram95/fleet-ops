@@ -1,3 +1,5 @@
+-- Run once, in order, on a new database. Not safe to re-run on a live one:
+-- later migrations replace parts of it. Kept unchanged as the history of the schema.
 -- Daily bus cash (income / expense). Apply after organizations exist.
 -- Buses and entries are visible only inside an organization the caller belongs to.
 

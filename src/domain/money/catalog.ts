@@ -9,6 +9,8 @@ export const COMPANY_EXPENSE_CATEGORIES: { id: CompanyExpenseCategory; label: st
   { id: "auditor", label: "Auditor" },
   { id: "office", label: "Office" },
   { id: "loan_emi", label: "Loan EMI" },
+  { id: "insurance", label: "Insurance" },
+  { id: "permit_tax", label: "Permit / FC / tax" },
   { id: "other", label: "Other" },
 ];
 

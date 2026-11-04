@@ -1,3 +1,5 @@
+-- Run once, in order, on a new database. Not safe to re-run on a live one:
+-- later migrations replace parts of it. Kept unchanged as the history of the schema.
 -- Development fallback: a signed-in user with no membership gets a personal org.
 -- Existing members are returned unchanged.
 

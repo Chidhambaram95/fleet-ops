@@ -3,6 +3,7 @@ import type {
   CompanyExpense,
   CompanyExpenseCategory,
   CostAppliesTo,
+  SpreadMonths,
   CrewJob,
   CrewPerson,
   IntercityIncome,
@@ -85,7 +86,7 @@ export async function listCompanyExpenses(
   organizationId: string,
   range?: Range,
 ): Promise<CompanyExpense[]> {
-  const rows = await listRows<Row>(client, "company_expenses", organizationId, "spent_on", range);
+  const rows = await listRows<Row>(client, "company_expenses", organizationId, "spent_on", range, 3000);
   return rows.map((row) => {
     const busIds = ids(row.bus_ids).length ? ids(row.bus_ids) : typeof row.bus_id === "string" ? [row.bus_id] : [];
     // Before migration 0025 there is no applies_to: picked buses, or all buses.
@@ -102,8 +103,55 @@ export async function listCompanyExpenses(
       amountInr: num(row.amount_inr),
       paidVia: (str(row.paid_via) || "bank") as PaidVia,
       note: str(row.note),
+      // Before migration 0026 there is no spread or repeat.
+      spreadMonths: toSpread(row.spread_months),
+      repeatMonthly: row.repeat_monthly === true,
     };
   });
+}
+
+const toSpread = (value: unknown): SpreadMonths => {
+  const months = num(value);
+  return months === 3 || months === 6 || months === 12 ? months : 1;
+};
+
+/** Spread and repeat columns, left out when they are the defaults so older databases still save. */
+function extraColumns(input: Pick<CompanyExpense, "spreadMonths" | "repeatMonthly">) {
+  return {
+    ...(input.spreadMonths !== 1 ? { spread_months: input.spreadMonths } : {}),
+    ...(input.repeatMonthly ? { repeat_monthly: true } : {}),
+  };
+}
+
+const MISSING_0026 = /spread_months|repeat_monthly|insurance|permit_tax|company_expenses_category_check/;
+
+/** Changes a saved cost: what for, amount, date, who it applies to, spread and repeat. */
+export async function updateCompanyExpense(
+  client: SupabaseClient,
+  organizationId: string,
+  id: string,
+  input: Omit<CompanyExpense, "id">,
+) {
+  const { error } = await client
+    .from("company_expenses")
+    .update({
+      spent_on: input.spentOn,
+      category: input.category,
+      amount_inr: input.amountInr,
+      paid_via: input.paidVia,
+      note: input.note,
+      applies_to: input.appliesTo,
+      applies_type: input.appliesTo === "type" ? input.appliesType : null,
+      bus_ids: input.appliesTo === "buses" ? input.busIds : [],
+      spread_months: input.spreadMonths,
+      repeat_monthly: input.repeatMonthly,
+    })
+    .eq("organization_id", organizationId)
+    .eq("id", id);
+  if (error && MISSING_0026.test(error.message)) {
+    throw new Error("Run migration 0026 on the database to edit costs, spread them over months or repeat them.");
+  }
+  throwIfError(error);
 }
 
 /**
@@ -130,7 +178,11 @@ export async function addCompanyExpense(
     applies_to: input.appliesTo,
     applies_type: input.appliesTo === "type" ? input.appliesType : null,
     bus_ids: input.appliesTo === "buses" ? input.busIds : [],
+    ...extraColumns(input),
   });
+  if (error && MISSING_0026.test(error.message)) {
+    throw new Error("Run migration 0026 on the database to spread costs, repeat them or use the Insurance and Permit categories.");
+  }
   if (error && /applies_(to|type)/.test(error.message)) {
     return insertRow(client, "company_expenses", organizationId, {
       ...base,
@@ -138,6 +190,27 @@ export async function addCompanyExpense(
     });
   }
   throwIfError(error);
+}
+
+/** Town day crew between two dates: who worked which bus each day. Empty before migration 0023. */
+export async function listDayCrewBetween(
+  client: SupabaseClient,
+  organizationId: string,
+  range: { from: string; to: string },
+): Promise<{ busId: string; date: string; personId: string }[]> {
+  const { data, error } = await client
+    .from("day_crew")
+    .select("bus_id, day, person_id")
+    .eq("organization_id", organizationId)
+    .gte("day", range.from)
+    .lte("day", range.to)
+    .limit(20000);
+  if (error) return [];
+  return ((data ?? []) as Row[]).map((row) => ({
+    busId: str(row.bus_id),
+    date: str(row.day),
+    personId: str(row.person_id),
+  }));
 }
 
 /** Odometer readings between two dates, for km on buses without trip sheets. Empty before migration 0022. */

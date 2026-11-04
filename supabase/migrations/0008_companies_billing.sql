@@ -1,3 +1,5 @@
+-- Run once, in order, on a new database. Not safe to re-run on a live one:
+-- later migrations replace parts of it. Kept unchanged as the history of the schema.
 -- Phase 1: companies, invites, super-admin console, free trial and subscription reminders.
 --
 -- Run this once in the Supabase SQL editor, then make yourself the super-admin:
