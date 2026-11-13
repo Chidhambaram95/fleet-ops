@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { deleteRow, listCrewPeople } from "@data/money/repository";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
@@ -9,7 +10,7 @@ import {
   listRenewals,
   uploadDocumentPhoto,
 } from "@data/renewals/repository";
-import type { ModuleId } from "@domain/modules/modules";
+import { moduleHref, type ModuleId } from "@domain/modules/modules";
 import { formatInr, todayInIst } from "@domain/operations/totals";
 import {
   BUS_DOCUMENTS,
@@ -218,9 +219,19 @@ export function RenewalsPage({
           }
           actions={
             !org.viewOnly ? (
-              <SmallButton tone="brand" onClick={() => openForm(document.id, ownerId)}>
-                {found ? "Renew" : "Add"}
-              </SmallButton>
+              <>
+                {document.id === "road_tax" ? (
+                  <Link
+                    href={`${moduleHref(module, "renewals")}/road-tax?bus=${encodeURIComponent(ownerId)}`}
+                    className="px-2 text-[13px] font-semibold text-brand"
+                  >
+                    Pay on Vahan
+                  </Link>
+                ) : null}
+                <SmallButton tone="brand" onClick={() => openForm(document.id, ownerId)}>
+                  {found ? "Renew" : "Add"}
+                </SmallButton>
+              </>
             ) : null
           }
         />
@@ -331,9 +342,14 @@ export function RenewalsPage({
         hint="FC, insurance, permit, tax and driver licences in one place."
         action={
           !org.viewOnly ? (
-            <button type="button" className={PRIMARY} onClick={() => openForm("fc", "")}>
-              + Add renewal
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <Link href={`${moduleHref(module, "renewals")}/road-tax`} className={`${SECONDARY} inline-flex items-center`}>
+                Pay road tax on Vahan
+              </Link>
+              <button type="button" className={PRIMARY} onClick={() => openForm("fc", "")}>
+                + Add renewal
+              </button>
+            </div>
           ) : null
         }
       />

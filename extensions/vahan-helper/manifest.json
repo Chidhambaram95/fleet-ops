@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Fleet Ops Vahan helper",
+  "version": "1.0.0",
+  "description": "Fills in Vahan road tax for the bus picked in Fleet Ops, checks the owner and quarter, and stops before Confirm Payment.",
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": ["https://vahan.parivahan.gov.in/vahanservice/*"],
+      "js": ["check.js", "content.js"],
+      "run_at": "document_start"
+    }
+  ]
+}

@@ -11,6 +11,12 @@ import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { useOrg } from "@/components/billing/OrgContext";
 import { friendlyErrorMessage } from "@domain/platform/errors";
 import { OffRoadDays } from "@/components/operations/OffRoadDays";
+import {
+  cleanBusVahanDetails,
+  listBusVahanDetails,
+  updateBusVahanDetails,
+  type BusVahanDetails,
+} from "@data/roadTax/repository";
 
 const inputClass =
   "h-12 rounded-2xl bg-canvas px-4 text-base font-normal";
@@ -23,6 +29,9 @@ type BusForm = {
   seatLayout: SeatLayout;
   permitType: string;
   runsWith: string;
+  /** Owner as on the RC and chassis last 5, for paying road tax on Vahan. */
+  ownerName: string;
+  chassisLast5: string;
 };
 
 const EMPTY_FORM: BusForm = {
@@ -33,9 +42,11 @@ const EMPTY_FORM: BusForm = {
   seatLayout: "",
   permitType: "",
   runsWith: "",
+  ownerName: "",
+  chassisLast5: "",
 };
 
-function formFromBus(bus: Bus): BusForm {
+function formFromBus(bus: Bus, details?: BusVahanDetails): BusForm {
   return {
     registrationNumber: bus.registrationNumber,
     routeLabel: bus.routeLabel,
@@ -44,6 +55,8 @@ function formFromBus(bus: Bus): BusForm {
     seatLayout: bus.seatLayout,
     permitType: bus.permitType,
     runsWith: bus.runsWith,
+    ownerName: details?.ownerName ?? "",
+    chassisLast5: details?.chassisLast5 ?? "",
   };
 }
 
@@ -71,11 +84,14 @@ function BusFields({
   form,
   onChange,
   showType = false,
+  showVahan = false,
 }: {
   form: BusForm;
   onChange: (next: BusForm) => void;
   /** New buses take their module's type; an existing bus can be moved to another module. */
   showType?: boolean;
+  /** Owner name and chassis last 5; hidden until migration 0028 is run. */
+  showVahan?: boolean;
 }) {
   const set = <K extends keyof BusForm>(key: K, value: BusForm[K]) =>
     onChange({ ...form, [key]: value });
@@ -154,6 +170,29 @@ function BusFields({
         aria-label="Paired bus"
         className={inputClass}
       />
+      {showVahan ? (
+        <>
+          <p className="mt-1 text-[13px] font-semibold">For road tax on Vahan (optional)</p>
+          <input
+            value={form.ownerName}
+            onChange={(event) => set("ownerName", event.target.value.toUpperCase())}
+            placeholder="Owner name, exactly as on the RC"
+            aria-label="Owner name as on the RC"
+            maxLength={120}
+            className={inputClass}
+          />
+          <input
+            value={form.chassisLast5}
+            onChange={(event) =>
+              set("chassisLast5", event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 5))
+            }
+            placeholder="Chassis number, last 5 characters"
+            aria-label="Chassis number, last 5 characters"
+            autoCapitalize="characters"
+            className={inputClass}
+          />
+        </>
+      ) : null}
     </>
   );
 }
@@ -179,6 +218,8 @@ export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; m
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [vahan, setVahan] = useState<Map<string, BusVahanDetails>>(new Map());
+  const [vahanReady, setVahanReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -190,9 +231,14 @@ export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; m
           return;
         }
         setOrganizationId(membership.organizationId);
-        const nextBuses = await repo.listBuses(membership.organizationId);
+        const [nextBuses, nextVahan] = await Promise.all([
+          repo.listBuses(membership.organizationId),
+          listBusVahanDetails(supabase, membership.organizationId),
+        ]);
         if (!cancelled) {
           setBuses(nextBuses.filter((bus) => bus.busType === module));
+          setVahan(nextVahan.details);
+          setVahanReady(nextVahan.migrated);
         }
       } catch (loadError) {
         if (!cancelled) {
@@ -218,7 +264,13 @@ export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; m
     setSaving(true);
     setError("");
     try {
+      // Check owner and chassis before adding, so a typo does not leave a half-saved bus.
+      const details = vahanReady ? cleanBusVahanDetails(form) : null;
       const created = await repo.createBus(organizationId, toNewBus(form));
+      if (details && (details.ownerName || details.chassisLast5)) {
+        const saved = await updateBusVahanDetails(supabase, organizationId, created.id, details);
+        setVahan((current) => new Map(current).set(created.id, saved));
+      }
       setBuses((current) =>
         [...current, created].sort((left, right) =>
           left.registrationNumber.localeCompare(right.registrationNumber),
@@ -234,7 +286,7 @@ export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; m
 
   function startEdit(bus: Bus) {
     setEditingId(bus.id);
-    setEditForm(formFromBus(bus));
+    setEditForm(formFromBus(bus, vahan.get(bus.id)));
     setError("");
   }
 
@@ -245,7 +297,16 @@ export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; m
     setSaving(true);
     setError("");
     try {
+      const details = vahanReady ? cleanBusVahanDetails(editForm) : null;
       const updated = await repo.updateBus(organizationId, id, toNewBus(editForm));
+      const before = vahan.get(id);
+      if (
+        details &&
+        (details.ownerName !== (before?.ownerName ?? "") || details.chassisLast5 !== (before?.chassisLast5 ?? ""))
+      ) {
+        const saved = await updateBusVahanDetails(supabase, organizationId, id, details);
+        setVahan((current) => new Map(current).set(id, saved));
+      }
       setBuses((current) =>
         current
           .map((bus) => (bus.id === id ? updated : bus))
@@ -305,7 +366,7 @@ export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; m
           }}
         >
           <p className="font-bold">Add a bus</p>
-          <BusFields form={form} onChange={setForm} />
+          <BusFields form={form} onChange={setForm} showVahan={vahanReady} />
           <button
             type="submit"
             disabled={saving || loading || !isComplete(form)}
@@ -331,7 +392,7 @@ export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; m
                   void saveEdit(bus.id);
                 }}
               >
-                <BusFields form={editForm} onChange={setEditForm} showType />
+                <BusFields form={editForm} onChange={setEditForm} showType showVahan={vahanReady} />
                 <div className="flex gap-2">
                   <button
                     type="submit"
@@ -369,6 +430,18 @@ export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; m
                       {[bus.permitType, bus.runsWith ? `Paired with ${bus.runsWith}` : ""]
                         .filter(Boolean)
                         .join(" · ")}
+                    </p>
+                  ) : null}
+                  {vahanReady ? (
+                    <p className="text-xs text-muted">
+                      {vahan.get(bus.id)?.ownerName || vahan.get(bus.id)?.chassisLast5
+                        ? [
+                            vahan.get(bus.id)?.ownerName ? `RC owner: ${vahan.get(bus.id)?.ownerName}` : "RC owner not added",
+                            vahan.get(bus.id)?.chassisLast5
+                              ? `Chassis …${vahan.get(bus.id)?.chassisLast5}`
+                              : "chassis not added",
+                          ].join(" · ")
+                        : "Owner and chassis not added (needed to pay road tax on Vahan)"}
                     </p>
                   ) : null}
                 </div>
