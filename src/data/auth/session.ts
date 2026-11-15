@@ -72,7 +72,14 @@ function membershipFromRow(
 export async function getActiveMembership(
   client: SupabaseClient,
 ): Promise<ActiveMembership> {
-  const userId = await getAuthenticatedUserId(client);
+  return membershipForUser(client, await getAuthenticatedUserId(client));
+}
+
+/** Same as getActiveMembership when the signed-in user's id is already known. */
+export async function membershipForUser(
+  client: SupabaseClient,
+  userId: string,
+): Promise<ActiveMembership> {
   const { data, error } = await loadMembership(client, userId);
 
   if (error) {

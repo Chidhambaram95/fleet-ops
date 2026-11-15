@@ -1,12 +1,12 @@
-import { getActiveMembership, SessionError } from "@data/auth/session";
-import { getCompanyProfile, listPendingInvites } from "@data/companies/repository";
+import { getRequestCompanyProfile, getRequestMembership, getRequestSupabase } from "@data/auth/requestSession";
+import { SessionError } from "@data/auth/session";
+import { listPendingInvites } from "@data/companies/repository";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import { listTeamLogins } from "@data/team/repository";
 import { loginLabel } from "@domain/auth/loginId";
 import { hasPublicSupabaseEnv } from "@data/supabase/env";
 import { activeModules } from "@domain/modules/modules";
 import { TeamSettings } from "@/components/settings/TeamSettings";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export default async function TeamSettingsPage() {
   if (!hasPublicSupabaseEnv()) {
@@ -19,8 +19,8 @@ export default async function TeamSettingsPage() {
   }
 
   try {
-    const supabase = await createServerSupabaseClient();
-    const membership = await getActiveMembership(supabase);
+    const supabase = await getRequestSupabase();
+    const membership = await getRequestMembership();
     if (membership.role !== "admin" && membership.role !== "manager") {
       return (
         <p className="rounded-3xl bg-white px-4 py-6 text-muted">
@@ -35,7 +35,7 @@ export default async function TeamSettingsPage() {
       repo.getOrganizationMembers(membership.organizationId),
       repo.listBuses(membership.organizationId),
       isAdmin ? listPendingInvites(supabase, membership.organizationId) : Promise.resolve([]),
-      getCompanyProfile(supabase, membership.organizationId),
+      getRequestCompanyProfile(membership.organizationId),
       listTeamLogins(supabase, membership.organizationId),
     ]);
 

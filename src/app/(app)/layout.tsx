@@ -1,6 +1,13 @@
 import { redirect } from "next/navigation";
-import { getActiveMembership } from "@data/auth/session";
-import { closedCompanyName, getCompanyProfile, isSuperAdmin } from "@data/companies/repository";
+import {
+  getRequestCompanyProfile,
+  getRequestMembership,
+  getRequestSuperAdmin,
+  getRequestSupabase,
+  getRequestUser,
+} from "@data/auth/requestSession";
+import { closedCompanyName } from "@data/companies/repository";
+import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import { hasPublicSupabaseEnv } from "@data/supabase/env";
 import { subscriptionStatus } from "@domain/billing/subscription";
 import { loginLabel } from "@domain/auth/loginId";
@@ -13,7 +20,6 @@ import { BillingNotice } from "@/components/billing/BillingNotice";
 import { OrgProvider } from "@/components/billing/OrgContext";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { BottomNav } from "@/components/layout/BottomNav";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { homeModule, moduleInfo } from "./moduleAccess";
 
 const MAIN_CLASS = "mx-auto w-full max-w-6xl px-4 py-4 md:px-8 md:py-7";
@@ -27,10 +33,8 @@ export default async function AppShellLayout({
     return <main className={MAIN_CLASS}>{children}</main>;
   }
 
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = await getRequestSupabase();
+  const user = await getRequestUser();
 
   let role: UserRole | null = null;
   let organizationName = "Fleet";
@@ -46,24 +50,33 @@ export default async function AppShellLayout({
   let defaultModule: ModuleId | null = null;
   let companyArea = false;
   let organizationId = "";
+  let assignedBusId = "";
   if (user) {
-    superAdmin = await isSuperAdmin(supabase, user.id);
+    superAdmin = await getRequestSuperAdmin(user.id);
     if (superAdmin) {
       // The super-admin only manages companies and payments, never a fleet.
       redirect("/admin");
     }
     try {
-      const membership = await getActiveMembership(supabase);
+      const membership = await getRequestMembership();
       role = membership.role;
       organizationId = membership.organizationId;
-      const [profileInfo, { data: profile }] = await Promise.all([
-        getCompanyProfile(supabase, membership.organizationId),
+      const [profileInfo, { data: profile }, assignment] = await Promise.all([
+        getRequestCompanyProfile(membership.organizationId),
         supabase
           .from("profiles")
           .select("display_name")
           .eq("id", user.id)
           .maybeSingle(),
+        // Crew work on one bus; the day book needs to know which, so it is not looked up again in the browser.
+        membership.role === "crew"
+          ? createSupabaseOperationsRepository(supabase).getCrewAssignment(
+              membership.organizationId,
+              membership.userId,
+            ).catch(() => null)
+          : Promise.resolve(null),
       ]);
+      assignedBusId = assignment?.busId ?? "";
       organizationName = profileInfo.name;
       if (role === "admin" || role === "manager") {
         const info = await moduleInfo(membership);
@@ -150,7 +163,20 @@ export default async function AppShellLayout({
         organizationId={organizationId}
       />
       {notice}
-      <OrgProvider value={{ name: organizationName, whatsappNumber, viewOnly }}>
+      <OrgProvider
+        value={{
+          name: organizationName,
+          whatsappNumber,
+          viewOnly,
+          organizationId,
+          userId: user?.id ?? "",
+          role,
+          modules,
+          defaultModule,
+          companyArea,
+          assignedBusId,
+        }}
+      >
         <main className={MAIN_CLASS}>{children}</main>
       </OrgProvider>
       <BottomNav

@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { getActiveMembership } from "@data/auth/session";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import { BUS_TYPES, BUS_TYPE_LABELS } from "@domain/companies/types";
 import { MODULE_TITLES, type ModuleId } from "@domain/modules/modules";
 import { PERMIT_TYPES, SEAT_LAYOUTS } from "@domain/operations/catalog";
 import type { Bus, BusKind, NewBus, SeatLayout } from "@domain/operations/types";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
-import { useOrg } from "@/components/billing/OrgContext";
+import { useSession } from "@/components/billing/OrgContext";
 import { friendlyErrorMessage } from "@domain/platform/errors";
 import { OffRoadDays } from "@/components/operations/OffRoadDays";
 import {
@@ -203,14 +202,13 @@ function messageFromUnknown(error: unknown) {
 
 export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; module: ModuleId }) {
   const emptyForm: BusForm = { ...EMPTY_FORM, busType: module };
-  const { viewOnly } = useOrg();
+  const { viewOnly, organizationId } = useSession();
   const canEdit = isAdmin && !viewOnly;
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const repo = useMemo(
     () => createSupabaseOperationsRepository(supabase),
     [supabase],
   );
-  const [organizationId, setOrganizationId] = useState("");
   const [buses, setBuses] = useState<Bus[]>([]);
   const [form, setForm] = useState<BusForm>(emptyForm);
   const [editingId, setEditingId] = useState("");
@@ -226,14 +224,9 @@ export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; m
 
     async function load() {
       try {
-        const membership = await getActiveMembership(supabase);
-        if (cancelled) {
-          return;
-        }
-        setOrganizationId(membership.organizationId);
         const [nextBuses, nextVahan] = await Promise.all([
-          repo.listBuses(membership.organizationId),
-          listBusVahanDetails(supabase, membership.organizationId),
+          repo.listBuses(organizationId),
+          listBusVahanDetails(supabase, organizationId),
         ]);
         if (!cancelled) {
           setBuses(nextBuses.filter((bus) => bus.busType === module));
@@ -255,7 +248,7 @@ export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; m
     return () => {
       cancelled = true;
     };
-  }, [repo, supabase, module]);
+  }, [repo, supabase, module, organizationId]);
 
   async function addBus() {
     if (!organizationId) {

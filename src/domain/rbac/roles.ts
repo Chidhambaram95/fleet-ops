@@ -8,6 +8,11 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   crew: "Crew",
 };
 
+/** Admins and managers: the people who run the company day to day. */
+export function canManage(role: UserRole | null | undefined): boolean {
+  return role === "admin" || role === "manager";
+}
+
 export function isUserRole(value: string): value is UserRole {
   return (USER_ROLES as readonly string[]).includes(value);
 }

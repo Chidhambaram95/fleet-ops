@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { getActiveMembership, SessionError } from "@data/auth/session";
+import { getRequestMembership, getRequestSupabase } from "@data/auth/requestSession";
+import { SessionError } from "@data/auth/session";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import { hasPublicSupabaseEnv } from "@data/supabase/env";
 import { HistoryBoard } from "@/components/history/HistoryBoard";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Change history · Fleet Ops",
@@ -14,8 +14,8 @@ export default async function HistoryPage() {
     return <p className="rounded-3xl bg-white px-4 py-6 text-muted">Add Supabase keys to see the history.</p>;
   }
   try {
-    const supabase = await createServerSupabaseClient();
-    const membership = await getActiveMembership(supabase);
+    const supabase = await getRequestSupabase();
+    const membership = await getRequestMembership();
     if (membership.role !== "admin" && membership.role !== "manager") {
       return (
         <p className="rounded-3xl bg-white px-4 py-6 text-muted">

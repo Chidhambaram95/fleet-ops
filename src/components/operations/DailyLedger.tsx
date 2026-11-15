@@ -3,7 +3,6 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { ModuleId } from "@domain/modules/modules";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { getActiveMembership } from "@data/auth/session";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import { addOdometerReading } from "@data/operations/odometer";
 import { latestOdometers } from "@data/tyres/repository";
@@ -36,10 +35,9 @@ import type {
   ExpenseCategory,
   IncomeCategory,
 } from "@domain/operations/types";
-import type { UserRole } from "@domain/rbac/roles";
 import { compressReceipt } from "@/lib/compressReceipt";
 import { downloadTextFile } from "@/lib/downloadTextFile";
-import { useOrg } from "@/components/billing/OrgContext";
+import { useSession } from "@/components/billing/OrgContext";
 import { MileageCard } from "@/components/mileage/MileageAlerts";
 import { BestWorstCard } from "@/components/reports/BestWorstCard";
 import { EmiDueCard } from "@/components/renewals/EmiDueCard";
@@ -69,18 +67,17 @@ export function DailyLedger({ module }: { module?: ModuleId } = {}) {
 }
 
 function DailyLedgerBoard({ module }: { module?: ModuleId }) {
-  const org = useOrg();
+  // Who is signed in comes from the server layout; it is not looked up again here.
+  const org = useSession();
+  const { organizationId, role, assignedBusId } = org;
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const repo = useMemo(
     () => createSupabaseOperationsRepository(supabase),
     [supabase],
   );
-  const [organizationId, setOrganizationId] = useState("");
-  const [role, setRole] = useState<UserRole | null>(null);
-  const [assignedBusId, setAssignedBusId] = useState("");
   const [date, setDate] = useState(todayInIst);
   const [kind, setKind] = useState<EntryKind>("income");
-  const [busId, setBusId] = useState("");
+  const [busId, setBusId] = useState(role === "crew" ? assignedBusId : "");
   const [category, setCategory] = useState<string>("ticket_collection");
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
@@ -134,45 +131,6 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [sheetOpen]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadOrganization() {
-      try {
-        const membership = await getActiveMembership(supabase);
-        if (cancelled) {
-          return;
-        }
-        setOrganizationId(membership.organizationId);
-        setRole(membership.role);
-        if (membership.role === "crew") {
-          const assignment = await repo.getCrewAssignment(
-            membership.organizationId,
-            membership.userId,
-          );
-          if (cancelled) {
-            return;
-          }
-          const busId = assignment?.busId ?? "";
-          setAssignedBusId(busId);
-          if (busId) {
-            setBusId(busId);
-          }
-        }
-      } catch (loadError) {
-        if (!cancelled) {
-          setError(messageFromUnknown(loadError));
-          setLoading(false);
-        }
-      }
-    }
-
-    void loadOrganization();
-    return () => {
-      cancelled = true;
-    };
-  }, [supabase, repo]);
 
   useEffect(() => {
     if (!organizationId) {

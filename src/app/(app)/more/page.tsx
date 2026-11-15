@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
-import { getActiveMembership } from "@data/auth/session";
-import { isSuperAdmin } from "@data/companies/repository";
+import { getRequestMembershipOrNull, getRequestSuperAdmin, getRequestUser } from "@data/auth/requestSession";
 import { hasPublicSupabaseEnv } from "@data/supabase/env";
 import {
   secondTabScreen,
@@ -13,20 +12,16 @@ import {
 } from "@domain/modules/modules";
 import { SignOutButton } from "@/components/admin/SignOutButton";
 import { companyLinks, moduleLinks, type NavLink } from "@/components/layout/navLinks";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { moduleInfo } from "../moduleAccess";
 
 export default async function MorePage() {
   const sections: { title: string; rows: NavLink[] }[] = [];
   let superAdmin = false;
   if (hasPublicSupabaseEnv()) {
-    const supabase = await createServerSupabaseClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getRequestUser();
     if (user) {
-      superAdmin = await isSuperAdmin(supabase, user.id);
-      const membership = await getActiveMembership(supabase).catch(() => null);
+      superAdmin = await getRequestSuperAdmin(user.id);
+      const membership = await getRequestMembershipOrNull();
       if (membership && membership.role !== "crew") {
         const info = await moduleInfo(membership);
         const last = (await cookies()).get(LAST_MODULE_COOKIE)?.value;

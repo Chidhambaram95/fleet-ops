@@ -1,7 +1,13 @@
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import { getActiveMembership, type ActiveMembership } from "@data/auth/session";
-import { getCompanyProfile, getMemberModule } from "@data/companies/repository";
+import { cache } from "react";
+import {
+  getRequestCompanyProfile,
+  getRequestMemberModule,
+  getRequestMembership,
+  getRequestMembershipOrNull,
+} from "@data/auth/requestSession";
+import type { ActiveMembership } from "@data/auth/session";
 import { hasPublicSupabaseEnv } from "@data/supabase/env";
 import {
   activeModules,
@@ -14,24 +20,22 @@ import {
   type ModuleId,
   type Screen,
 } from "@domain/modules/modules";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 /**
  * The company's switched-on modules, and the ones this person may open
  * (a manager can be limited to one), in menu order.
  */
-export async function moduleInfo(
-  membership: ActiveMembership,
-): Promise<{ active: ModuleId[]; mine: ModuleId[]; limited: boolean }> {
-  const supabase = await createServerSupabaseClient();
-  const [profile, memberModule] = await Promise.all([
-    getCompanyProfile(supabase, membership.organizationId),
-    getMemberModule(supabase, membership.organizationId, membership.userId),
-  ]);
-  const active = activeModules(profile.busTypes, profile.enabledModules);
-  const mine = modulesForMember(active, membership.role, memberModule);
-  return { active, mine, limited: mine.length < active.length };
-}
+export const moduleInfo = cache(
+  async (membership: ActiveMembership): Promise<{ active: ModuleId[]; mine: ModuleId[]; limited: boolean }> => {
+    const [profile, memberModule] = await Promise.all([
+      getRequestCompanyProfile(membership.organizationId),
+      getRequestMemberModule(membership.organizationId, membership.userId),
+    ]);
+    const active = activeModules(profile.busTypes, profile.enabledModules);
+    const mine = modulesForMember(active, membership.role, memberModule);
+    return { active, mine, limited: mine.length < active.length };
+  },
+);
 
 /** The modules a signed-in admin or manager may open, in menu order. */
 export async function myModules(membership: ActiveMembership): Promise<ModuleId[]> {
@@ -66,7 +70,7 @@ export async function moduleAccess(
   }
   let membership: ActiveMembership;
   try {
-    membership = await getActiveMembership(await createServerSupabaseClient());
+    membership = await getRequestMembership();
   } catch (error) {
     return { message: error instanceof Error ? error.message : "Could not load this page." };
   }
@@ -97,7 +101,7 @@ export async function companyAccess(): Promise<
   }
   let membership: ActiveMembership;
   try {
-    membership = await getActiveMembership(await createServerSupabaseClient());
+    membership = await getRequestMembership();
   } catch (error) {
     return { message: error instanceof Error ? error.message : "Could not load this page." };
   }
@@ -116,7 +120,7 @@ export async function companyAccess(): Promise<
 
 /** Old single-app links (/trips, /fuel …) open the same screen in the person's module. */
 export async function redirectToModuleScreen(screen: Screen, rest = ""): Promise<never> {
-  const membership = await getActiveMembership(await createServerSupabaseClient()).catch(() => null);
+  const membership = await getRequestMembershipOrNull();
   if (!membership || membership.role === "crew") redirect("/");
   const modules = await myModules(membership);
   const last = (await cookies()).get(LAST_MODULE_COOKIE)?.value;

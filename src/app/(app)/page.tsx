@@ -1,17 +1,16 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { getActiveMembership } from "@data/auth/session";
+import { getRequestMembershipOrNull } from "@data/auth/requestSession";
 import { hasPublicSupabaseEnv } from "@data/supabase/env";
 import { moduleHref } from "@domain/modules/modules";
 import { DailyLedger } from "@/components/operations/DailyLedger";
 import { AccessMessage } from "@/app/(app)/editorAccess";
 import { homeModule } from "@/app/(app)/moduleAccess";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 /** Crew get their bus's day book. Admins and managers go to their last module. */
 export default async function HomePage({ searchParams }: { searchParams: Promise<{ add?: string }> }) {
   if (hasPublicSupabaseEnv()) {
-    const membership = await getActiveMembership(await createServerSupabaseClient()).catch(() => null);
+    const membership = await getRequestMembershipOrNull();
     if (membership && membership.role !== "crew") {
       const openModule = await homeModule(membership);
       if (!openModule) {
