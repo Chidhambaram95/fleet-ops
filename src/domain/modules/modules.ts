@@ -42,37 +42,39 @@ export const MODULE_SCREENS: Record<ModuleId, readonly Screen[]> = {
   tour: ["home", "enquiries", "bookings", "trips", "fuel", "mileage", "buses", "crew", "renewals", "tyres", "reports"],
 };
 
-export const SCREEN_LABELS: Record<Screen, string> = {
-  home: "Today",
-  daybook: "Day book",
-  enquiries: "Enquiries & quotes",
-  bookings: "Bookings",
-  trips: "Trip sheets",
-  fuel: "Diesel & pumps",
-  mileage: "Mileage",
-  intercity: "Intercity payments",
-  buses: "Buses",
-  crew: "Crew",
-  renewals: "Documents due",
-  tyres: "Tyres",
+/** How the menu groups screens: what to watch, daily work, the fleet itself, and reports. */
+export type NavGroup = "monitor" | "work" | "fleet" | "reports";
+
+export const NAV_GROUP_LABELS: Record<NavGroup, string> = {
+  monitor: "Monitor",
+  work: "Daily work",
+  fleet: "Fleet",
   reports: "Reports",
 };
 
-export const SCREEN_HINTS: Record<Screen, string> = {
-  home: "Today at a glance",
-  daybook: "Daily money in and out",
-  enquiries: "New enquiries, quotes and advances",
-  bookings: "Confirmed tours, payments and balances",
-  trips: "Trip sheets, approvals and advances",
-  fuel: "Pump credit owed",
-  mileage: "Km per litre and alerts for each bus",
-  intercity: "Fortnightly Intercity payments",
-  buses: "This module's buses",
-  crew: "Salaries, advances and your crew",
-  renewals: "FC, insurance, permit, tax and licences",
-  tyres: "Tyres on each bus, km, retreads and warranty",
-  reports: "Profit and loss, trips, fuel and more",
+/** Everything the menus need to know about a screen, in one place. Add a screen here and in MODULE_SCREENS. */
+export const SCREENS: Record<Screen, { label: string; hint: string; group: NavGroup }> = {
+  home: { label: "Today", hint: "Today at a glance", group: "monitor" },
+  daybook: { label: "Day book", hint: "Daily money in and out", group: "work" },
+  enquiries: { label: "Enquiries & quotes", hint: "New enquiries, quotes and advances", group: "work" },
+  bookings: { label: "Bookings", hint: "Confirmed tours, payments and balances", group: "work" },
+  trips: { label: "Trip sheets", hint: "Trip sheets, approvals and advances", group: "work" },
+  fuel: { label: "Diesel & pumps", hint: "Pump credit owed", group: "work" },
+  mileage: { label: "Mileage", hint: "Km per litre and alerts for each bus", group: "monitor" },
+  intercity: { label: "Intercity payments", hint: "Fortnightly Intercity payments", group: "work" },
+  buses: { label: "Buses", hint: "This module's buses", group: "fleet" },
+  crew: { label: "Crew", hint: "Salaries, advances and your crew", group: "fleet" },
+  renewals: { label: "Documents due", hint: "FC, insurance, permit, tax and licences", group: "monitor" },
+  tyres: { label: "Tyres", hint: "Tyres on each bus, km, retreads and warranty", group: "fleet" },
+  reports: { label: "Reports", hint: "Profit and loss, trips, fuel and more", group: "reports" },
 };
+
+const screenField = <K extends "label" | "hint">(key: K) =>
+  Object.fromEntries(Object.entries(SCREENS).map(([screen, def]) => [screen, def[key]])) as Record<Screen, string>;
+
+export const SCREEN_LABELS: Record<Screen, string> = screenField("label");
+
+export const SCREEN_HINTS: Record<Screen, string> = screenField("hint");
 
 /** Omni and Tour open on an overview of what needs doing; Town on today's cash. */
 export function screenLabel(module: ModuleId, screen: Screen) {
