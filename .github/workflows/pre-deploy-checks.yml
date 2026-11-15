@@ -1,0 +1,95 @@
+name: Pre-deploy checks
+
+# Runs on every push to main and on every pull request into main.
+# To make it a real gate, require the "app" and "database" checks in the
+# branch protection rules for main (Settings > Branches).
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: pre-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+  # The build only needs these two to be well formed. Set repository
+  # variables with the same names to build against the real project;
+  # the real server keys stay in Vercel only.
+  NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
+
+jobs:
+  app:
+    name: app
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # A. Dependencies, exactly as locked.
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      # E. Environment variables: names, shape, and no server key in browser code.
+      - name: Check environment variables
+        run: npm run check:env
+
+      # B. TypeScript, strict.
+      - name: Type check
+        run: npx tsc --noEmit
+
+      # C. ESLint. Warnings fail too.
+      - name: Lint
+        run: npm run lint -- --max-warnings 0
+
+      - name: Unit tests
+        run: npm test
+
+      # D. Production build, the same one Vercel runs.
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: next-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**') }}
+          restore-keys: |
+            next-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+
+      - name: Production build
+        run: npm run build
+
+  database:
+    name: database
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # G. A throwaway local Supabase (database, auth and storage only), never
+      # the live project. Starting it applies every file in supabase/migrations
+      # in order to an empty database, so this step fails if they do not.
+      - name: Start local Supabase and apply migrations from zero
+        run: |
+          if [ ! -f supabase/config.toml ]; then supabase init --force; fi
+          supabase start -x studio,imgproxy,edge-runtime,logflare,vector,realtime,postgres-meta,inbucket,supavisor
+
+      # The security and rule checks in supabase/tests.
+
+      - name: Database tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: npm run test:db
