@@ -10,12 +10,10 @@ import { hasScreen, MODULE_TITLES, moduleHref, type ModuleId } from "@domain/mod
 import { formatInr, todayInIst } from "@domain/operations/totals";
 import { tripTotals } from "@domain/trips/checks";
 import { useOrg } from "@/components/billing/OrgContext";
-import { MileageCard } from "@/components/mileage/MileageAlerts";
+import { NeedsAttention } from "@/components/overview/NeedsAttention";
 import { BestWorstCard } from "@/components/reports/BestWorstCard";
-import { RenewalsDueCard } from "@/components/renewals/RenewalsDueCard";
-import { EmiDueCard } from "@/components/renewals/EmiDueCard";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
-import { ErrorText, PageHeader, useLoaded } from "@/components/ui/kit";
+import { Empty, ErrorText, KpiTile, PageHeader, PRIMARY, useLoaded } from "@/components/ui/kit";
 
 /** Home of a trip module (Omni, Tour): what needs doing today. */
 export function ModuleHome({ organizationId, module }: { organizationId: string; module: ModuleId }) {
@@ -104,16 +102,13 @@ export function ModuleHome({ organizationId, module }: { organizationId: string;
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 lg:gap-6">
       <PageHeader
-        title={MODULE_TITLES[module]}
-        hint={loading ? "Loading…" : `${data.buses} bus${data.buses === 1 ? "" : "es"}`}
+        title="Overview"
+        hint={`${MODULE_TITLES[module]} · ${loading ? "loading…" : `${data.buses} bus${data.buses === 1 ? "" : "es"}`}`}
         action={
           !org.viewOnly ? (
-            <Link
-              href={`${trips}/new`}
-              className="flex min-h-12 items-center gap-2 rounded-lg bg-brand px-5 text-sm font-bold text-white"
-            >
+            <Link href={`${trips}/new`} className={PRIMARY}>
               <span aria-hidden="true" className="text-xl leading-none">+</span>
               New trip sheet
             </Link>
@@ -121,32 +116,29 @@ export function ModuleHome({ organizationId, module }: { organizationId: string;
         }
       />
       <ErrorText message={error} />
-      <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
         {tiles.map((tile) => (
-          <Link key={tile.label} href={tile.href} className="flex min-w-0 flex-col gap-1 rounded-xl border border-line bg-surface p-4">
-            <span className="text-xs font-semibold text-muted">{tile.label}</span>
-            <span
-              className={`text-xl font-semibold ${
-                tile.tone === "in" ? "text-money-in" : tile.tone === "out" ? "text-money-out" : ""
-              }`}
-            >
-              {loading ? "…" : tile.value}
-            </span>
-            <span className="text-xs text-muted">{tile.detail}</span>
-          </Link>
+          <KpiTile
+            key={tile.label}
+            href={tile.href}
+            label={tile.label}
+            value={loading ? "…" : tile.value}
+            detail={tile.detail}
+            tone={tile.tone}
+          />
         ))}
       </div>
-      <EmiDueCard supabase={supabase} organizationId={organizationId} module={module} />
-      <BestWorstCard supabase={supabase} organizationId={organizationId} module={module} />
-      <RenewalsDueCard supabase={supabase} organizationId={organizationId} module={module} />
-      <MileageCard supabase={supabase} organizationId={organizationId} module={module} />
+      <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
+        <NeedsAttention module={module} />
+        <BestWorstCard supabase={supabase} organizationId={organizationId} module={module} />
+      </div>
       {!loading && data.buses === 0 ? (
-        <p className="rounded-xl border border-line bg-surface px-4 py-6 text-muted">
+        <Empty>
           No buses in this module yet.{" "}
-          <Link href={moduleHref(module, "buses")} className="font-bold text-brand">
+          <Link href={moduleHref(module, "buses")} className="font-semibold text-brand">
             Add a bus
           </Link>
-        </p>
+        </Empty>
       ) : null}
     </div>
   );

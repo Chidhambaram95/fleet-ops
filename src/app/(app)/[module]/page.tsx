@@ -1,22 +1,17 @@
-import { Suspense } from "react";
 import { ModuleHome } from "@/components/modules/ModuleHome";
 import { TourHome } from "@/components/tours/TourHome";
-import { DailyLedger } from "@/components/operations/DailyLedger";
+import { TownOverview } from "@/components/overview/TownOverview";
 import { AccessMessage } from "@/app/(app)/editorAccess";
 import { moduleAccess } from "@/app/(app)/moduleAccess";
 
-/** Town opens on its day book; Omni and Tour on their own home. */
+/** Every module opens on its Overview. The day book is one tap away. */
 export default async function ModuleHomePage({ params }: { params: Promise<{ module: string }> }) {
   const access = await moduleAccess((await params).module, "home");
   if (!access.membership) {
     return <AccessMessage message={access.message} />;
   }
   if (access.module === "town") {
-    return (
-      <Suspense>
-        <DailyLedger key={access.module} module={access.module} />
-      </Suspense>
-    );
+    return <TownOverview key={access.module} />;
   }
   if (access.module === "tour") {
     return <TourHome key={access.module} organizationId={access.membership.organizationId} />;

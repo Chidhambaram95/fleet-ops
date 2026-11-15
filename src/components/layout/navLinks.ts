@@ -1,22 +1,41 @@
 import {
-  MODULE_SCREENS,
   moduleFromPath,
   moduleHref,
+  navScreens,
+  NAV_GROUP_LABELS,
   SCREEN_HINTS,
   screenLabel,
+  SCREENS,
   type ModuleId,
+  type NavGroup,
 } from "@domain/modules/modules";
 import { canManage, type UserRole } from "@domain/rbac/roles";
+import type { NavIconName } from "@/components/ui/icons";
 
-/** Settings links sit in the laptop account menu instead of the top bar. */
-export type NavLink = { href: string; label: string; hint: string; settings?: boolean };
+/** `group` is where the sidebar and the Menu page file it; the Company links have their own group. */
+export type NavLink = {
+  href: string;
+  label: string;
+  hint: string;
+  icon: NavIconName;
+  group: NavGroup | "company";
+  /** Company pages are not tied to a module. */
+  settings?: boolean;
+};
 
-/** The menu of one module, in order. Home is always first. */
+export const NAV_GROUP_TITLES: Record<NavGroup | "company", string> = {
+  ...NAV_GROUP_LABELS,
+  company: "Company",
+};
+
+/** The menu of one module, in order. Overview is always first. */
 export function moduleLinks(module: ModuleId): NavLink[] {
-  return MODULE_SCREENS[module].map((screen) => ({
+  return navScreens(module).map((screen) => ({
     href: moduleHref(module, screen),
     label: screenLabel(module, screen),
     hint: SCREEN_HINTS[screen],
+    icon: screen === "home" ? "overview" : (screen as NavIconName),
+    group: SCREENS[screen].group,
   }));
 }
 
@@ -25,22 +44,30 @@ export function companyLinks(role: UserRole | null, companyArea: boolean): NavLi
   const links: NavLink[] = [];
   if (companyArea) {
     links.push(
-      { href: "/company/costs", label: "Company costs", hint: "Loan EMI, auditor, office and workshop bills", settings: true },
-      { href: "/company/reports", label: "All buses report", hint: "Profit and loss across every module", settings: true },
+      { href: "/company/costs", label: "Company costs", hint: "Loan EMI, auditor, office and workshop bills", icon: "costs", group: "company", settings: true },
+      { href: "/company/reports", label: "All buses report", hint: "Profit and loss across every module", icon: "allbuses", group: "company", settings: true },
     );
   }
   if (canManage(role)) {
-    links.push({ href: "/history", label: "Change history", hint: "Who changed which money record, and why", settings: true });
+    links.push({ href: "/history", label: "Change history", hint: "Who changed which money record, and why", icon: "history", group: "company", settings: true });
   }
   if (role === "admin") {
     links.push(
-      { href: "/settings/team", label: "Team & logins", hint: "Add people, set passwords and roles", settings: true },
-      { href: "/settings/company", label: "Company settings", hint: "Name, WhatsApp number and bus types", settings: true },
+      { href: "/settings/team", label: "Team & logins", hint: "Add people, set passwords and roles", icon: "team", group: "company", settings: true },
+      { href: "/settings/company", label: "Company settings", hint: "Name, WhatsApp number and bus types", icon: "settings", group: "company", settings: true },
     );
   } else if (role === "manager") {
-    links.push({ href: "/settings/team", label: "Team", hint: "Everyone in the company; remove crew who left", settings: true });
+    links.push({ href: "/settings/team", label: "Team", hint: "Everyone in the company; remove crew who left", icon: "team", group: "company", settings: true });
   }
   return links;
+}
+
+/** Links of a module and the company area, grouped for the sidebar and the Menu page. */
+export function groupedLinks(links: NavLink[]): { group: NavGroup | "company"; title: string; links: NavLink[] }[] {
+  const order: (NavGroup | "company")[] = ["monitor", "work", "fleet", "reports", "company"];
+  return order
+    .map((group) => ({ group, title: NAV_GROUP_TITLES[group], links: links.filter((link) => link.group === group) }))
+    .filter((entry) => entry.links.length > 0);
 }
 
 /** Pages a person can open: crew get their day book; others their current module and the Company area. */
@@ -50,7 +77,7 @@ export function navLinksFor(
   companyArea = false,
 ): NavLink[] {
   if (!canManage(role)) {
-    return [{ href: "/", label: "Today", hint: "Today's money in and out" }];
+    return [{ href: "/", label: "Today", hint: "Today's money in and out", icon: "daybook", group: "work" }];
   }
   return [...(module ? moduleLinks(module) : []), ...companyLinks(role, companyArea)];
 }
@@ -70,7 +97,7 @@ export function currentModule(
 export function addEntryHref(role: UserRole | null, module: ModuleId | null) {
   if (role === "crew" || !module) return "/?add=income";
   if (module === "tour") return "/tour/enquiries?new=1";
-  return module === "town" ? "/town?add=income" : `${moduleHref(module, "daybook")}?add=income`;
+  return `${moduleHref(module, "daybook")}?add=income`;
 }
 
 export function isActive(pathname: string, href: string) {

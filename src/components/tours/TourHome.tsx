@@ -8,11 +8,9 @@ import { formatInr, todayInIst } from "@domain/operations/totals";
 import { balanceDue, isRunning, isUpcoming } from "@domain/tours/calc";
 import { quoteNumber, tripLine, whenLine } from "@domain/tours/messages";
 import { useOrg } from "@/components/billing/OrgContext";
-import { MileageCard } from "@/components/mileage/MileageAlerts";
+import { NeedsAttention } from "@/components/overview/NeedsAttention";
 import { BestWorstCard } from "@/components/reports/BestWorstCard";
-import { EmiDueCard } from "@/components/renewals/EmiDueCard";
-import { RenewalsDueCard } from "@/components/renewals/RenewalsDueCard";
-import { Card, ErrorText, PageHeader, useLoaded } from "@/components/ui/kit";
+import { Card, Empty, ErrorText, KpiTile, PageHeader, PRIMARY, useLoaded } from "@/components/ui/kit";
 import { StatusPill, useTourData } from "./shared";
 
 /** Home of the Tour module: tours on the road, tours coming, and money to collect. */
@@ -74,16 +72,13 @@ export function TourHome({ organizationId }: { organizationId: string }) {
   const busName = (id: string | null) => data.buses.find((bus) => bus.id === id)?.registrationNumber ?? "No bus";
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 lg:gap-6">
       <PageHeader
-        title={MODULE_TITLES.tour}
-        hint={loading ? "Loading…" : `${data.buses.length} bus${data.buses.length === 1 ? "" : "es"}`}
+        title="Overview"
+        hint={`${MODULE_TITLES.tour} · ${loading ? "loading…" : `${data.buses.length} bus${data.buses.length === 1 ? "" : "es"}`}`}
         action={
           !org.viewOnly ? (
-            <Link
-              href={`${moduleHref("tour", "enquiries")}?new=1`}
-              className="flex min-h-12 items-center gap-2 rounded-lg bg-brand px-5 text-sm font-bold text-white"
-            >
+            <Link href={`${moduleHref("tour", "enquiries")}?new=1`} className={PRIMARY}>
               <span aria-hidden="true" className="text-xl leading-none">+</span>
               New enquiry
             </Link>
@@ -91,15 +86,16 @@ export function TourHome({ organizationId }: { organizationId: string }) {
         }
       />
       <ErrorText message={error} />
-      <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
         {tiles.map((tile) => (
-          <Link key={tile.label} href={tile.href} className="flex min-w-0 flex-col gap-1 rounded-xl border border-line bg-surface p-4">
-            <span className="text-xs font-semibold text-muted">{tile.label}</span>
-            <span className={`text-xl font-semibold ${tile.tone === "out" ? "text-money-out" : ""}`}>
-              {loading ? "…" : tile.value}
-            </span>
-            <span className="text-xs text-muted">{tile.detail}</span>
-          </Link>
+          <KpiTile
+            key={tile.label}
+            href={tile.href}
+            label={tile.label}
+            value={loading ? "…" : tile.value}
+            detail={tile.detail}
+            tone={tile.tone}
+          />
         ))}
       </div>
       <Card
@@ -114,7 +110,7 @@ export function TourHome({ organizationId }: { organizationId: string }) {
           <p className="text-sm text-muted">No confirmed tours yet. Start with a new enquiry.</p>
         ) : (
           coming.map((booking, index) => (
-            <div key={booking.id} className={`flex items-center justify-between gap-3 py-2 ${index ? "border-t border-line" : ""}`}>
+            <div key={booking.id} className={`flex items-center justify-between gap-3 py-3 ${index ? "border-t border-line" : ""}`}>
               <div className="min-w-0">
                 <p className="truncate font-semibold">
                   {booking.customerName} · {tripLine(booking)}
@@ -128,17 +124,17 @@ export function TourHome({ organizationId }: { organizationId: string }) {
           ))
         )}
       </Card>
-      <EmiDueCard supabase={supabase} organizationId={organizationId} module="tour" />
-      <BestWorstCard supabase={supabase} organizationId={organizationId} module="tour" />
-      <RenewalsDueCard supabase={supabase} organizationId={organizationId} module="tour" />
-      <MileageCard supabase={supabase} organizationId={organizationId} module="tour" />
+      <div className="grid gap-4 lg:grid-cols-2 lg:gap-6">
+        <NeedsAttention module="tour" />
+        <BestWorstCard supabase={supabase} organizationId={organizationId} module="tour" />
+      </div>
       {!loading && data.buses.length === 0 ? (
-        <p className="rounded-xl border border-line bg-surface px-4 py-6 text-muted">
+        <Empty>
           No tour buses yet.{" "}
-          <Link href={moduleHref("tour", "buses")} className="font-bold text-brand">
+          <Link href={moduleHref("tour", "buses")} className="font-semibold text-brand">
             Add a bus
           </Link>
-        </p>
+        </Empty>
       ) : null}
     </div>
   );

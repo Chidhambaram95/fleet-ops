@@ -45,8 +45,8 @@ export function EntryPanels({ book, form }: { book: DayBook; form: EntryFormStat
   const { sheetOpen, setSheetOpen } = form;
   return (
     <>
-      <aside className="hidden flex-col gap-4 rounded-xl border border-line bg-surface p-5 lg:sticky lg:top-24 lg:flex">
-        <h2 className="text-lg font-semibold">Add cash entry</h2>
+      <aside className="hidden flex-col gap-4 rounded-xl border border-line bg-surface p-5 lg:sticky lg:top-20 lg:flex">
+        <h2 className="text-base font-semibold text-ink">Add cash entry</h2>
         <EntryForm book={book} form={form} place="side" />
       </aside>
 
@@ -65,7 +65,7 @@ export function EntryPanels({ book, form }: { book: DayBook; form: EntryFormStat
             className="mx-auto flex max-h-[90dvh] w-full max-w-lg flex-col gap-4 overflow-y-auto rounded-t-2xl bg-surface px-5 pb-[max(24px,env(safe-area-inset-bottom))] pt-5"
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Add cash entry</h2>
+              <h2 className="text-base font-semibold text-ink">Add cash entry</h2>
               <button
                 type="button"
                 className="px-2 text-sm font-bold text-brand"

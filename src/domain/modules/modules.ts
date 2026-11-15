@@ -22,6 +22,7 @@ export const MODULE_TITLES: Record<ModuleId, string> = {
 
 export type Screen =
   | "home"
+  | "health"
   | "daybook"
   | "enquiries"
   | "bookings"
@@ -35,12 +36,24 @@ export type Screen =
   | "tyres"
   | "reports";
 
-/** Screens of each module, in menu order. Town's home is the day book itself. */
+/**
+ * Screens of each module, in menu order. Every module opens on its Overview.
+ * Mileage and Documents due are still screens (they have routes and access checks)
+ * but are reached from Fleet health, so the menus leave them out (see NAV_HIDDEN).
+ */
 export const MODULE_SCREENS: Record<ModuleId, readonly Screen[]> = {
-  town: ["home", "buses", "mileage", "crew", "renewals", "tyres", "reports"],
-  omni: ["home", "trips", "fuel", "mileage", "intercity", "daybook", "buses", "crew", "renewals", "tyres", "reports"],
-  tour: ["home", "enquiries", "bookings", "trips", "fuel", "mileage", "buses", "crew", "renewals", "tyres", "reports"],
+  town: ["home", "health", "daybook", "buses", "mileage", "crew", "renewals", "tyres", "reports"],
+  omni: ["home", "health", "daybook", "trips", "fuel", "intercity", "buses", "mileage", "crew", "renewals", "tyres", "reports"],
+  tour: ["home", "health", "enquiries", "bookings", "trips", "fuel", "buses", "mileage", "crew", "renewals", "tyres", "reports"],
 };
+
+/** Screens that live under Fleet health instead of having a menu entry of their own. */
+export const NAV_HIDDEN: readonly Screen[] = ["mileage", "renewals"];
+
+/** The screens a module shows in its menus, in order. */
+export function navScreens(module: ModuleId): Screen[] {
+  return MODULE_SCREENS[module].filter((screen) => !NAV_HIDDEN.includes(screen));
+}
 
 /** How the menu groups screens: what to watch, daily work, the fleet itself, and reports. */
 export type NavGroup = "monitor" | "work" | "fleet" | "reports";
@@ -54,7 +67,8 @@ export const NAV_GROUP_LABELS: Record<NavGroup, string> = {
 
 /** Everything the menus need to know about a screen, in one place. Add a screen here and in MODULE_SCREENS. */
 export const SCREENS: Record<Screen, { label: string; hint: string; group: NavGroup }> = {
-  home: { label: "Today", hint: "Today at a glance", group: "monitor" },
+  home: { label: "Overview", hint: "Today and this month at a glance", group: "monitor" },
+  health: { label: "Fleet health", hint: "Documents, mileage, loans and EMIs", group: "monitor" },
   daybook: { label: "Day book", hint: "Daily money in and out", group: "work" },
   enquiries: { label: "Enquiries & quotes", hint: "New enquiries, quotes and advances", group: "work" },
   bookings: { label: "Bookings", hint: "Confirmed tours, payments and balances", group: "work" },
@@ -76,15 +90,13 @@ export const SCREEN_LABELS: Record<Screen, string> = screenField("label");
 
 export const SCREEN_HINTS: Record<Screen, string> = screenField("hint");
 
-/** Omni and Tour open on an overview of what needs doing; Town on today's cash. */
-export function screenLabel(module: ModuleId, screen: Screen) {
-  return screen === "home" && module !== "town" ? "Overview" : SCREEN_LABELS[screen];
+export function screenLabel(_module: ModuleId, screen: Screen) {
+  return SCREEN_LABELS[screen];
 }
 
-/** The second tab on the phone: Trip sheets, or Enquiries for Tour, or Crew where there are no trips. */
+/** The second tab on the phone: the day book, or Enquiries for Tour. */
 export function secondTabScreen(module: ModuleId): Screen {
-  if (module === "tour") return "enquiries";
-  return hasScreen(module, "trips") ? "trips" : "crew";
+  return module === "tour" ? "enquiries" : "daybook";
 }
 
 export function isModuleId(value: unknown): value is ModuleId {

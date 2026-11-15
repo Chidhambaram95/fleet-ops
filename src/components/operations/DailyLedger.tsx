@@ -2,20 +2,17 @@
 
 import type { ModuleId } from "@domain/modules/modules";
 import { hasPublicSupabaseEnv } from "@data/supabase/env";
+import { useState } from "react";
 import { CrewDayView } from "./daybook/CrewDayView";
-import {
-  BusDayGrid,
-  DayAlertCards,
-  DayCrewSection,
-  DayProfitCard,
-  DayRecordLock,
-  DaySwitcher,
-} from "./daybook/DayParts";
+import { DayCrewSection, DayRecordLock, DaySummaryStrip, DaySwitcher } from "./daybook/DayParts";
 import { ActionButtons, EntryPanels } from "./daybook/EntryPanels";
-import { EntryList } from "./daybook/EntryList";
+import { DaySendPanel, EntryList } from "./daybook/EntryList";
 import { useDayBook } from "./daybook/useDayBook";
 import { useEntryForm } from "./daybook/useEntryForm";
 import { useOdometerForm } from "./daybook/useOdometerForm";
+import { ErrorText, PageHeader, Tabs } from "@/components/ui/primitives";
+
+type DayTab = "entries" | "crew" | "send";
 
 /** The day book. Inside a module it shows only that module's buses. */
 export function DailyLedger({ module }: { module?: ModuleId } = {}) {
@@ -36,29 +33,34 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
   const book = useDayBook(module);
   const form = useEntryForm(book);
   const odo = useOdometerForm(book);
+  const [tab, setTab] = useState<DayTab>("entries");
 
   if (book.crewLocked) {
     return <CrewDayView book={book} form={form} odo={odo} />;
   }
 
+  // Who is on duty is a Town screen; the other modules take crew from the trip sheet.
+  const tabs: { id: DayTab; label: string }[] = [
+    { id: "entries", label: "Entries" },
+    ...(module === "town" ? [{ id: "crew" as const, label: "Crew on duty" }] : []),
+    { id: "send", label: "Close & send" },
+  ];
+  const active = tabs.some((item) => item.id === tab) ? tab : "entries";
+
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
       <div className="flex min-w-0 flex-col gap-4">
-        <DaySwitcher book={book} />
+        <PageHeader title="Day book" hint="Money in and out, day by day" action={<DaySwitcher book={book} />} />
         <DayRecordLock book={book} />
-        <DayProfitCard book={book} />
+        <DaySummaryStrip book={book} />
         <ActionButtons book={book} form={form} />
-        <DayAlertCards book={book} />
-
-        {book.error && !form.sheetOpen ? (
-          <p className="rounded-lg bg-surface px-4 py-3 text-sm font-semibold text-money-out lg:hidden">
-            {book.error}
-          </p>
-        ) : null}
-
-        <BusDayGrid book={book} />
-        <DayCrewSection book={book} />
-        <EntryList book={book} />
+        {!form.sheetOpen ? <ErrorText message={book.error} /> : null}
+        <Tabs value={active} options={tabs} onChange={setTab} />
+        <div role="tabpanel" className="flex flex-col gap-4">
+          {active === "entries" ? <EntryList book={book} /> : null}
+          {active === "crew" ? <DayCrewSection book={book} /> : null}
+          {active === "send" ? <DaySendPanel book={book} /> : null}
+        </div>
       </div>
 
       <EntryPanels book={book} form={form} />

@@ -19,11 +19,13 @@ import { canManage, type UserRole } from "@domain/rbac/roles";
 import { SignOutButton } from "@/components/admin/SignOutButton";
 import { BillingNotice } from "@/components/billing/BillingNotice";
 import { OrgProvider } from "@/components/billing/OrgContext";
-import { AppHeader } from "@/components/layout/AppHeader";
+import { AlertsProvider } from "@/components/alerts/AlertsProvider";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { TopBar } from "@/components/layout/TopBar";
 import { homeModule, moduleInfo } from "./moduleAccess";
 
-const MAIN_CLASS = "mx-auto w-full max-w-6xl px-4 py-4 md:px-8 md:py-7";
+const MAIN_CLASS = "mx-auto w-full max-w-7xl px-4 py-5 lg:px-8 lg:py-8";
 
 export default async function AppShellLayout({
   children,
@@ -150,43 +152,38 @@ export default async function AppShellLayout({
     );
   }
 
+  // Crew work from one screen, so they get no sidebar.
+  const sidebar = canManage(role);
   return (
-    <div className="min-h-dvh pb-24 md:pb-0">
-      <AppHeader
-        organizationName={organizationName}
-        email={login}
-        displayName={displayName}
-        role={role}
-        isSuperAdmin={superAdmin}
-        canAdd={Boolean(role) && !viewOnly}
-        modules={modules}
-        defaultModule={defaultModule}
-        companyArea={companyArea}
-        organizationId={organizationId}
-      />
-      {notice}
-      <OrgProvider
-        value={{
-          name: organizationName,
-          whatsappNumber,
-          viewOnly,
-          organizationId,
-          userId: user?.id ?? "",
-          role,
-          modules,
-          defaultModule,
-          companyArea,
-          assignedBusId,
-        }}
-      >
-        <main className={MAIN_CLASS}>{children}</main>
-      </OrgProvider>
-      <BottomNav
-        canAdd={Boolean(role) && !viewOnly}
-        role={role}
-        modules={modules}
-        defaultModule={defaultModule}
-      />
-    </div>
+    <OrgProvider
+      value={{
+        name: organizationName,
+        whatsappNumber,
+        viewOnly,
+        organizationId,
+        userId: user?.id ?? "",
+        role,
+        modules,
+        defaultModule,
+        companyArea,
+        assignedBusId,
+      }}
+    >
+      <AlertsProvider>
+        <div
+          className={`min-h-dvh bg-canvas pb-24 text-ink md:pb-0 ${
+            sidebar ? "md:grid md:grid-cols-[64px_minmax(0,1fr)] lg:grid-cols-[240px_minmax(0,1fr)]" : ""
+          }`}
+        >
+          <Sidebar />
+          <div className="flex min-w-0 flex-col">
+            <TopBar email={login} displayName={displayName} isSuperAdmin={superAdmin} />
+            {notice}
+            <main className={MAIN_CLASS}>{children}</main>
+          </div>
+          <BottomNav />
+        </div>
+      </AlertsProvider>
+    </OrgProvider>
   );
 }

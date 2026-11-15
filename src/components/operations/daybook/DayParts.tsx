@@ -1,10 +1,6 @@
 "use client";
 
 import { displayDate, formatInr, shiftDate, todayInIst } from "@domain/operations/totals";
-import { MileageCard } from "@/components/mileage/MileageAlerts";
-import { BestWorstCard } from "@/components/reports/BestWorstCard";
-import { EmiDueCard } from "@/components/renewals/EmiDueCard";
-import { RenewalsDueCard } from "@/components/renewals/RenewalsDueCard";
 import { DayCrewCard } from "@/components/operations/DayCrewCard";
 import { RecordLock } from "@/components/history/RecordLock";
 import { canManage } from "@domain/rbac/roles";
@@ -14,18 +10,20 @@ import type { DayBook } from "./useDayBook";
 /** Previous day, date picker, next day, and a way back to today. */
 export function DaySwitcher({ book }: { book: DayBook }) {
   const { date, setDate, today } = book;
+  const arrow =
+    "flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-xl font-semibold text-muted hover:bg-subtle disabled:opacity-40";
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1.5">
       <button
         type="button"
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface text-xl font-semibold text-muted"
+        className={arrow}
         onClick={() => setDate((current) => shiftDate(current, -1))}
         aria-label="Previous day"
       >
         ‹
       </button>
-      <label className="relative flex h-11 min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-surface px-4 sm:flex-none">
-        <span aria-hidden="true" className="truncate text-sm font-bold">
+      <label className="relative flex h-10 min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-line-strong bg-surface px-4 hover:bg-subtle sm:flex-none">
+        <span aria-hidden="true" className="truncate text-sm font-semibold text-ink">
           {today ? `Today, ${displayDate(date)}` : displayDate(date)}
         </span>
         <CalendarIcon />
@@ -44,7 +42,7 @@ export function DaySwitcher({ book }: { book: DayBook }) {
       </label>
       <button
         type="button"
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface text-xl font-semibold text-muted disabled:opacity-40"
+        className={arrow}
         onClick={() => setDate((current) => shiftDate(current, 1))}
         disabled={today}
         aria-label="Next day"
@@ -54,7 +52,7 @@ export function DaySwitcher({ book }: { book: DayBook }) {
       {!today ? (
         <button
           type="button"
-          className="shrink-0 px-2 text-sm font-bold text-brand"
+          className="h-8 shrink-0 rounded-md px-3 text-sm font-medium text-brand hover:bg-brand-soft"
           onClick={() => setDate(todayInIst())}
         >
           Today
@@ -78,105 +76,28 @@ export function DayRecordLock({ book }: { book: DayBook }) {
     ) : null;
 }
 
-/** The day's profit with money in and money out. */
-export function DayProfitCard({ book }: { book: DayBook }) {
+/** The day's money in, money out and profit, in one line. */
+export function DaySummaryStrip({ book }: { book: DayBook }) {
   const { date, loading, fleetTotals, today } = book;
+  const net = fleetTotals.netInr;
+  const figure = "font-semibold tabular-nums";
   return (
-    <section className="flex flex-col gap-3.5 rounded-xl bg-brand p-5 text-white">
-      <span className="text-sm font-semibold text-brand-pale">
-        {today ? "Profit today" : `Profit on ${displayDate(date)}`}
+    <section
+      aria-label={today ? "Today's totals" : `Totals for ${displayDate(date)}`}
+      className="flex flex-wrap items-center gap-x-6 gap-y-1 rounded-xl border border-line bg-surface px-4 py-3 text-sm"
+    >
+      <span className="text-muted">
+        Money in <span className={`${figure} text-money-in`}>{loading ? "…" : formatInr(fleetTotals.incomeInr)}</span>
       </span>
-      <span className="text-3xl font-semibold leading-none tracking-tight">
-        {loading ? "…" : formatInr(fleetTotals.netInr)}
+      <span className="text-muted">
+        Money out <span className={`${figure} text-money-out`}>{loading ? "…" : formatInr(fleetTotals.expenseInr)}</span>
       </span>
-      <div className="grid grid-cols-2 gap-2.5">
-        <div className="rounded-lg bg-brand-mid px-3 py-2.5">
-          <div className="text-xs text-brand-pale">Money in</div>
-          <div className="text-lg font-bold">
-            {formatInr(fleetTotals.incomeInr)}
-          </div>
-        </div>
-        <div className="rounded-lg bg-brand-mid px-3 py-2.5">
-          <div className="text-xs text-brand-pale">Money out</div>
-          <div className="text-lg font-bold">
-            {formatInr(fleetTotals.expenseInr)}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/** Alert cards for this module: EMIs, best and worst bus, documents due, mileage. */
-export function DayAlertCards({ book }: { book: DayBook }) {
-  const { organizationId, role, supabase, module } = book;
-  return (
-    <>
-      {organizationId && module && canManage(role) ? (
-        <EmiDueCard supabase={supabase} organizationId={organizationId} module={module} />
-      ) : null}
-
-      {organizationId && module && canManage(role) ? (
-        <BestWorstCard supabase={supabase} organizationId={organizationId} module={module} />
-      ) : null}
-
-      {organizationId && role ? (
-        <RenewalsDueCard supabase={supabase} organizationId={organizationId} module={module} />
-      ) : null}
-
-      {organizationId && module && canManage(role) ? (
-        <MileageCard supabase={supabase} organizationId={organizationId} module={module} />
-      ) : null}
-    </>
-  );
-}
-
-/** One tile per bus with its profit for the day and its last odometer reading. */
-export function BusDayGrid({ book }: { book: DayBook }) {
-  const { loading, error, odometers, busTotals, crewLocked, visibleBuses } = book;
-  return (
-    <section className="flex flex-col gap-2.5">
-      <h2 className="font-bold">Buses</h2>
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
-        {visibleBuses.map((bus) => {
-          const net = busTotals.get(bus.id)?.netInr ?? 0;
-          return (
-            <div
-              key={bus.id}
-              className="flex min-w-0 flex-col gap-1 rounded-xl border border-line bg-surface p-3.5"
-            >
-              <span className="truncate text-xs text-muted">
-                {bus.routeLabel || "No route"}
-              </span>
-              <span className="truncate text-sm font-bold">
-                {bus.registrationNumber}
-              </span>
-              <span
-                className={`text-lg font-semibold ${
-                  net > 0 ? "text-money-in" : net < 0 ? "text-money-out" : "text-ink"
-                }`}
-              >
-                {formatInr(net)}
-              </span>
-              {odometers.has(bus.id) ? (
-                <span className="truncate text-xs text-muted">
-                  Odometer {odometers.get(bus.id)?.toLocaleString("en-IN")} km
-                </span>
-              ) : null}
-            </div>
-          );
-        })}
-      </div>
-      {loading ? (
-        <p className="text-sm text-muted">Loading your buses…</p>
-      ) : null}
-      {!loading && visibleBuses.length === 0 && !error ? (
-        <p className="rounded-xl border border-line bg-surface px-4 py-4 text-muted">
-          {crewLocked
-            ? "No bus is given to you yet. Ask your admin."
-            : "No buses yet."}
-        </p>
-      ) : null}
+      <span className="text-muted">
+        {today ? "Profit today" : "Profit"}{" "}
+        <span className={`${figure} ${net > 0 ? "text-money-in" : net < 0 ? "text-money-out" : "text-ink"}`}>
+          {loading ? "…" : formatInr(net)}
+        </span>
+      </span>
     </section>
   );
 }

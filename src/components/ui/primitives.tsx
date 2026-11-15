@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 /** Shared building blocks for the money, renewals and report pages. */
@@ -175,5 +176,63 @@ export function BusSelect({
         </option>
       ))}
     </select>
+  );
+}
+
+/** A figure with a label, as a tile. Pass `href` to make the whole tile a link. */
+export function KpiTile({
+  label,
+  value,
+  detail,
+  tone,
+  href,
+}: {
+  label: string;
+  value: ReactNode;
+  detail?: ReactNode;
+  tone?: "in" | "out";
+  href?: string;
+}) {
+  const body = (
+    <>
+      <span className="text-xs font-medium uppercase tracking-wide text-muted">{label}</span>
+      <span
+        className={`text-2xl font-semibold tracking-tight tabular-nums ${
+          tone === "in" ? "text-money-in" : tone === "out" ? "text-money-out" : "text-ink"
+        }`}
+      >
+        {value}
+      </span>
+      {detail ? <span className="text-xs text-muted">{detail}</span> : null}
+    </>
+  );
+  const base = "flex min-w-0 flex-col gap-1 rounded-xl border border-line bg-surface p-4";
+  return href ? (
+    <Link href={href} className={`${base} hover:border-line-strong`}>
+      {body}
+    </Link>
+  ) : (
+    <div className={base}>{body}</div>
+  );
+}
+
+/** Small status label. Always carries text, so colour is never the only signal. */
+export function Badge({
+  tone = "neutral",
+  children,
+}: {
+  tone?: "neutral" | "ok" | "warn" | "danger";
+  children: ReactNode;
+}) {
+  const colours = {
+    neutral: "bg-subtle text-muted",
+    ok: "bg-success-bg text-money-in",
+    warn: "bg-warn-bg text-warn-ink",
+    danger: "bg-danger-bg text-money-out",
+  }[tone];
+  return (
+    <span className={`inline-flex h-6 items-center gap-1 rounded-full px-2 text-xs font-medium ${colours}`}>
+      {children}
+    </span>
   );
 }
