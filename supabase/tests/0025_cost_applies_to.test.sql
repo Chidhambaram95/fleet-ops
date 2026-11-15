@@ -6,6 +6,13 @@
 set client_min_messages = notice;
 begin;
 
+-- The dates below are fixed, and days older than three days are closed for
+-- editing. So the clock is held at the day these checks were written for.
+-- Rolled back with everything else.
+create or replace function public.today_ist() returns date language sql stable as $$
+  select date '2026-11-03';
+$$;
+
 create function pg_temp.act_as(p_user uuid) returns void language sql as $$
   select set_config('request.jwt.claim.sub', coalesce(p_user::text, ''), true),
          set_config('request.jwt.claims', json_build_object('sub', p_user, 'role', 'authenticated')::text, true);

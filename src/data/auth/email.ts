@@ -11,18 +11,6 @@ export async function signInWithEmail(
   }
 }
 
-export async function signUpWithEmail(
-  client: SupabaseClient,
-  email: string,
-  password: string,
-) {
-  const { data, error } = await client.auth.signUp({ email, password });
-  if (error) {
-    throw new Error(error.message);
-  }
-  return data;
-}
-
 export async function signOut(client: SupabaseClient) {
   const { error } = await client.auth.signOut();
   if (error) {

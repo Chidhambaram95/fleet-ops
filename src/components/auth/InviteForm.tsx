@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { signInWithEmail } from "@data/auth/email";
 import { acceptInvite } from "@data/companies/repository";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
+import { createInviteLoginAction } from "@/app/(auth)/invite/[token]/actions";
 
 const field =
   "h-12 rounded-2xl bg-canvas px-4 text-base font-normal";
@@ -23,34 +24,19 @@ export function InviteForm({
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [info, setInfo] = useState("");
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setBusy(true);
     setError("");
-    setInfo("");
     const client = createBrowserSupabaseClient();
     try {
-      if (hasLogin) {
-        await signInWithEmail(client, email.trim(), password);
-      } else {
-        const { data, error: signUpError } = await client.auth.signUp({
-          email: email.trim(),
-          password,
-          options: { data: { display_name: name.trim() } },
-        });
-        if (signUpError) throw new Error(signUpError.message);
-        if (data.user?.identities && data.user.identities.length === 0) {
-          throw new Error("An account with that email already exists. Choose “I already have a login”.");
-        }
-        if (!data.session) {
-          setInfo(
-            "Check your email to confirm the account. Then sign in here with “I already have a login”.",
-          );
-          return;
-        }
+      if (!hasLogin) {
+        // The login is made on the server: public sign-up is switched off.
+        const created = await createInviteLoginAction({ token, name, email, password });
+        if (created.error) throw new Error(created.error);
       }
+      await signInWithEmail(client, email.trim().toLowerCase(), password);
       await acceptInvite(client, token);
       router.replace("/");
       router.refresh();
@@ -86,7 +72,6 @@ export function InviteForm({
         />
       </label>
       {error ? <p className="text-sm text-money-out">{error}</p> : null}
-      {info ? <p className="text-sm text-muted">{info}</p> : null}
       <button
         type="submit"
         disabled={busy}

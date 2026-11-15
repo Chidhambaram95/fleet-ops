@@ -12,7 +12,7 @@ export default function LoginPage() {
     <>
       <section className="flex flex-col gap-4 rounded-3xl bg-white p-6">
         <h1 className="text-2xl font-extrabold leading-tight">Sign in</h1>
-        <AuthForm mode="login" />
+        <AuthForm />
         <p className="text-center text-sm text-muted">
           New here? Ask your company admin to send you an invite on WhatsApp.
         </p>

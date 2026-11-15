@@ -75,25 +75,11 @@ export async function getActiveMembership(
   const userId = await getAuthenticatedUserId(client);
   const { data, error } = await loadMembership(client, userId);
 
-  console.log("[session] auth.uid()", userId);
-  console.log("[session] organization membership", { data, error });
-
   if (error) {
     throw new SessionError(error.message, 403);
   }
 
-  let membership = membershipFromRow(userId, data as MembershipRow | null);
-  if (!membership && process.env.NODE_ENV === "development") {
-    const ensured = await ensureDevOrganization(client, userId);
-    if (ensured) {
-      const again = await loadMembership(client, userId);
-      if (again.error) {
-        throw new SessionError(again.error.message, 403);
-      }
-      membership = membershipFromRow(userId, again.data as MembershipRow | null);
-    }
-  }
-
+  const membership = membershipFromRow(userId, data as MembershipRow | null);
   if (membership) {
     return membership;
   }
@@ -104,28 +90,11 @@ export async function getActiveMembership(
   );
 }
 
-/** First organization the user joined. Membership is the source of truth. */
-export async function getActiveOrganizationId(client: SupabaseClient) {
-  const membership = await getActiveMembership(client);
-  return membership.organizationId;
-}
-
-async function ensureDevOrganization(client: SupabaseClient, userId: string) {
-  const { data, error } = await client.rpc("ensure_personal_organization");
-  console.log("[session] dev membership fallback", { userId, data, error });
-  if (error || typeof data !== "string" || !isOrganizationId(data)) {
-    return null;
-  }
-  return data;
-}
-
 export async function requireOrganizationMember(
   client: SupabaseClient,
   organizationId: string,
 ) {
   const userId = await getAuthenticatedUserId(client);
-  console.log("[session] require membership", { userId, organizationId });
-
   if (!isOrganizationId(organizationId)) {
     throw new SessionError("Choose an organization.", 403);
   }
@@ -136,8 +105,6 @@ export async function requireOrganizationMember(
     .eq("user_id", userId)
     .eq("organization_id", organizationId)
     .maybeSingle();
-
-  console.log("[session] membership check", { userId, data, error });
 
   if (error) {
     throw new SessionError(error.message, 403);
