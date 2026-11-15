@@ -1,9 +1,5 @@
 import type { Bus, DailyEntry, DayTotals } from "./types";
 
-export function emptyTotals(): DayTotals {
-  return { incomeInr: 0, expenseInr: 0, netInr: 0 };
-}
-
 export function totalsForEntries(entries: DailyEntry[]): DayTotals {
   const incomeInr = entries
     .filter((entry) => entry.kind === "income")

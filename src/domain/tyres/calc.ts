@@ -58,11 +58,6 @@ export function readyToFit(tyre: Tyre): boolean {
   return tyre.status === "in_stock" && !tyre.scrapPileOn && !tyre.warrantyClaimOn;
 }
 
-/** Off the bus and with the dealer on a pending warranty claim. */
-export function claimPending(tyre: Tyre): boolean {
-  return tyre.status === "in_stock" && !!tyre.warrantyClaimOn;
-}
-
 /** Off the bus and waiting to be sold as scrap. */
 export function onScrapPile(tyre: Tyre): boolean {
   return tyre.status === "in_stock" && !!tyre.scrapPileOn;

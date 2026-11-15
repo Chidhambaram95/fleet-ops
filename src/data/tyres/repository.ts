@@ -231,51 +231,6 @@ export async function undoLastTyreMove(client: SupabaseClient, tyreId: string) {
   throwIfError(error);
 }
 
-/**
- * The latest odometer known for a bus: its newest trip-sheet closing km, tyre
- * reading or crew odometer reading, whichever is higher. Null when there is none.
- */
-export async function latestOdometer(
-  client: SupabaseClient,
-  organizationId: string,
-  busId: string,
-): Promise<number | null> {
-  const [trips, tyres, readings] = await Promise.all([
-    client
-      .from("trips")
-      .select("end_km")
-      .eq("organization_id", organizationId)
-      .eq("bus_id", busId)
-      .not("end_km", "is", null)
-      .order("end_km", { ascending: false })
-      .limit(1),
-    client
-      .from("tyre_events")
-      .select("odometer_km")
-      .eq("organization_id", organizationId)
-      .eq("bus_id", busId)
-      .not("odometer_km", "is", null)
-      .order("odometer_km", { ascending: false })
-      .limit(1),
-    client
-      .from("odometer_readings")
-      .select("odometer_km")
-      .eq("organization_id", organizationId)
-      .eq("bus_id", busId)
-      .order("odometer_km", { ascending: false })
-      .limit(1),
-  ]);
-  throwIfError(trips.error);
-  throwIfError(tyres.error);
-  throwIfError(readings.error);
-  const known = [
-    num((trips.data?.[0] as Row | undefined)?.end_km),
-    num((tyres.data?.[0] as Row | undefined)?.odometer_km),
-    num((readings.data?.[0] as Row | undefined)?.odometer_km),
-  ].filter((value): value is number => value != null);
-  return known.length ? Math.max(...known) : null;
-}
-
 /** Latest odometer for every bus at once, for the km-so-far figures. */
 export async function latestOdometers(client: SupabaseClient, organizationId: string): Promise<Map<string, number>> {
   const [trips, tyres, readings] = await Promise.all([

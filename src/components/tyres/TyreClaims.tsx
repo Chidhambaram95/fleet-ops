@@ -7,7 +7,7 @@ import { cancelClaim, closeClaim, moveTyre, raiseClaim } from "@data/tyres/repos
 import { formatInr, todayInIst } from "@domain/operations/totals";
 import { kmSoFar, kmText, warrantyEndsOn, warrantyState } from "@domain/tyres/calc";
 import { positionLabel } from "@domain/tyres/catalog";
-import type { Tyre, TyreClaim, TyreClaimStatus } from "@domain/tyres/types";
+import type { Tyre, TyreClaim } from "@domain/tyres/types";
 import {
   Card,
   ErrorText,
@@ -29,14 +29,6 @@ export const CLAIM_REASONS = [
   "Bead damage",
   "Other",
 ];
-
-export const CLAIM_STATUS_LABELS: Record<TyreClaimStatus, string> = {
-  pending: "Pending",
-  replaced: "Replaced",
-  credited: "Credit",
-  rejected: "Rejected",
-  cancelled: "Cancelled",
-};
 
 function daysSince(date: string, today: string) {
   return Math.max(0, Math.round((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${date}T00:00:00Z`)) / 86400000));

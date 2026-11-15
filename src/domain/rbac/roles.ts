@@ -26,10 +26,6 @@ export function normalizeUserRole(value: string): UserRole | null {
   return null;
 }
 
-export function canManageBuses(role: UserRole) {
-  return role === "admin";
-}
-
 export type OrganizationMember = {
   userId: string;
   displayName: string;

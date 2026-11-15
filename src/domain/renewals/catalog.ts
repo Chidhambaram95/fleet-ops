@@ -64,9 +64,6 @@ export function currentRenewals(renewals: Renewal[]): Renewal[] {
   return [...latest.values()].sort((left, right) => left.expiresOn.localeCompare(right.expiresOn));
 }
 
-/** Reminders go out 30, 15 and 7 days before, and on the day. */
-export const REMINDER_DAYS = [30, 15, 7, 0];
-
 export function reminderText(items: { owner: string; kind: RenewalKind; expiresOn: string; days: number }[]): string {
   const lines = items.map(
     (item) => `• ${item.owner}: ${renewalLabel(item.kind)} – ${item.expiresOn.split("-").reverse().join("-")} (${dueText(item.days)})`,

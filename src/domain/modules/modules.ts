@@ -119,20 +119,3 @@ export function moduleFromPath(pathname: string): ModuleId | null {
   const first = pathname.split("/")[1];
   return isModuleId(first) ? first : null;
 }
-
-/**
- * How much of a shared cost falls on each bus. A cost with no buses picked is
- * split across every bus of the company. Rupees left over go to the first buses.
- */
-export function costShares(amountInr: number, busIds: readonly string[], allBusIds: readonly string[]) {
-  const targets = busIds.length ? busIds : allBusIds;
-  const shares = new Map<string, number>();
-  if (targets.length === 0) return shares;
-  const base = Math.floor(amountInr / targets.length);
-  let left = amountInr - base * targets.length;
-  for (const id of targets) {
-    shares.set(id, (shares.get(id) ?? 0) + base + (left > 0 ? 1 : 0));
-    if (left > 0) left -= 1;
-  }
-  return shares;
-}

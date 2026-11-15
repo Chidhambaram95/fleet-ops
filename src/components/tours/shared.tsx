@@ -5,7 +5,6 @@ import { createSupabaseOperationsRepository } from "@data/operations/supabaseRep
 import { getTourSettings, listBookings, listTourPayments } from "@data/tours/repository";
 import type { Bus } from "@domain/operations/types";
 import { formatInr } from "@domain/operations/totals";
-import { balanceDue } from "@domain/tours/calc";
 import { inclusionItems, longDay, quoteMessage, quoteNumber, tripLine, whenLine } from "@domain/tours/messages";
 import {
   DEFAULT_TOUR_SETTINGS,
@@ -224,8 +223,4 @@ export function QuoteShare({
       </p>
     </Sheet>
   );
-}
-
-export function balanceOf(booking: TourBooking, payments: TourPayment[]) {
-  return balanceDue(booking, payments);
 }

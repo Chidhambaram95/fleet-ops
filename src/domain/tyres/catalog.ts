@@ -14,10 +14,6 @@ export function sparePosition(number: number) {
   return `spare_${number}`;
 }
 
-export function isSpare(position: string | null | undefined) {
-  return !!position && /^spare_\d+$/.test(position);
-}
-
 export function positionLabel(position: string | null | undefined): string {
   if (!position) return "";
   const road = ROAD_POSITIONS.find((item) => item.id === position);
