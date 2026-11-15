@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { copyFromDay, dayCrewMap, missingDuties, peopleForDuty } from "@domain/crew/dayCrew";
-import type { CrewPerson } from "@domain/money/types";
+import type { CrewPerson } from "@domain/crew/types";
 
 function person(id: string, job: CrewPerson["job"], overrides: Partial<CrewPerson> = {}): CrewPerson {
   return { id, name: id, job, phone: "", monthlySalaryInr: 0, licenceNo: "", active: true, module: "town", ...overrides };

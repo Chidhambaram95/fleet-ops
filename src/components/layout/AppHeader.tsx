@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { signOut } from "@data/auth/email";
 import {
   LAST_MODULE_COOKIE,
@@ -11,10 +11,12 @@ import {
   moduleHref,
   type ModuleId,
 } from "@domain/modules/modules";
-import { ROLE_LABELS, type UserRole } from "@domain/rbac/roles";
+import { canManage, ROLE_LABELS, type UserRole } from "@domain/rbac/roles";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { MileageBell } from "@/components/mileage/MileageAlerts";
 import { addEntryHref, currentModule, initials, isActive, navLinksFor } from "./navLinks";
+import { PlusIcon } from "@/components/ui/icons";
+import { useDismiss } from "@/components/ui/useDismiss";
 
 /** Phone: company name and account button. Laptop: logo, top menu and account. */
 export function AppHeader({
@@ -63,24 +65,8 @@ export function AppHeader({
     }
   }, [pathname]);
 
-  useEffect(() => {
-    function onPointerDown(event: PointerEvent) {
-      if (!headerRef.current?.contains(event.target as Node)) {
-        setAccountOpen(false);
-      }
-    }
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setAccountOpen(false);
-      }
-    }
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, []);
+  const closeAccount = useCallback(() => setAccountOpen(false), []);
+  useDismiss(accountOpen, closeAccount, headerRef);
 
   async function onSignOut() {
     await signOut(createBrowserSupabaseClient());
@@ -130,7 +116,7 @@ export function AppHeader({
         </nav>
 
         <div className="flex shrink-0 items-center gap-2">
-          {(role === "admin" || role === "manager") && organizationId ? (
+          {canManage(role) && organizationId ? (
             <MileageBell organizationId={organizationId} module={openModule} />
           ) : null}
           {canAdd ? (
@@ -250,18 +236,3 @@ export function ModuleSwitch({
   );
 }
 
-export function PlusIcon({ className = "h-6 w-6" }: { className?: string }) {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-    >
-      <path d="M12 5v14M5 12h14" />
-    </svg>
-  );
-}

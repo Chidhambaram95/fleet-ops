@@ -4,7 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import { useState } from "react";
 import { listDayCrew, setDayCrew } from "@data/crew/dayCrew";
-import { listCrewPeople } from "@data/money/repository";
+import { listCrewPeople } from "@data/crew/people";
 import {
   copyFromDay,
   dayCrewMap,
@@ -13,7 +13,7 @@ import {
   missingDuties,
   peopleForDuty,
 } from "@domain/crew/dayCrew";
-import type { CrewJob } from "@domain/money/types";
+import type { CrewJob } from "@domain/crew/types";
 import { shiftDate } from "@domain/operations/totals";
 import type { Bus } from "@domain/operations/types";
 import { Card, ErrorText, messageFromUnknown, useLoaded } from "@/components/ui/kit";

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { listCrewPeople } from "@data/money/repository";
+import { listCrewPeople } from "@data/crew/people";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import { listRenewals } from "@data/renewals/repository";
 import { moduleHref, type ModuleId } from "@domain/modules/modules";

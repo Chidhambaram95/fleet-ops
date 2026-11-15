@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { throwIfError } from "@data/supabase/errors";
 import { getAuthenticatedUserId } from "@data/auth/session";
 import type { Bus, DailyEntry, NewBus, NewDailyEntry } from "@domain/operations/types";
 import {
@@ -16,12 +17,6 @@ import {
 } from "./mappers";
 import type { OperationsRepository, TeamRepository } from "./repository";
 import { isModuleId, type ModuleId } from "@domain/modules/modules";
-
-function throwIfError(error: { message: string; code?: string } | null) {
-  if (error) {
-    throw new Error(error.message);
-  }
-}
 
 function isDuplicate(error: { message: string; code?: string }) {
   return error.code === "23505" || error.message.toLowerCase().includes("duplicate");

@@ -2,17 +2,10 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import {
-  addCrewPerson,
-  addSalaryPayment,
-  deleteRow,
-  listCrewPeople,
-  listSalaryPayments,
-  markTripSettled,
-  updateCrewPerson,
-} from "@data/money/repository";
+import { deleteRow, markTripSettled } from "@data/money/repository";
+import { addCrewPerson, addSalaryPayment, listCrewPeople, listSalaryPayments, updateCrewPerson } from "@data/crew/people";
 import { listTripsWithLines } from "@data/trips/repository";
-import type { CrewJob, CrewPerson } from "@domain/money/types";
+import type { CrewJob, CrewPerson } from "@domain/crew/types";
 import { JOB_LABELS } from "@domain/crew/dayCrew";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import { hasScreen, MODULE_LABELS, moduleHref, type ModuleId } from "@domain/modules/modules";

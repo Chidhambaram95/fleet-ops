@@ -7,6 +7,7 @@ import { loginLabel } from "@domain/auth/loginId";
 import { hasPublicSupabaseEnv } from "@data/supabase/env";
 import { activeModules } from "@domain/modules/modules";
 import { TeamSettings } from "@/components/settings/TeamSettings";
+import { canManage } from "@domain/rbac/roles";
 
 export default async function TeamSettingsPage() {
   if (!hasPublicSupabaseEnv()) {
@@ -21,7 +22,7 @@ export default async function TeamSettingsPage() {
   try {
     const supabase = await getRequestSupabase();
     const membership = await getRequestMembership();
-    if (membership.role !== "admin" && membership.role !== "manager") {
+    if (!canManage(membership.role)) {
       return (
         <p className="rounded-3xl bg-white px-4 py-6 text-muted">
           Only admins and managers can open the team.

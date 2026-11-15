@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { friendlyErrorMessage } from "@domain/platform/errors";
+import { shortDay } from "@domain/platform/dates";
+import { wholeNumber } from "@domain/platform/numbers";
+
+// Date and number helpers live in @domain/platform; re-exported so existing imports from the kit keep working.
+export { shortDay, wholeNumber };
 
 /** Shared theme C building blocks for the money, renewals and report pages. */
 export const FIELD =
@@ -157,20 +162,6 @@ export function SmallButton({
 
 export function messageFromUnknown(error: unknown) {
   return friendlyErrorMessage(error);
-}
-
-export function shortDay(date: string) {
-  if (!/^\d{4}-\d{2}-\d{2}/.test(date)) return date;
-  const [year, month, day] = date.slice(0, 10).split("-").map(Number);
-  return new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric" }).format(
-    new Date(year, month - 1, day),
-  );
-}
-
-export function wholeNumber(value: string): number | null {
-  const cleaned = value.replace(/[,\s₹]/g, "");
-  if (!/^\d+(\.\d+)?$/.test(cleaned)) return null;
-  return Math.round(Number(cleaned));
 }
 
 /** Loads page data on mount, when key changes, and on reload(). */

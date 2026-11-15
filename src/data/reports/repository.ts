@@ -1,14 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { mapDailyEntry, type DailyEntryRow } from "@data/operations/mappers";
 import type { DailyEntry } from "@domain/operations/types";
-import {
-  listCompanyExpenses,
-  listCrewPeople,
-  listDayCrewBetween,
-  listIntercityIncome,
-  listOdometerReadings,
-  listSalaryPayments,
-} from "@data/money/repository";
+import { listCompanyExpenses, listIntercityIncome, listOdometerReadings } from "@data/money/repository";
+import { listCrewPeople, listDayCrewBetween, listSalaryPayments } from "@data/crew/people";
 import { listOffRoadDays } from "@data/operations/offRoad";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import { listRenewals } from "@data/renewals/repository";
@@ -16,17 +10,11 @@ import { listBookings, listTourPayments } from "@data/tours/repository";
 import { listTripsWithLines } from "@data/trips/repository";
 import { listScrapSales, listTyreEventsBetween, listTyres, listWarrantyCredits } from "@data/tyres/repository";
 import type { ModuleId } from "@domain/modules/modules";
+import { endOfMonth } from "@domain/platform/dates";
 import { shiftDate } from "@domain/operations/totals";
 import type { ReportData } from "@domain/reports/build";
 
 const PAGE = 1000;
-
-/** Last day of the month a date falls in. */
-function endOfMonth(date: string): string {
-  const year = Number(date.slice(0, 4));
-  const month = Number(date.slice(5, 7));
-  return new Date(Date.UTC(year, month, 0)).toISOString().slice(0, 10);
-}
 
 /** Daily ledger entries between two dates (inclusive), a page at a time. */
 export async function listEntriesBetween(

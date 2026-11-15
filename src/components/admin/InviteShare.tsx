@@ -5,6 +5,7 @@ import {
   inviteMessage,
   whatsappDigits,
 } from "@domain/companies/types";
+import { whatsAppChatUrl } from "@domain/platform/whatsapp";
 
 /** Share an invite from the sender's own WhatsApp: a wa.me link, no paid service. */
 export function InviteShare({
@@ -24,7 +25,7 @@ export function InviteShare({
   const link = `${typeof window === "undefined" ? "" : window.location.origin}/invite/${token}`;
   const text = inviteMessage({ company, name, link });
   const digits = whatsappDigits(whatsappNumber);
-  const waUrl = `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
+  const waUrl = whatsAppChatUrl(digits, text);
 
   async function copy() {
     try {

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { FLEETOPS_ENQUIRY, FLEETOPS_WHATSAPP } from "@domain/platform/contact";
+import { whatsAppChatUrl } from "@domain/platform/whatsapp";
 import { AuthForm } from "@/components/auth/AuthForm";
 
 export const metadata: Metadata = {
@@ -7,7 +8,7 @@ export const metadata: Metadata = {
 };
 
 export default function LoginPage() {
-  const contactUrl = `https://wa.me/${FLEETOPS_WHATSAPP.replace(/\D/g, "")}?text=${encodeURIComponent(FLEETOPS_ENQUIRY)}`;
+  const contactUrl = whatsAppChatUrl(FLEETOPS_WHATSAPP, FLEETOPS_ENQUIRY);
   return (
     <>
       <section className="flex flex-col gap-4 rounded-3xl bg-white p-6">

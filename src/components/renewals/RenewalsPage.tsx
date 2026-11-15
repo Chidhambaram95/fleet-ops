@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { deleteRow, listCrewPeople } from "@data/money/repository";
+import { deleteRow } from "@data/money/repository";
+import { listCrewPeople } from "@data/crew/people";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import {
   addRenewal,
@@ -46,6 +47,7 @@ import {
   useLoaded,
   wholeNumber,
 } from "@/components/ui/kit";
+import { whatsAppChatUrl } from "@domain/platform/whatsapp";
 
 type Section = "buses" | "drivers" | "loans" | "history";
 
@@ -195,7 +197,7 @@ export function RenewalsPage({
       })),
     );
     // To the company's own WhatsApp number when it is set; otherwise WhatsApp asks who to send it to.
-    window.open(`https://wa.me/${org.whatsappNumber}?text=${encodeURIComponent(text)}`, "_blank", "noopener");
+    window.open(whatsAppChatUrl(org.whatsappNumber, text), "_blank", "noopener");
   }
 
   function documentRows(ownerId: string, documents: { id: RenewalKind; label: string }[]) {

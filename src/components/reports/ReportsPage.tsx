@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { whatsAppChatUrl } from "@domain/platform/whatsapp";
 import { EMPTY_REPORT_DATA, loadReportData } from "@data/reports/repository";
 import { hasScreen, MODULE_LABELS, type ModuleId } from "@domain/modules/modules";
 import { formatInr, shiftDate, todayInIst } from "@domain/operations/totals";
@@ -433,11 +434,7 @@ export function ReportsPage({
           type="button"
           className="h-12 rounded-2xl bg-[#1f8f4e] px-5 text-[15px] font-bold text-white"
           onClick={() =>
-            window.open(
-              `https://wa.me/?text=${encodeURIComponent(whatsappText(table, filters, scope))}`,
-              "_blank",
-              "noopener",
-            )
+            window.open(whatsAppChatUrl("", whatsappText(table, filters, scope)), "_blank", "noopener")
           }
         >
           Send report on WhatsApp

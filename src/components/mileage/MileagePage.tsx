@@ -17,6 +17,7 @@ import { useOrg } from "@/components/billing/OrgContext";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { ErrorText, FIELD, PageHeader, messageFromUnknown, useLoaded } from "@/components/ui/kit";
 import { KmplRing, STATUS_COLOURS, STATUS_LABELS, STATUS_PILLS, StatusDonut, TripChart } from "./MileageCharts";
+import { whatsAppChatUrl } from "@domain/platform/whatsapp";
 
 const PERIODS = Object.keys(PERIOD_LABELS) as MileagePeriod[];
 
@@ -106,7 +107,7 @@ export function MileageScreen({
     const alert = view.alerts[0];
     if (!alert) return;
     const text = mileageAlertWhatsApp({ company: org.name, busNumber: view.bus.registrationNumber, alert });
-    window.open(`https://wa.me/${org.whatsappNumber}?text=${encodeURIComponent(text)}`, "_blank", "noopener");
+    window.open(whatsAppChatUrl(org.whatsappNumber, text), "_blank", "noopener");
   }
 
   return (

@@ -5,7 +5,7 @@ import { getActiveMembership } from "@data/auth/session";
 import { cancelInvite, createInvite } from "@data/companies/repository";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import { isModuleId } from "@domain/modules/modules";
-import { isUserRole } from "@domain/rbac/roles";
+import { canManage, isUserRole } from "@domain/rbac/roles";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createServiceSupabaseClient } from "@/lib/supabase/admin";
 import { prepareCompanyLogin, setLoginPassword } from "@data/auth/directLogin";
@@ -26,14 +26,10 @@ async function requireAdmin() {
 async function requireAdminOrManager() {
   const supabase = await createServerSupabaseClient();
   const membership = await getActiveMembership(supabase);
-  if (membership.role !== "admin" && membership.role !== "manager") {
+  if (!canManage(membership.role)) {
     throw new Error("Only admins and managers can manage the team.");
   }
   return { supabase, membership };
-}
-
-function messageFromUnknown(error: unknown) {
-  return friendlyErrorMessage(error);
 }
 
 export async function createInviteAction(input: {
@@ -65,7 +61,7 @@ export async function createInviteAction(input: {
     revalidatePath("/settings/team");
     return { token };
   } catch (error) {
-    return { error: messageFromUnknown(error) };
+    return { error: friendlyErrorMessage(error) };
   }
 }
 
@@ -76,7 +72,7 @@ export async function cancelInviteAction(inviteId: string) {
     revalidatePath("/settings/team");
     return {};
   } catch (error) {
-    return { error: messageFromUnknown(error) };
+    return { error: friendlyErrorMessage(error) };
   }
 }
 
@@ -94,7 +90,7 @@ export async function updateMemberRoleAction(userId: string, role: string) {
     revalidatePath("/settings/team");
     return {};
   } catch (error) {
-    return { error: messageFromUnknown(error) };
+    return { error: friendlyErrorMessage(error) };
   }
 }
 
@@ -114,7 +110,7 @@ export async function assignCrewToBusAction(userId: string, busId: string) {
     revalidatePath("/settings/team");
     return {};
   } catch (error) {
-    return { error: messageFromUnknown(error) };
+    return { error: friendlyErrorMessage(error) };
   }
 }
 
@@ -130,7 +126,7 @@ export async function updateMemberModuleAction(userId: string, module: string) {
     revalidatePath("/settings/team");
     return {};
   } catch (error) {
-    return { error: messageFromUnknown(error) };
+    return { error: friendlyErrorMessage(error) };
   }
 }
 
@@ -171,7 +167,7 @@ export async function addMemberDirectAction(input: {
     revalidatePath("/settings/team");
     return { login: loginLabel(login.email) };
   } catch (error) {
-    return { error: messageFromUnknown(error) };
+    return { error: friendlyErrorMessage(error) };
   }
 }
 
@@ -182,7 +178,7 @@ export async function removeMemberAction(userId: string) {
     revalidatePath("/settings/team");
     return {};
   } catch (error) {
-    return { error: messageFromUnknown(error) };
+    return { error: friendlyErrorMessage(error) };
   }
 }
 
@@ -198,6 +194,6 @@ export async function setMemberPasswordAction(userId: string, password: string) 
     await setLoginPassword(createServiceSupabaseClient(), userId, password);
     return {};
   } catch (error) {
-    return { error: messageFromUnknown(error) };
+    return { error: friendlyErrorMessage(error) };
   }
 }

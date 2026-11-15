@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { throwIfError } from "@data/supabase/errors";
 import { listTripsWithLines } from "@data/trips/repository";
 import {
   townPoints,
@@ -8,12 +9,6 @@ import {
   type TownFill,
 } from "@domain/mileage/mileage";
 import type { ModuleId } from "@domain/modules/modules";
-
-function throwIfError(error: { message: string } | null) {
-  if (error) {
-    throw new Error(error.message);
-  }
-}
 
 type BusRow = {
   id: string;

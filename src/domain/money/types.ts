@@ -1,5 +1,8 @@
 import type { ModuleId } from "@domain/modules/modules";
 
+// Crew types live in @domain/crew/types; re-exported so older imports keep working.
+export type { CrewJob, CrewPerson, SalaryPayment } from "@domain/crew/types";
+
 export type CompanyExpenseCategory =
   | "accident_repair"
   | "workshop"
@@ -64,29 +67,6 @@ export type PumpPayment = {
   amountInr: number;
   reference: string;
   module: ModuleId;
-};
-
-export type CrewJob = "driver" | "conductor" | "cleaner";
-
-export type CrewPerson = {
-  id: string;
-  name: string;
-  job: CrewJob;
-  phone: string;
-  monthlySalaryInr: number;
-  licenceNo: string;
-  active: boolean;
-  module: ModuleId;
-};
-
-export type SalaryPayment = {
-  id: string;
-  personId: string;
-  /** YYYY-MM-01 */
-  forMonth: string;
-  paidOn: string;
-  amountInr: number;
-  note: string;
 };
 
 /** A fortnightly Intercity payment, shared across the buses it covers. */

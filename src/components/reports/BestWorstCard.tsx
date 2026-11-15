@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { companyBusDays, loadReportData } from "@data/reports/repository";
 import { moduleHref, type ModuleId } from "@domain/modules/modules";
+import { firstOfMonth } from "@domain/platform/dates";
 import { formatInr, shiftDate, todayInIst } from "@domain/operations/totals";
 import {
   BUS_TYPE_LABELS,
@@ -24,12 +25,6 @@ type CardData = {
   /** Buses that made a loss in each of the last two full months. */
   losing: string[];
   lastMonthLabel: string;
-};
-
-const firstOfMonth = (date: string, plusMonths = 0) => {
-  const year = Number(date.slice(0, 4));
-  const month = Number(date.slice(5, 7));
-  return new Date(Date.UTC(year, month - 1 + plusMonths, 1)).toISOString().slice(0, 10);
 };
 
 /** The same days of last month: 1–4 Nov becomes 1–4 Oct (cut at the month's end). */

@@ -1,10 +1,7 @@
+import { csvCell } from "@domain/platform/csv";
 import { companyExpenseLabel } from "@domain/money/catalog";
-import type {
-  CompanyExpense,
-  CrewPerson,
-  IntercityIncome,
-  SalaryPayment,
-} from "@domain/money/types";
+import type { CompanyExpense, IntercityIncome } from "@domain/money/types";
+import type { CrewPerson, SalaryPayment } from "@domain/crew/types";
 import { categoryLabel } from "@domain/operations/catalog";
 import { formatInr, shiftDate } from "@domain/operations/totals";
 import type { Bus, BusKind, DailyEntry } from "@domain/operations/types";
@@ -1180,11 +1177,6 @@ export function buildReport(kind: ReportKind, data: ReportData, filters: ReportF
     case "tyres":
       return tyresReport(data, filters);
   }
-}
-
-function csvCell(value: Cell) {
-  const text = String(value);
-  return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
 /** CSV that Excel opens directly; the BOM keeps ₹ and Tamil text readable. */

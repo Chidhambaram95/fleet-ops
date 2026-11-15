@@ -11,10 +11,11 @@ import { createSupabaseOperationsRepository } from "@data/operations/supabaseRep
 import { hasPublicSupabaseEnv } from "@data/supabase/env";
 import { subscriptionStatus } from "@domain/billing/subscription";
 import { loginLabel } from "@domain/auth/loginId";
+import { whatsAppChatUrl } from "@domain/platform/whatsapp";
 import { FLEETOPS_WHATSAPP } from "@domain/platform/contact";
 import { todayInIst } from "@domain/operations/totals";
 import type { ModuleId } from "@domain/modules/modules";
-import type { UserRole } from "@domain/rbac/roles";
+import { canManage, type UserRole } from "@domain/rbac/roles";
 import { SignOutButton } from "@/components/admin/SignOutButton";
 import { BillingNotice } from "@/components/billing/BillingNotice";
 import { OrgProvider } from "@/components/billing/OrgContext";
@@ -78,7 +79,7 @@ export default async function AppShellLayout({
       ]);
       assignedBusId = assignment?.busId ?? "";
       organizationName = profileInfo.name;
-      if (role === "admin" || role === "manager") {
+      if (canManage(role)) {
         const info = await moduleInfo(membership);
         modules = info.mine;
         defaultModule = await homeModule(membership, info.mine);
@@ -94,7 +95,7 @@ export default async function AppShellLayout({
       notice = (
         <BillingNotice
           status={status}
-          isAdminOrManager={role === "admin" || role === "manager"}
+          isAdminOrManager={canManage(role)}
           amountInr={profileInfo.subscription?.amountInr ?? null}
           details={profileInfo.paymentDetails}
         />
@@ -123,9 +124,10 @@ export default async function AppShellLayout({
 
   if (noCompany) {
     // Removed from their company, or the company was deleted.
-    const contactUrl = `https://wa.me/${FLEETOPS_WHATSAPP.replace(/\D/g, "")}?text=${encodeURIComponent(
+    const contactUrl = whatsAppChatUrl(
+      FLEETOPS_WHATSAPP,
       `Hi Fleet Ops, I can't open my company on Fleet Ops (${login}).`,
-    )}`;
+    );
     return (
       <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-4 px-4">
         <section className="flex flex-col gap-3 rounded-3xl bg-white p-6">

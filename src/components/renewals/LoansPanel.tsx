@@ -46,6 +46,7 @@ import {
   useLoaded,
   wholeNumber,
 } from "@/components/ui/kit";
+import { whatsAppChatUrl } from "@domain/platform/whatsapp";
 
 type LoanDraft = {
   id?: string;
@@ -257,7 +258,7 @@ export function LoansPanel({
 
   function sendReminder() {
     const text = emiReminderText(alerts, busName);
-    window.open(`https://wa.me/${org.whatsappNumber}?text=${encodeURIComponent(text)}`, "_blank", "noopener");
+    window.open(whatsAppChatUrl(org.whatsappNumber, text), "_blank", "noopener");
   }
 
   const loanFormCard = loanForm ? (

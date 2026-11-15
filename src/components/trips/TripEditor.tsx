@@ -13,14 +13,14 @@ import {
   usualMileage,
 } from "@data/trips/repository";
 import { getBooking, listTourPayments, updateBooking } from "@data/tours/repository";
-import { whatsAppSendUrl } from "@domain/operations/settlementExport";
+import { whatsAppSendUrl } from "@domain/platform/whatsapp";
 import { hasScreen, moduleHref, type ModuleId } from "@domain/modules/modules";
 import { formatInr } from "@domain/operations/totals";
 import { balanceDue } from "@domain/tours/calc";
 import { tripLine } from "@domain/tours/messages";
 import type { TourBooking } from "@domain/tours/types";
 import type { Bus } from "@domain/operations/types";
-import type { UserRole } from "@domain/rbac/roles";
+import { canManage, type UserRole } from "@domain/rbac/roles";
 import { TRIP_EXPENSE_CATEGORIES } from "@domain/trips/catalog";
 import { settlementText, tripChecks, tripTotals } from "@domain/trips/checks";
 import { tripSheetSchema } from "@domain/trips/tripSheet";
@@ -44,10 +44,6 @@ import { friendlyErrorMessage } from "@domain/platform/errors";
 
 const FIELD = "h-12 w-full min-w-0 rounded-2xl bg-canvas px-4 text-base disabled:opacity-70";
 const LABEL = "flex min-w-0 flex-col gap-1.5 text-[13px] font-semibold";
-
-function messageFromUnknown(error: unknown) {
-  return friendlyErrorMessage(error);
-}
 
 type Step = "photo" | "reading" | "form";
 
@@ -140,7 +136,7 @@ export function TripEditor({
           if (!cancelled) setPhoto({ url, blob: null, path: loaded.photoPath });
         }
       } catch (loadError) {
-        if (!cancelled) setError(messageFromUnknown(loadError));
+        if (!cancelled) setError(friendlyErrorMessage(loadError));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -220,7 +216,7 @@ export function TripEditor({
       setFromPhoto(true);
       setStep("form");
     } catch (readError) {
-      setError(`${messageFromUnknown(readError)} Please type the details in.`);
+      setError(`${friendlyErrorMessage(readError)} Please type the details in.`);
       setStep("form");
     }
   }
@@ -265,7 +261,7 @@ export function TripEditor({
       setConfirmApprove(false);
       router.refresh();
     } catch (saveError) {
-      setError(messageFromUnknown(saveError));
+      setError(friendlyErrorMessage(saveError));
     } finally {
       setSaving(false);
     }
@@ -280,7 +276,7 @@ export function TripEditor({
       router.replace(tripsHref);
       router.refresh();
     } catch (removeError) {
-      setError(messageFromUnknown(removeError));
+      setError(friendlyErrorMessage(removeError));
     }
   }
 
@@ -777,7 +773,7 @@ export function TripEditor({
           Delete this trip
         </button>
       ) : null}
-      {trip && (role === "admin" || role === "manager") ? (
+      {trip && canManage(role) ? (
         <LastChangeLine
           supabase={supabase}
           organizationId={organizationId}

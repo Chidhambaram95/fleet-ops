@@ -6,7 +6,7 @@ import {
   screenLabel,
   type ModuleId,
 } from "@domain/modules/modules";
-import type { UserRole } from "@domain/rbac/roles";
+import { canManage, type UserRole } from "@domain/rbac/roles";
 
 /** Settings links sit in the laptop account menu instead of the top bar. */
 export type NavLink = { href: string; label: string; hint: string; settings?: boolean };
@@ -29,7 +29,7 @@ export function companyLinks(role: UserRole | null, companyArea: boolean): NavLi
       { href: "/company/reports", label: "All buses report", hint: "Profit and loss across every module", settings: true },
     );
   }
-  if (role === "admin" || role === "manager") {
+  if (canManage(role)) {
     links.push({ href: "/history", label: "Change history", hint: "Who changed which money record, and why", settings: true });
   }
   if (role === "admin") {
@@ -49,7 +49,7 @@ export function navLinksFor(
   module: ModuleId | null,
   companyArea = false,
 ): NavLink[] {
-  if (role !== "admin" && role !== "manager") {
+  if (!canManage(role)) {
     return [{ href: "/", label: "Today", hint: "Today's money in and out" }];
   }
   return [...(module ? moduleLinks(module) : []), ...companyLinks(role, companyArea)];

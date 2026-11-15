@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DayCrewRow } from "@domain/crew/dayCrew";
-import type { CrewJob } from "@domain/money/types";
+import type { CrewJob } from "@domain/crew/types";
 
 /** The Town crew on duty on one day, for every bus of the company. */
 export async function listDayCrew(

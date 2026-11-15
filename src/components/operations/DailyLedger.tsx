@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { ModuleId } from "@domain/modules/modules";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createSupabaseOperationsRepository } from "@data/operations/supabaseRepository";
 import { addOdometerReading } from "@data/operations/odometer";
 import { latestOdometers } from "@data/tyres/repository";
@@ -13,11 +13,11 @@ import {
   INCOME_CATEGORIES,
 } from "@domain/operations/catalog";
 import {
-  formatWhatsAppSettlement,
-  settlementCsv,
-  settlementFilename,
-  whatsAppSendUrl,
-} from "@domain/operations/settlementExport";
+  dailySummaryCsv,
+  dailySummaryFilename,
+  formatWhatsAppDailySummary,
+} from "@domain/operations/dailySummary";
+import { whatsAppSendUrl } from "@domain/platform/whatsapp";
 import { expenseFromReceipt, receiptSchema } from "@domain/operations/receipt";
 import {
   displayDate,
@@ -46,10 +46,10 @@ import { DayCrewCard } from "@/components/operations/DayCrewCard";
 import { LastChangeLine, RecordLock } from "@/components/history/RecordLock";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { friendlyErrorMessage } from "@domain/platform/errors";
-
-function messageFromUnknown(error: unknown) {
-  return friendlyErrorMessage(error);
-}
+import { parseTypedNumber } from "@domain/platform/numbers";
+import { canManage } from "@domain/rbac/roles";
+import { useDismiss } from "@/components/ui/useDismiss";
+import { CameraIcon, ArrowIcon, CalendarIcon, DownloadIcon, SendIcon } from "@/components/ui/icons";
 
 /** The day book. Inside a module it shows only that module's buses. */
 export function DailyLedger({ module }: { module?: ModuleId } = {}) {
@@ -119,18 +119,8 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
     router.replace(pathname, { scroll: false });
   }, [addParam, router, pathname]);
 
-  useEffect(() => {
-    if (!sheetOpen) {
-      return;
-    }
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setSheetOpen(false);
-      }
-    }
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [sheetOpen]);
+  const closeSheet = useCallback(() => setSheetOpen(false), []);
+  useDismiss(sheetOpen, closeSheet);
 
   useEffect(() => {
     if (!organizationId) {
@@ -155,7 +145,7 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
         });
       } catch (loadError) {
         if (!cancelled) {
-          setError(messageFromUnknown(loadError));
+          setError(friendlyErrorMessage(loadError));
         }
       }
     }
@@ -189,7 +179,7 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
         setEntries(nextEntries);
       } catch (loadError) {
         if (!cancelled) {
-          setError(messageFromUnknown(loadError));
+          setError(friendlyErrorMessage(loadError));
         }
       } finally {
         if (!cancelled) {
@@ -268,8 +258,8 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
     }
     // Diesel can carry the odometer and litres, for mileage.
     const isDiesel = kind === "expense" && category === "diesel";
-    const litres = isDiesel && dieselLitres.trim() ? Number(dieselLitres.replace(/[\s,]/g, "")) : null;
-    const odometerKm = isDiesel && dieselKm.trim() ? Number(dieselKm.replace(/[\s,]/g, "")) : null;
+    const litres = isDiesel && dieselLitres.trim() ? parseTypedNumber(dieselLitres) : null;
+    const odometerKm = isDiesel && dieselKm.trim() ? parseTypedNumber(dieselKm) : null;
     if (litres != null && (!Number.isFinite(litres) || litres <= 0 || litres > 2000)) {
       setError("Enter the litres, for example 85.5.");
       return;
@@ -301,7 +291,7 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
       try {
         await addOdometerReading(supabase, organizationId, busId, odometerKm);
       } catch (readingError) {
-        setError(messageFromUnknown(readingError));
+        setError(friendlyErrorMessage(readingError));
         setSaving(false);
         return;
       }
@@ -336,14 +326,14 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
       setEntries((current) =>
         current.filter((entry) => entry.id !== optimistic.id),
       );
-      setError(messageFromUnknown(saveError));
+      setError(friendlyErrorMessage(saveError));
     } finally {
       setSaving(false);
     }
   }
 
   async function saveOdometer() {
-    const km = Number(odometerKm.replace(/[\s,]/g, ""));
+    const km = parseTypedNumber(odometerKm);
     if (!organizationId || !busId) {
       setOdometerError("No bus is given to you yet. Ask your admin.");
       return;
@@ -363,7 +353,7 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
       );
       setOdometerKm("");
     } catch (saveError) {
-      setOdometerError(messageFromUnknown(saveError));
+      setOdometerError(friendlyErrorMessage(saveError));
     } finally {
       setOdometerSaving(false);
     }
@@ -381,14 +371,14 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
       await repo.removeEntry(organizationId, id);
     } catch (removeError) {
       setEntries(previous);
-      setError(messageFromUnknown(removeError));
+      setError(friendlyErrorMessage(removeError));
     }
   }
 
   function downloadCsv() {
     downloadTextFile(
-      settlementFilename(date, org.name),
-      settlementCsv({ buses, entries }),
+      dailySummaryFilename(date, org.name),
+      dailySummaryCsv({ buses, entries }),
       "text/csv;charset=utf-8",
     );
   }
@@ -442,7 +432,7 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
       }
       setSheetOpen(true);
     } catch (scanError) {
-      setError(messageFromUnknown(scanError));
+      setError(friendlyErrorMessage(scanError));
     } finally {
       setScanning(false);
     }
@@ -451,7 +441,7 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
   function sendToOperator() {
     const phone = org.whatsappNumber;
     const url = whatsAppSendUrl({
-      text: formatWhatsAppSettlement({ company: org.name, date, buses, entries }),
+      text: formatWhatsAppDailySummary({ company: org.name, date, buses, entries }),
       phone,
       userAgent: navigator.userAgent,
     });
@@ -460,7 +450,7 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
 
   const today = isTodayInIst(date);
   const canWrite = !org.viewOnly && !dayLocked;
-  const canUndo = (role === "admin" || role === "manager") && canWrite;
+  const canUndo = canManage(role) && canWrite;
 
   function scanInput() {
     return (
@@ -892,11 +882,11 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
 
         {actionButtons}
 
-        {organizationId && module && (role === "admin" || role === "manager") ? (
+        {organizationId && module && canManage(role) ? (
           <EmiDueCard supabase={supabase} organizationId={organizationId} module={module} />
         ) : null}
 
-        {organizationId && module && (role === "admin" || role === "manager") ? (
+        {organizationId && module && canManage(role) ? (
           <BestWorstCard supabase={supabase} organizationId={organizationId} module={module} />
         ) : null}
 
@@ -904,7 +894,7 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
           <RenewalsDueCard supabase={supabase} organizationId={organizationId} module={module} />
         ) : null}
 
-        {organizationId && module && (role === "admin" || role === "manager") ? (
+        {organizationId && module && canManage(role) ? (
           <MileageCard supabase={supabase} organizationId={organizationId} module={module} />
         ) : null}
 
@@ -958,7 +948,7 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
           ) : null}
         </section>
 
-        {module === "town" && organizationId && (role === "admin" || role === "manager") && visibleBuses.length ? (
+        {module === "town" && organizationId && canManage(role) && visibleBuses.length ? (
           <DayCrewCard
             supabase={supabase}
             organizationId={organizationId}
@@ -1044,7 +1034,7 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
               })}
             </div>
           )}
-          {organizationId && (role === "admin" || role === "manager") ? (
+          {organizationId && canManage(role) ? (
             <LastChangeLine
               supabase={supabase}
               organizationId={organizationId}
@@ -1061,102 +1051,6 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
 }
 
 const FIELD = "h-12 rounded-2xl bg-canvas px-4 text-base";
-
-function CameraIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      className="h-5 w-5 shrink-0"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" />
-      <circle cx="12" cy="13.5" r="3.5" />
-    </svg>
-  );
-}
-
-function ArrowIcon({ direction }: { direction: "in" | "out" }) {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      className="h-5 w-5 shrink-0"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      {direction === "in" ? (
-        <path d="M17 7 7 17M7 9v8h8" />
-      ) : (
-        <path d="M7 17 17 7M9 7h8v8" />
-      )}
-    </svg>
-  );
-}
-
-function CalendarIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      className="h-4 w-4 shrink-0 text-muted"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="3" y="5" width="18" height="16" rx="2" />
-      <path d="M8 3v4" />
-      <path d="M16 3v4" />
-      <path d="M3 10h18" />
-    </svg>
-  );
-}
-
-function DownloadIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      className="h-4 w-4 shrink-0"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12 3v12" />
-      <path d="m7 11 5 5 5-5" />
-      <path d="M5 21h14" />
-    </svg>
-  );
-}
-
-function SendIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      className="h-4 w-4 shrink-0"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M22 2 11 13" />
-      <path d="m22 2-7 20-4-9-9-4 20-7z" />
-    </svg>
-  );
-}
 
 function KindButton({
   active,

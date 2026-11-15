@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { loadMileage } from "@data/mileage/repository";
 import { mileageSummary, type BusMileageView } from "@domain/mileage/mileage";
 import { moduleHref, type ModuleId } from "@domain/modules/modules";
 import { shiftDate, todayInIst } from "@domain/operations/totals";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
+import { useDismiss } from "@/components/ui/useDismiss";
 import { emiHref, useEmiAlerts } from "@/components/renewals/EmiDueCard";
 
 /** Buses with an open mileage alert in the last 30 days, worst first. */
@@ -82,6 +83,9 @@ export function MileageBell({ organizationId, module }: { organizationId: string
   // Again on each page change, so marking an EMI paid clears the bell.
   const emis = useEmiAlerts(supabase, organizationId, module, pathname);
   useEffect(() => setOpen(false), [pathname]);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const closePopover = useCallback(() => setOpen(false), []);
+  useDismiss(open, closePopover, popoverRef);
   if (!module) {
     return null;
   }
@@ -126,7 +130,7 @@ export function MileageBell({ organizationId, module }: { organizationId: string
     );
   }
   return (
-    <div className="relative">
+    <div className="relative" ref={popoverRef}>
       <button type="button" aria-label={label} aria-expanded={open} onClick={() => setOpen((value) => !value)} className={bellClass}>
         {bell}
       </button>

@@ -1,8 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { str } from "@data/supabase/rows";
 import { DEFAULT_REMINDER_DAYS, type EmiStatus, type Loan, type LoanEmi } from "@domain/loans/emis";
 
 type Row = Record<string, unknown>;
-const str = (value: unknown) => (typeof value === "string" ? value : "");
 const dateOrNull = (value: unknown) => (typeof value === "string" && value ? value : null);
 
 const MISSING_0027 = /(bus_loans|loan_emis|emi_reminder_days).*(does not exist|schema cache)|(does not exist|schema cache).*(bus_loans|loan_emis|emi_reminder_days)/;

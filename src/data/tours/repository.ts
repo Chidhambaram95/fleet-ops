@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { throwIfError } from "@data/supabase/errors";
 import {
   DEFAULT_TOUR_SETTINGS,
   type PayMode,
@@ -7,10 +8,6 @@ import {
   type TourSettings,
   type TourStatus,
 } from "@domain/tours/types";
-
-function throwIfError(error: { message: string } | null) {
-  if (error) throw new Error(error.message);
-}
 
 type BookingRow = {
   id: string;

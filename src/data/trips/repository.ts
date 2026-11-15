@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { throwIfError } from "@data/supabase/errors";
 import { TRIP_EXPENSE_IDS } from "@domain/trips/catalog";
 import type {
   DieselFill,
@@ -45,12 +46,6 @@ type ItemRow = {
   pump: string;
   note: string;
 };
-
-function throwIfError(error: { message: string } | null) {
-  if (error) {
-    throw new Error(error.message);
-  }
-}
 
 function mapTrip(row: TripRow, items: ItemRow[]): Trip {
   const diesel: DieselFill[] = items

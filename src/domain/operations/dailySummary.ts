@@ -1,3 +1,4 @@
+import { csvCell } from "@domain/platform/csv";
 import { categoryLabel } from "./catalog";
 import type { Bus, DailyEntry, EntryKind } from "./types";
 import { displayDate, formatInr, totalsForEntries } from "./totals";
@@ -12,29 +13,12 @@ const CSV_HEADERS = [
   "Note",
 ] as const;
 
-export function settlementFilename(date: string, company = "Fleet"): string {
+export function dailySummaryFilename(date: string, company = "Fleet"): string {
   const slug = company.trim().replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
   return `${slug || "Fleet"}_Daily_summary_${date}.csv`;
 }
 
-export function whatsAppSendUrl(input: {
-  text: string;
-  phone: string;
-  userAgent: string;
-}): string {
-  const number = input.phone.trim();
-  const encodedText = encodeURIComponent(input.text);
-  if (isMobileUserAgent(input.userAgent)) {
-    return `https://wa.me/${number}?text=${encodedText}`;
-  }
-  return `https://web.whatsapp.com/send?phone=${number}&text=${encodedText}`;
-}
-
-function isMobileUserAgent(userAgent: string): boolean {
-  return /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent);
-}
-
-export function settlementCsv(input: {
+export function dailySummaryCsv(input: {
   buses: Bus[];
   entries: DailyEntry[];
 }): string {
@@ -58,7 +42,7 @@ export function settlementCsv(input: {
   return `\uFEFF${body}`;
 }
 
-export function formatWhatsAppSettlement(input: {
+export function formatWhatsAppDailySummary(input: {
   company?: string;
   date: string;
   buses: Bus[];
@@ -153,11 +137,4 @@ function categoryEmoji(kind: EntryKind, category: string): string {
     default:
       return "💸";
   }
-}
-
-function csvCell(value: string): string {
-  if (/[",\n\r]/.test(value)) {
-    return `"${value.replaceAll('"', '""')}"`;
-  }
-  return value;
 }

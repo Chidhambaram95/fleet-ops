@@ -1,4 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { throwIfError } from "@data/supabase/errors";
+import { str } from "@data/supabase/rows";
 import type {
   NewTyre,
   ScrapReceivedVia,
@@ -18,14 +20,7 @@ export const DEFAULT_TYRE_LIFE: TyreLifeSettings = { newLifeKm: 80000, retreadLi
 
 const PHOTO_BUCKET = "trip-sheets";
 
-function throwIfError(error: { message: string } | null) {
-  if (error) {
-    throw new Error(error.message);
-  }
-}
-
 type Row = Record<string, unknown>;
-const str = (value: unknown) => (typeof value === "string" ? value : "");
 const num = (value: unknown) => (value == null ? null : Number(value));
 
 function mapTyre(row: Row): Tyre {

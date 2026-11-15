@@ -196,10 +196,6 @@ function BusFields({
   );
 }
 
-function messageFromUnknown(error: unknown) {
-  return friendlyErrorMessage(error);
-}
-
 export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; module: ModuleId }) {
   const emptyForm: BusForm = { ...EMPTY_FORM, busType: module };
   const { viewOnly, organizationId } = useSession();
@@ -235,7 +231,7 @@ export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; m
         }
       } catch (loadError) {
         if (!cancelled) {
-          setError(messageFromUnknown(loadError));
+          setError(friendlyErrorMessage(loadError));
         }
       } finally {
         if (!cancelled) {
@@ -271,7 +267,7 @@ export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; m
       );
       setForm(emptyForm);
     } catch (addError) {
-      setError(messageFromUnknown(addError));
+      setError(friendlyErrorMessage(addError));
     } finally {
       setSaving(false);
     }
@@ -311,7 +307,7 @@ export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; m
       );
       setEditingId("");
     } catch (editError) {
-      setError(messageFromUnknown(editError));
+      setError(friendlyErrorMessage(editError));
     } finally {
       setSaving(false);
     }
@@ -331,7 +327,7 @@ export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; m
       await repo.deleteBus(organizationId, id);
     } catch (deleteError) {
       setBuses(previous);
-      setError(messageFromUnknown(deleteError));
+      setError(friendlyErrorMessage(deleteError));
     }
   }
 

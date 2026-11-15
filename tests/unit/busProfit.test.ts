@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { CompanyExpense, CrewPerson, SalaryPayment } from "@domain/money/types";
+import type { CompanyExpense } from "@domain/money/types";
+import type { CrewPerson, SalaryPayment } from "@domain/crew/types";
 import type { Bus, DailyEntry } from "@domain/operations/types";
 import {
   BUS_PROFIT_COLUMNS as C,

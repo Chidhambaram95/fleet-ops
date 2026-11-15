@@ -6,12 +6,12 @@ import { closeDay, getDayLock, getTripLock, lastChange, openForEdit } from "@dat
 import { changedAtLabel, changedByLabel, changeTitle } from "@domain/history/describe";
 import type { HistoryRow } from "@domain/history/types";
 import { friendlyErrorMessage } from "@domain/platform/errors";
-import type { UserRole } from "@domain/rbac/roles";
+import { canManage, type UserRole } from "@domain/rbac/roles";
 
 type Target = { day: string } | { tripId: string };
 
 function canOpen(role: UserRole | null) {
-  return role === "admin" || role === "manager";
+  return canManage(role);
 }
 
 function timeLabel(iso: string) {

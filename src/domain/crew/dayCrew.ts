@@ -1,4 +1,4 @@
-import type { CrewJob, CrewPerson } from "@domain/money/types";
+import type { CrewJob, CrewPerson } from "./types";
 
 /** The jobs on a Town bus each day. Driver and conductor are needed to close the day. */
 export const DUTIES: readonly CrewJob[] = ["driver", "conductor", "cleaner"];
