@@ -54,9 +54,9 @@ export function MileageCard({
   return (
     <Link
       href={moduleHref(module, "mileage")}
-      className="flex flex-col gap-2 rounded-3xl bg-[#fbe9e5] p-4 text-money-out"
+      className="flex flex-col gap-2 rounded-xl bg-danger-bg p-4 text-money-out"
     >
-      <span className="flex items-center justify-between gap-2 font-extrabold">
+      <span className="flex items-center justify-between gap-2 font-semibold">
         <span>
           Mileage: {problems.length} {problems.length === 1 ? "bus needs" : "buses need"} a look
         </span>
@@ -120,7 +120,7 @@ export function MileageBell({ organizationId, module }: { organizationId: string
       ) : null}
     </>
   );
-  const bellClass = "relative inline-flex h-11 w-11 items-center justify-center rounded-full bg-white md:bg-canvas";
+  const bellClass = "relative inline-flex h-11 w-11 items-center justify-center rounded-full bg-surface md:bg-canvas";
   // Only mileage (or nothing): the bell goes straight to the mileage page, as before.
   if (!emis.length) {
     return (
@@ -135,9 +135,9 @@ export function MileageBell({ organizationId, module }: { organizationId: string
         {bell}
       </button>
       {open ? (
-        <div className="absolute right-0 top-12 z-50 flex w-72 max-w-[calc(100vw-2rem)] flex-col gap-1 rounded-2xl bg-white p-2 shadow-lg ring-1 ring-line">
+        <div className="absolute right-0 top-12 z-50 flex w-72 max-w-[calc(100vw-2rem)] flex-col gap-1 rounded-lg bg-surface p-2 shadow-lg ring-1 ring-line">
           <Link href={emiHref(module)} className="flex flex-col gap-1 rounded-xl px-3 py-2 hover:bg-canvas">
-            <span className="text-sm font-extrabold">EMIs · {emis.length}</span>
+            <span className="text-sm font-semibold">EMIs · {emis.length}</span>
             {emis.slice(0, 2).map((line, index) => (
               <span key={index} className={`text-xs ${line.kind === "overdue" ? "font-bold text-money-out" : "text-muted"}`}>
                 {line.text}
@@ -145,7 +145,7 @@ export function MileageBell({ organizationId, module }: { organizationId: string
             ))}
           </Link>
           <Link href={moduleHref(module, "mileage")} className="flex flex-col gap-1 rounded-xl px-3 py-2 hover:bg-canvas">
-            <span className="text-sm font-extrabold">Mileage · {problems.length}</span>
+            <span className="text-sm font-semibold">Mileage · {problems.length}</span>
             <span className="text-xs text-muted">
               {problems.length ? `${problems.length} ${problems.length === 1 ? "bus needs" : "buses need"} a look` : "All buses look fine"}
             </span>

@@ -18,14 +18,14 @@ export function DaySwitcher({ book }: { book: DayBook }) {
     <div className="flex items-center gap-2">
       <button
         type="button"
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-xl font-semibold text-muted"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface text-xl font-semibold text-muted"
         onClick={() => setDate((current) => shiftDate(current, -1))}
         aria-label="Previous day"
       >
         ‹
       </button>
-      <label className="relative flex h-11 min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-white px-4 sm:flex-none">
-        <span aria-hidden="true" className="truncate text-[15px] font-bold">
+      <label className="relative flex h-11 min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 rounded-full bg-surface px-4 sm:flex-none">
+        <span aria-hidden="true" className="truncate text-sm font-bold">
           {today ? `Today, ${displayDate(date)}` : displayDate(date)}
         </span>
         <CalendarIcon />
@@ -44,7 +44,7 @@ export function DaySwitcher({ book }: { book: DayBook }) {
       </label>
       <button
         type="button"
-        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-xl font-semibold text-muted disabled:opacity-40"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface text-xl font-semibold text-muted disabled:opacity-40"
         onClick={() => setDate((current) => shiftDate(current, 1))}
         disabled={today}
         aria-label="Next day"
@@ -82,23 +82,23 @@ export function DayRecordLock({ book }: { book: DayBook }) {
 export function DayProfitCard({ book }: { book: DayBook }) {
   const { date, loading, fleetTotals, today } = book;
   return (
-    <section className="flex flex-col gap-3.5 rounded-3xl bg-brand p-5 text-white">
-      <span className="text-[13px] font-semibold text-brand-pale">
+    <section className="flex flex-col gap-3.5 rounded-xl bg-brand p-5 text-white">
+      <span className="text-sm font-semibold text-brand-pale">
         {today ? "Profit today" : `Profit on ${displayDate(date)}`}
       </span>
-      <span className="text-[38px] font-extrabold leading-none tracking-tight">
+      <span className="text-3xl font-semibold leading-none tracking-tight">
         {loading ? "…" : formatInr(fleetTotals.netInr)}
       </span>
       <div className="grid grid-cols-2 gap-2.5">
-        <div className="rounded-2xl bg-brand-mid px-3 py-2.5">
+        <div className="rounded-lg bg-brand-mid px-3 py-2.5">
           <div className="text-xs text-brand-pale">Money in</div>
-          <div className="text-[17px] font-bold">
+          <div className="text-lg font-bold">
             {formatInr(fleetTotals.incomeInr)}
           </div>
         </div>
-        <div className="rounded-2xl bg-brand-mid px-3 py-2.5">
+        <div className="rounded-lg bg-brand-mid px-3 py-2.5">
           <div className="text-xs text-brand-pale">Money out</div>
-          <div className="text-[17px] font-bold">
+          <div className="text-lg font-bold">
             {formatInr(fleetTotals.expenseInr)}
           </div>
         </div>
@@ -143,7 +143,7 @@ export function BusDayGrid({ book }: { book: DayBook }) {
           return (
             <div
               key={bus.id}
-              className="flex min-w-0 flex-col gap-1 rounded-[20px] bg-white p-3.5"
+              className="flex min-w-0 flex-col gap-1 rounded-xl border border-line bg-surface p-3.5"
             >
               <span className="truncate text-xs text-muted">
                 {bus.routeLabel || "No route"}
@@ -152,7 +152,7 @@ export function BusDayGrid({ book }: { book: DayBook }) {
                 {bus.registrationNumber}
               </span>
               <span
-                className={`text-lg font-extrabold ${
+                className={`text-lg font-semibold ${
                   net > 0 ? "text-money-in" : net < 0 ? "text-money-out" : "text-ink"
                 }`}
               >
@@ -171,7 +171,7 @@ export function BusDayGrid({ book }: { book: DayBook }) {
         <p className="text-sm text-muted">Loading your buses…</p>
       ) : null}
       {!loading && visibleBuses.length === 0 && !error ? (
-        <p className="rounded-[20px] bg-white px-4 py-4 text-muted">
+        <p className="rounded-xl border border-line bg-surface px-4 py-4 text-muted">
           {crewLocked
             ? "No bus is given to you yet. Ask your admin."
             : "No buses yet."}

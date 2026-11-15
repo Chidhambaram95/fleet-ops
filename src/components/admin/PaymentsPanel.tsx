@@ -15,8 +15,8 @@ import {
 } from "@domain/billing/subscription";
 
 const field =
-  "rounded-2xl border border-[#DCDDF7] bg-[#F3F4FB] px-3.5 text-base font-normal";
-const primary = "rounded-2xl bg-[#3A3FB8] px-5 text-sm font-bold text-white disabled:opacity-60";
+  "rounded-lg border border-brand-pale bg-canvas px-3.5 text-base font-normal";
+const primary = "rounded-lg bg-brand px-5 text-sm font-bold text-white disabled:opacity-60";
 
 function periodEnd(from: string, period: Subscription["billingPeriod"]) {
   const days = period === "year" ? 365 : period === "quarter" ? 91 : 30;
@@ -68,14 +68,14 @@ export function CompanyBilling({
       <div className="flex flex-wrap gap-2">
         {/* The trial only matters until the first payment. */}
         {!subscription.nextDueOn ? (
-          <button type="button" onClick={() => setPanel(panel === "trial" ? "" : "trial")} className="h-[46px] rounded-2xl bg-[#F3F4FB] px-4 text-sm font-bold">
+          <button type="button" onClick={() => setPanel(panel === "trial" ? "" : "trial")} className="h-[46px] rounded-lg bg-canvas px-4 text-sm font-bold">
             Extend trial
           </button>
         ) : null}
-        <button type="button" onClick={() => setPanel(panel === "plan" ? "" : "plan")} className="h-[46px] rounded-2xl bg-[#F3F4FB] px-4 text-sm font-bold">
+        <button type="button" onClick={() => setPanel(panel === "plan" ? "" : "plan")} className="h-[46px] rounded-lg bg-canvas px-4 text-sm font-bold">
           Edit plan amount
         </button>
-        <button type="button" onClick={() => setPanel(panel === "paid" ? "" : "paid")} className="h-[46px] rounded-2xl bg-[#3A3FB8] px-4 text-sm font-bold text-white">
+        <button type="button" onClick={() => setPanel(panel === "paid" ? "" : "paid")} className="h-[46px] rounded-lg bg-brand px-4 text-sm font-bold text-white">
           Mark as received
         </button>
       </div>
@@ -83,7 +83,7 @@ export function CompanyBilling({
 
       {panel === "trial" ? (
         <form
-          className="flex flex-wrap items-end gap-3 rounded-2xl bg-[#F3F4FB] p-3.5"
+          className="flex flex-wrap items-end gap-3 rounded-lg bg-canvas p-3.5"
           onSubmit={(e) => {
             e.preventDefault();
             void run(() => extendTrialAction(organizationId, trialDate));
@@ -99,7 +99,7 @@ export function CompanyBilling({
 
       {panel === "plan" ? (
         <form
-          className="flex flex-wrap items-end gap-3 rounded-2xl bg-[#F3F4FB] p-3.5"
+          className="flex flex-wrap items-end gap-3 rounded-lg bg-canvas p-3.5"
           onSubmit={(e) => {
             e.preventDefault();
             void run(() => updatePlanAction(organizationId, { amountInr: amount, billingPeriod: period }));
@@ -123,7 +123,7 @@ export function CompanyBilling({
 
       {panel === "paid" ? (
         <form
-          className="flex flex-wrap items-end gap-3 rounded-2xl bg-[#F3F4FB] p-3.5"
+          className="flex flex-wrap items-end gap-3 rounded-lg bg-canvas p-3.5"
           onSubmit={(e) => {
             e.preventDefault();
             void run(() =>
@@ -196,11 +196,11 @@ export function PaymentDetailsForm({ initial }: { initial: PaymentDetails }) {
         e.preventDefault();
         void save();
       }}
-      className="flex flex-col gap-3 rounded-3xl bg-white p-5"
+      className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-5"
     >
       <div>
-        <h2 className="text-base font-extrabold">Fleet Ops bank account</h2>
-        <p className="text-sm text-[#5B5E7A]">
+        <h2 className="text-base font-semibold">Fleet Ops bank account</h2>
+        <p className="text-sm text-muted">
           The one account every company pays into. Companies see these details in their payment reminders.
         </p>
       </div>
@@ -214,7 +214,7 @@ export function PaymentDetailsForm({ initial }: { initial: PaymentDetails }) {
       </div>
       <div className="flex items-center gap-3">
         <button type="submit" disabled={busy} className={primary}>Save details</button>
-        {message ? <span className="text-sm text-[#5B5E7A]">{message}</span> : null}
+        {message ? <span className="text-sm text-muted">{message}</span> : null}
       </div>
     </form>
   );

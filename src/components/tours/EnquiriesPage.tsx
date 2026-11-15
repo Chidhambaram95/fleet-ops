@@ -182,7 +182,7 @@ export function EnquiriesPage({ organizationId }: { organizationId: string }) {
         hint="Note an enquiry, send a quote, and confirm the booking when the advance comes in."
         action={
           !org.viewOnly ? (
-            <button type="button" onClick={startNew} className="flex min-h-12 items-center gap-2 rounded-2xl bg-brand px-5 text-[15px] font-bold text-white">
+            <button type="button" onClick={startNew} className="flex min-h-12 items-center gap-2 rounded-lg bg-brand px-5 text-sm font-bold text-white">
               <span aria-hidden="true" className="text-xl leading-none">+</span>
               New enquiry
             </button>
@@ -200,12 +200,12 @@ export function EnquiriesPage({ organizationId }: { organizationId: string }) {
       <ErrorText message={error} />
       {loading ? <p className="text-sm text-muted">Loading…</p> : null}
       {!loading && data.buses.length === 0 ? (
-        <p className="rounded-3xl bg-warn-bg px-4 py-3 text-sm font-semibold text-warn-ink">
+        <p className="rounded-xl bg-warn-bg px-4 py-3 text-sm font-semibold text-warn-ink">
           No tour buses yet. Add them on the Buses page before confirming a booking.
         </p>
       ) : null}
       {!loading && shown.length === 0 ? (
-        <p className="rounded-3xl bg-white px-4 py-6 text-center text-muted">
+        <p className="rounded-xl border border-line bg-surface px-4 py-6 text-center text-muted">
           {tab === "open" ? "No open enquiries. Tap “New enquiry” when a customer calls." : "Nothing here."}
         </p>
       ) : null}
@@ -215,10 +215,10 @@ export function EnquiriesPage({ organizationId }: { organizationId: string }) {
           const busy = busyness(booking);
           const expired = booking.status === "quoted" && isQuoteExpired(booking, today);
           return (
-            <section key={booking.id} className="flex flex-col gap-2 rounded-3xl bg-white p-4">
+            <section key={booking.id} className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate font-extrabold">{booking.customerName}</p>
+                  <p className="truncate font-semibold">{booking.customerName}</p>
                   <p className="truncate text-sm text-muted">{tripLine(booking)}</p>
                 </div>
                 <StatusPill status={booking.status}>{expired ? "Quote expired" : undefined}</StatusPill>
@@ -477,7 +477,7 @@ function QuoteForm({
       <label className={LABEL}>
         Price includes (one per line)
         <textarea
-          className="min-h-24 w-full rounded-2xl bg-canvas px-4 py-3 text-base"
+          className="min-h-24 w-full rounded-lg bg-canvas px-4 py-3 text-base"
           value={includes}
           onChange={(event) => setIncludes(event.target.value)}
           placeholder={"Diesel\nToll and parking\nDriver bata"}
@@ -649,12 +649,12 @@ export function ConfirmSheet({
         </label>
       </div>
       {clash?.kind === "block" ? (
-        <p className="rounded-2xl bg-money-out px-4 py-3 text-sm font-semibold text-white">
+        <p className="rounded-lg bg-money-out px-4 py-3 text-sm font-semibold text-white">
           This bus is already booked for those times ({clash.other.customerName}, {whenLine(clash.other)}). Pick another bus or time.
         </p>
       ) : null}
       {clash?.kind === "warn" ? (
-        <p className="rounded-2xl bg-warn-bg px-4 py-3 text-sm font-semibold text-warn-ink">
+        <p className="rounded-lg bg-warn-bg px-4 py-3 text-sm font-semibold text-warn-ink">
           {clash.reason === "short_gap"
             ? `Less than ${data.settings.turnaroundHours} hours between this tour and ${clash.other.customerName}'s (${whenLine(clash.other)}). You can still confirm.`
             : `${clash.other.customerName}'s tour (${whenLine(clash.other)}) has no exact times, so the bus may be busy. Add leaving and return times to be sure. You can still confirm.`}

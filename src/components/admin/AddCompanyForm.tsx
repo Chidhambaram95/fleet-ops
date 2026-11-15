@@ -11,7 +11,7 @@ import {
 } from "@domain/companies/types";
 
 const input =
-  "rounded-2xl border border-[#DCDDF7] bg-[#F3F4FB] px-3.5 text-base font-normal";
+  "rounded-lg border border-brand-pale bg-canvas px-3.5 text-base font-normal";
 
 export function AddCompanyForm() {
   const router = useRouter();
@@ -70,9 +70,9 @@ export function AddCompanyForm() {
 
   if (created) {
     return (
-      <section className="flex flex-col gap-3 rounded-3xl bg-[#3A3FB8] p-5 text-white">
-        <h2 className="text-lg font-extrabold">{created.company} is ready</h2>
-        <p className="text-sm text-[#D9DAF6]">
+      <section className="flex flex-col gap-3 rounded-xl bg-brand p-5 text-white">
+        <h2 className="text-lg font-semibold">{created.company} is ready</h2>
+        <p className="text-sm text-brand-pale">
           Send this invite to {created.adminName || "the admin"}. They create their password and
           become the company admin. The free trial starts now.
         </p>
@@ -102,7 +102,7 @@ export function AddCompanyForm() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="self-start rounded-2xl bg-[#3A3FB8] px-5 text-sm font-bold text-white"
+        className="self-start rounded-lg bg-brand px-5 text-sm font-bold text-white"
       >
         Add company
       </button>
@@ -115,9 +115,9 @@ export function AddCompanyForm() {
         event.preventDefault();
         void submit();
       }}
-      className="flex flex-col gap-3 rounded-3xl bg-white p-5"
+      className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-5"
     >
-      <h2 className="text-lg font-extrabold">Add company</h2>
+      <h2 className="text-lg font-semibold">Add company</h2>
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="flex flex-col gap-1 text-sm font-semibold">
           Company name
@@ -137,8 +137,8 @@ export function AddCompanyForm() {
             {BUS_TYPES.map((type) => (
               <label
                 key={type}
-                className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-2xl px-3.5 text-sm font-semibold ${
-                  busTypes.includes(type) ? "bg-[#E6E7FA] text-[#2A2E8C]" : "bg-[#F3F4FB]"
+                className={`flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-3.5 text-sm font-semibold ${
+                  busTypes.includes(type) ? "bg-brand-soft text-brand-dark" : "bg-canvas"
                 }`}
               >
                 <input
@@ -172,14 +172,14 @@ export function AddCompanyForm() {
         <button
           type="submit"
           disabled={busy}
-          className="rounded-2xl bg-[#3A3FB8] px-5 text-sm font-bold text-white disabled:opacity-60"
+          className="rounded-lg bg-brand px-5 text-sm font-bold text-white disabled:opacity-60"
         >
           {busy ? "Creating…" : "Create and get invite"}
         </button>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="rounded-2xl bg-[#F3F4FB] px-5 text-sm font-bold"
+          className="rounded-lg bg-canvas px-5 text-sm font-bold"
         >
           Cancel
         </button>

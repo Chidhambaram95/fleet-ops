@@ -24,11 +24,11 @@ import {
 } from "@domain/companies/types";
 
 const input =
-  "h-12 w-full min-w-0 rounded-2xl border border-[#DCDDF7] bg-[#F3F4FB] px-3.5 text-base font-normal";
-const label = "flex min-w-0 flex-col gap-1.5 text-[13px] font-semibold";
-const card = "flex flex-col gap-4 rounded-3xl bg-white p-5";
+  "h-12 w-full min-w-0 rounded-lg border border-brand-pale bg-canvas px-3.5 text-base font-normal";
+const label = "flex min-w-0 flex-col gap-1.5 text-sm font-semibold";
+const card = "flex flex-col gap-4 rounded-xl border border-line bg-surface p-5";
 const primary =
-  "h-12 rounded-2xl bg-[#3A3FB8] px-5 text-[15px] font-bold text-white disabled:opacity-50";
+  "h-12 rounded-lg bg-brand px-5 text-sm font-bold text-white disabled:opacity-50";
 
 const ROLE_LABELS: Record<string, string> = {
   owner: "Admin",
@@ -78,7 +78,7 @@ export function CompanyEditForm({ company }: { company: Company }) {
 
   return (
     <section className={card}>
-      <h2 className="text-lg font-extrabold">Company details</h2>
+      <h2 className="text-lg font-semibold">Company details</h2>
       <div className="grid gap-3 sm:grid-cols-2">
         <label className={label}>
           Company name
@@ -105,12 +105,12 @@ export function CompanyEditForm({ company }: { company: Company }) {
             value={maxBuses}
             onChange={(e) => setMaxBuses(e.target.value)}
           />
-          <span className="text-xs font-normal text-[#5B5E7A]">
+          <span className="text-xs font-normal text-muted">
             They have {company.busCount} now. Leave empty for no limit.
           </span>
         </label>
         <fieldset className="flex flex-col gap-1.5">
-          <legend className="mb-1.5 text-[13px] font-semibold">Bus types allowed</legend>
+          <legend className="mb-1.5 text-sm font-semibold">Bus types allowed</legend>
           <div className="flex flex-wrap gap-2">
             {BUS_TYPES.map((type) => {
               const on = busTypes.includes(type);
@@ -123,7 +123,7 @@ export function CompanyEditForm({ company }: { company: Company }) {
                     setBusTypes((list) => (on ? list.filter((item) => item !== type) : [...list, type]))
                   }
                   className={`h-11 rounded-full px-4 text-sm font-bold ${
-                    on ? "bg-[#3A3FB8] text-white" : "bg-[#F3F4FB] text-[#5B5E7A]"
+                    on ? "bg-brand text-white" : "bg-canvas text-muted"
                   }`}
                 >
                   {BUS_TYPE_LABELS[type]}
@@ -138,7 +138,7 @@ export function CompanyEditForm({ company }: { company: Company }) {
           {busy ? "Saving…" : "Save details"}
         </button>
         {message ? (
-          <p role="status" className={`text-sm font-semibold ${message === "Saved." ? "text-[#1E6B45]" : "text-[#A3321C]"}`}>
+          <p role="status" className={`text-sm font-semibold ${message === "Saved." ? "text-money-in" : "text-money-out"}`}>
             {message}
           </p>
         ) : null}
@@ -238,20 +238,20 @@ export function CompanyPeople({
 
   return (
     <section className={card}>
-      <h2 className="text-lg font-extrabold">People and access</h2>
+      <h2 className="text-lg font-semibold">People and access</h2>
       {members.length === 0 ? (
-        <p className="text-sm text-[#5B5E7A]">No one has joined yet.</p>
+        <p className="text-sm text-muted">No one has joined yet.</p>
       ) : (
         <ul className="flex flex-col">
           {members.map((member, index) => (
             <li
               key={member.userId}
-              className={`flex flex-wrap items-center justify-between gap-3 py-3 ${index ? "border-t border-[#EEEFF7]" : ""}`}
+              className={`flex flex-wrap items-center justify-between gap-3 py-3 ${index ? "border-t border-line" : ""}`}
             >
               <div className="min-w-0">
                 <p className="truncate font-bold">{member.displayName || loginLabel(member.email) || "Unnamed"}</p>
                 {member.displayName && member.email ? (
-                  <p className="truncate text-xs text-[#5B5E7A]">{loginLabel(member.email)}</p>
+                  <p className="truncate text-xs text-muted">{loginLabel(member.email)}</p>
                 ) : null}
                 {passwordFor === member.userId ? (
                   <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -265,7 +265,7 @@ export function CompanyPeople({
                     />
                     <button
                       type="button"
-                      className="h-11 rounded-2xl bg-[#3A3FB8] px-3 text-sm font-bold text-white"
+                      className="h-11 rounded-lg bg-brand px-3 text-sm font-bold text-white"
                       disabled={busy !== ""}
                       onClick={() => void savePassword(member.userId)}
                     >
@@ -273,7 +273,7 @@ export function CompanyPeople({
                     </button>
                     <button
                       type="button"
-                      className="h-11 px-2 text-sm font-semibold text-[#5B5E7A]"
+                      className="h-11 px-2 text-sm font-semibold text-muted"
                       onClick={() => setPasswordFor("")}
                     >
                       Cancel
@@ -282,7 +282,7 @@ export function CompanyPeople({
                 ) : (
                   <button
                     type="button"
-                    className="mt-1 text-xs font-semibold text-[#3A3FB8]"
+                    className="mt-1 text-xs font-semibold text-brand"
                     onClick={() => {
                       setPasswordFor(member.userId);
                       setMemberPassword("");
@@ -296,7 +296,7 @@ export function CompanyPeople({
               <div className="flex items-center gap-2">
                 <select
                   aria-label={`Access for ${member.displayName || member.email}`}
-                  className="h-11 rounded-2xl bg-[#F3F4FB] px-3 text-sm font-semibold"
+                  className="h-11 rounded-lg bg-canvas px-3 text-sm font-semibold"
                   value={ROLE_LABELS[member.role] === "Admin" ? "admin" : ROLE_LABELS[member.role] === "Manager" ? "manager" : "crew"}
                   disabled={busy !== ""}
                   onChange={(e) =>
@@ -313,7 +313,7 @@ export function CompanyPeople({
                   <>
                     <button
                       type="button"
-                      className="h-11 rounded-2xl bg-[#A3321C] px-3 text-sm font-bold text-white"
+                      className="h-11 rounded-lg bg-money-out px-3 text-sm font-bold text-white"
                       disabled={busy !== ""}
                       onClick={() =>
                         void run(member.userId, () => removeMemberAction(company.organizationId, member.userId)).then(
@@ -323,14 +323,14 @@ export function CompanyPeople({
                     >
                       Remove
                     </button>
-                    <button type="button" className="h-11 px-2 text-sm font-semibold text-[#5B5E7A]" onClick={() => setConfirmRemove("")}>
+                    <button type="button" className="h-11 px-2 text-sm font-semibold text-muted" onClick={() => setConfirmRemove("")}>
                       Keep
                     </button>
                   </>
                 ) : (
                   <button
                     type="button"
-                    className="h-11 px-2 text-sm font-semibold text-[#5B5E7A]"
+                    className="h-11 px-2 text-sm font-semibold text-muted"
                     onClick={() => setConfirmRemove(member.userId)}
                   >
                     Remove
@@ -343,8 +343,8 @@ export function CompanyPeople({
       )}
 
       {invites.length ? (
-        <div className="flex flex-col gap-2 rounded-2xl bg-[#F3F4FB] p-3">
-          <p className="text-xs font-semibold text-[#5B5E7A]">Invited, not joined yet</p>
+        <div className="flex flex-col gap-2 rounded-lg bg-canvas p-3">
+          <p className="text-xs font-semibold text-muted">Invited, not joined yet</p>
           {invites.map((item) => (
             <div key={item.id} className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-sm font-semibold">
@@ -356,15 +356,15 @@ export function CompanyPeople({
         </div>
       ) : null}
 
-      <div className="flex flex-col gap-3 border-t border-[#EEEFF7] pt-4">
-        <h3 className="font-extrabold">Add an admin or manager</h3>
-        <div className="flex gap-1 self-start rounded-full bg-[#F3F4FB] p-1" role="group" aria-label="How to add">
+      <div className="flex flex-col gap-3 border-t border-line pt-4">
+        <h3 className="font-semibold">Add an admin or manager</h3>
+        <div className="flex gap-1 self-start rounded-full bg-canvas p-1" role="group" aria-label="How to add">
           {(["password", "invite"] as const).map((mode) => (
             <button
               key={mode}
               type="button"
               aria-pressed={addMode === mode}
-              className={`h-9 rounded-full px-4 text-sm font-bold ${addMode === mode ? "bg-white text-[#3A3FB8]" : "text-[#5B5E7A]"}`}
+              className={`h-9 rounded-full px-4 text-sm font-bold ${addMode === mode ? "bg-surface text-brand" : "text-muted"}`}
               onClick={() => setAddMode(mode)}
             >
               {mode === "password" ? "With a password" : "WhatsApp invite"}
@@ -372,12 +372,12 @@ export function CompanyPeople({
           ))}
         </div>
         {added ? (
-          <p role="status" className="rounded-2xl bg-[#E6E7FA] p-3 text-sm font-semibold">
+          <p role="status" className="rounded-lg bg-brand-soft p-3 text-sm font-semibold">
             {added}
           </p>
         ) : null}
         {created ? (
-          <div className="flex flex-col gap-2 rounded-2xl bg-[#E6E7FA] p-3">
+          <div className="flex flex-col gap-2 rounded-lg bg-brand-soft p-3">
             <p className="text-sm font-semibold">Invite ready for {created.name || "them"}. Send it now:</p>
             <InviteShare token={created.token} company={company.name} name={created.name} whatsappNumber={created.whatsapp} />
           </div>
@@ -429,12 +429,12 @@ export function CompanyPeople({
         )}
       </div>
       {passwordSaved ? (
-        <p role="status" className="text-sm font-semibold text-[#3A3FB8]">
+        <p role="status" className="text-sm font-semibold text-brand">
           {passwordSaved}
         </p>
       ) : null}
       {error ? (
-        <p role="alert" className="text-sm font-semibold text-[#A3321C]">
+        <p role="alert" className="text-sm font-semibold text-money-out">
           {error}
         </p>
       ) : null}
@@ -472,11 +472,11 @@ export function CompanyDanger({
 
   const active = !company.deactivatedAt;
   return (
-    <section className={`${card} border-2 border-[#FDECEA]`}>
-      <h2 className="text-lg font-extrabold">{active ? "Deactivate company" : "Company is deactivated"}</h2>
+    <section className={`${card} border-2 border-danger-bg`}>
+      <h2 className="text-lg font-semibold">{active ? "Deactivate company" : "Company is deactivated"}</h2>
       {active ? (
         <>
-          <p className="text-sm text-[#5B5E7A]">
+          <p className="text-sm text-muted">
             Everyone in {company.name} loses access straight away. Their data is kept and nothing is deleted.
             You can reactivate at any time. Deleting the data is only possible 30 days after deactivating, and
             only when you press Delete.
@@ -486,7 +486,7 @@ export function CompanyDanger({
               <button
                 type="button"
                 disabled={busy}
-                className="h-12 rounded-2xl bg-[#A3321C] px-5 text-[15px] font-bold text-white disabled:opacity-50"
+                className="h-12 rounded-lg bg-money-out px-5 text-sm font-bold text-white disabled:opacity-50"
                 onClick={() =>
                   run(() => setCompanyActiveAction(company.organizationId, false), () => {
                     setStep("");
@@ -496,14 +496,14 @@ export function CompanyDanger({
               >
                 {busy ? "Deactivating…" : `Yes, deactivate ${company.name}`}
               </button>
-              <button type="button" className="h-12 px-3 font-semibold text-[#5B5E7A]" onClick={() => setStep("")}>
+              <button type="button" className="h-12 px-3 font-semibold text-muted" onClick={() => setStep("")}>
                 Cancel
               </button>
             </div>
           ) : (
             <button
               type="button"
-              className="h-12 self-start rounded-2xl bg-[#FDECEA] px-5 text-[15px] font-bold text-[#A3321C]"
+              className="h-12 self-start rounded-lg bg-danger-bg px-5 text-sm font-bold text-money-out"
               onClick={() => setStep("deactivate")}
             >
               Deactivate
@@ -512,7 +512,7 @@ export function CompanyDanger({
         </>
       ) : (
         <>
-          <p className="text-sm text-[#5B5E7A]">
+          <p className="text-sm text-muted">
             No one in this company can sign in. All their data is kept until you delete it.{" "}
             {canDeleteNow ? "Delete is now available." : `Delete becomes available on ${deletableOn}.`}
           </p>
@@ -529,15 +529,15 @@ export function CompanyDanger({
               type="button"
               disabled={!canDeleteNow || busy}
               title={canDeleteNow ? undefined : `Available on ${deletableOn}`}
-              className="h-12 rounded-2xl bg-[#FDECEA] px-5 text-[15px] font-bold text-[#A3321C] disabled:opacity-50"
+              className="h-12 rounded-lg bg-danger-bg px-5 text-sm font-bold text-money-out disabled:opacity-50"
               onClick={() => setStep("delete")}
             >
               {canDeleteNow ? "Delete all data" : `Delete (from ${deletableOn})`}
             </button>
           </div>
           {step === "delete" && canDeleteNow ? (
-            <div className="flex flex-col gap-3 rounded-2xl bg-[#FDECEA] p-4">
-              <p className="text-sm font-semibold text-[#A3321C]">
+            <div className="flex flex-col gap-3 rounded-lg bg-danger-bg p-4">
+              <p className="text-sm font-semibold text-money-out">
                 This deletes every bus, entry, trip sheet, photo, cost, salary, renewal and payment record of{" "}
                 {company.name}. It cannot be undone. Download any reports you need first.
               </p>
@@ -549,14 +549,14 @@ export function CompanyDanger({
                 <button
                   type="button"
                   disabled={busy || typed.trim() !== company.name.trim()}
-                  className="h-12 rounded-2xl bg-[#A3321C] px-5 text-[15px] font-bold text-white disabled:opacity-50"
+                  className="h-12 rounded-lg bg-money-out px-5 text-sm font-bold text-white disabled:opacity-50"
                   onClick={() =>
                     run(() => deleteCompanyAction(company.organizationId, typed), () => router.replace("/admin/companies"))
                   }
                 >
                   {busy ? "Deleting…" : "Delete for good"}
                 </button>
-                <button type="button" className="h-12 px-3 font-semibold text-[#5B5E7A]" onClick={() => setStep("")}>
+                <button type="button" className="h-12 px-3 font-semibold text-muted" onClick={() => setStep("")}>
                   Cancel
                 </button>
               </div>
@@ -565,7 +565,7 @@ export function CompanyDanger({
         </>
       )}
       {error ? (
-        <p role="alert" className="text-sm font-semibold text-[#A3321C]">
+        <p role="alert" className="text-sm font-semibold text-money-out">
           {error}
         </p>
       ) : null}

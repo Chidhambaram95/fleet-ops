@@ -72,7 +72,7 @@ export const STATUS_LABEL: Record<TourStatus, string> = {
 const STATUS_CLASS: Record<TourStatus, string> = {
   enquiry: "bg-brand-soft text-brand",
   quoted: "bg-warn-bg text-warn-ink",
-  confirmed: "bg-[#E3F2EA] text-money-in",
+  confirmed: "bg-success-bg text-money-in",
   completed: "bg-canvas text-muted",
   cancelled: "bg-canvas text-muted",
 };
@@ -105,11 +105,11 @@ export function Sheet({ title, onClose, children }: { title: string; onClose: ()
       <div
         role="dialog"
         aria-label={title}
-        className="flex max-h-[92dvh] w-full max-w-lg flex-col gap-3 overflow-y-auto rounded-t-3xl bg-white p-5 md:rounded-3xl"
+        className="flex max-h-[92dvh] w-full max-w-lg flex-col gap-3 overflow-y-auto rounded-t-2xl border border-line bg-surface p-5 md:rounded-xl"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-extrabold">{title}</h2>
+          <h2 className="text-lg font-semibold">{title}</h2>
           <button type="button" onClick={onClose} className="h-10 rounded-full bg-canvas px-4 text-sm font-bold text-muted">
             Close
           </button>
@@ -206,7 +206,7 @@ export function QuoteShare({
     <Sheet title={`Quote ${quoteNumber(booking)}`} onClose={onClose}>
       {url ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={url} alt="Quote" className="w-full rounded-2xl border border-line" />
+        <img src={url} alt="Quote" className="w-full rounded-lg border border-line" />
       ) : (
         <p className="py-10 text-center text-muted">Making the quote picture…</p>
       )}

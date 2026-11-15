@@ -77,19 +77,19 @@ export function AppHeader({
   return (
     <header
       ref={headerRef}
-      className="sticky top-0 z-40 bg-canvas/95 backdrop-blur md:bg-white print:hidden"
+      className="sticky top-0 z-40 bg-canvas/95 backdrop-blur md:bg-surface print:hidden"
     >
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 pb-2 pt-4 md:px-8 md:py-3">
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand font-extrabold text-white md:flex">
+          <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand font-semibold text-white md:flex">
             F
           </span>
           <div className="flex min-w-0 flex-col">
-            <span className="truncate text-[13px] text-muted md:hidden">
+            <span className="truncate text-xs text-muted md:hidden">
               {role ? `${label.split(" ")[0]} · ${ROLE_LABELS[role]}` : label}
             </span>
-            <span className="hidden text-[15px] font-extrabold md:block">Fleet Ops</span>
-            <span className="truncate text-[19px] font-extrabold leading-tight md:text-xs md:font-normal md:text-muted">
+            <span className="hidden text-sm font-semibold md:block">Fleet Ops</span>
+            <span className="truncate text-lg font-semibold leading-tight md:text-xs md:font-normal md:text-muted">
               {organizationName}
             </span>
           </div>
@@ -136,7 +136,7 @@ export function AppHeader({
               aria-expanded={accountOpen}
               aria-controls={accountId}
               onClick={() => setAccountOpen((open) => !open)}
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-brand-pale text-[13px] font-bold text-brand-dark"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-brand-pale text-sm font-bold text-brand-dark"
             >
               {initials(label)}
             </button>
@@ -144,7 +144,7 @@ export function AppHeader({
               <div
                 id={accountId}
                 role="menu"
-                className="absolute right-0 top-full z-30 mt-2 w-60 overflow-hidden rounded-3xl bg-white p-2 shadow-[0_8px_24px_rgba(26,27,46,0.14)]"
+                className="absolute right-0 top-full z-30 mt-2 w-60 overflow-hidden rounded-xl border border-line bg-surface p-2 shadow-[0_8px_24px_rgba(26,27,46,0.14)]"
               >
                 <div className="px-3 pb-2 pt-1">
                   <p className="truncate text-sm font-bold">{label}</p>
@@ -159,7 +159,7 @@ export function AppHeader({
                       key={link.href}
                       href={link.href}
                       role="menuitem"
-                      className="flex min-h-11 items-center rounded-2xl px-3 text-sm font-semibold hover:bg-canvas"
+                      className="flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold hover:bg-canvas"
                     >
                       {link.label}
                     </Link>
@@ -168,7 +168,7 @@ export function AppHeader({
                   <Link
                     href="/admin/companies"
                     role="menuitem"
-                    className="flex min-h-11 items-center rounded-2xl px-3 text-sm font-semibold hover:bg-canvas"
+                    className="flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold hover:bg-canvas"
                   >
                     Fleet Ops admin
                   </Link>
@@ -177,7 +177,7 @@ export function AppHeader({
                   type="button"
                   role="menuitem"
                   onClick={() => void onSignOut()}
-                  className="flex min-h-11 w-full items-center rounded-2xl px-3 text-left text-sm font-semibold hover:bg-canvas"
+                  className="flex min-h-11 w-full items-center rounded-lg px-3 text-left text-sm font-semibold hover:bg-canvas"
                 >
                   Sign out
                 </button>
@@ -197,8 +197,8 @@ export function AppHeader({
 
 const MODULE_ACCENT: Record<ModuleId, string> = {
   town: "bg-brand text-white",
-  omni: "bg-teal-700 text-white",
-  tour: "bg-amber-600 text-white",
+  omni: "bg-mod-omni text-white",
+  tour: "bg-mod-tour text-white",
 };
 
 /** Town | Omni | Tour. Each opens that module's home. */
@@ -216,7 +216,7 @@ export function ModuleSwitch({
   // Outside a module (company pages) no module is highlighted.
   const inModule = modules.some((item) => pathname === `/${item}` || pathname.startsWith(`/${item}/`));
   return (
-    <nav aria-label="Modules" className={`gap-1 rounded-full bg-white p-1 md:bg-canvas ${className}`}>
+    <nav aria-label="Modules" className={`gap-1 rounded-full bg-surface p-1 md:bg-canvas ${className}`}>
       {modules.map((item) => {
         const active = inModule && item === current;
         return (

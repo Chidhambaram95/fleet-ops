@@ -157,10 +157,10 @@ export function BestWorstCard({
   const month = new Intl.DateTimeFormat("en-IN", { month: "long", timeZone: "Asia/Kolkata" }).format(new Date());
 
   return (
-    <section className="flex flex-col gap-3 rounded-3xl bg-white p-4">
+    <section className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-extrabold">{card.worst ? "Best & worst bus" : "Your bus this month"}</h2>
+          <h2 className="text-lg font-semibold">{card.worst ? "Best & worst bus" : "Your bus this month"}</h2>
           <p className="text-sm text-muted">{month} so far · profit after shared costs</p>
         </div>
         <Link
@@ -171,7 +171,7 @@ export function BestWorstCard({
         </Link>
       </div>
       {card.losing.length ? (
-        <p className="rounded-2xl bg-[#fbe7e3] px-4 py-3 text-sm font-semibold text-money-out">
+        <p className="rounded-lg bg-danger-bg px-4 py-3 text-sm font-semibold text-money-out">
           ⚠ In loss two months running: {card.losing.join(", ")}
         </p>
       ) : null}
@@ -202,17 +202,17 @@ function BusTile({
   const tone = gain ? "text-money-in" : "text-money-out";
   const change = last == null ? null : line.profit - last;
   return (
-    <div className={`flex flex-col gap-2 rounded-2xl p-4 ${gain ? "bg-[#e3f4ea]" : "bg-[#fbe7e3]"}`}>
+    <div className={`flex flex-col gap-2 rounded-lg p-4 ${gain ? "bg-success-bg" : "bg-danger-bg"}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-extrabold uppercase text-muted">{label}</p>
-          <p className="truncate font-extrabold">
+          <p className="text-xs font-semibold uppercase text-muted">{label}</p>
+          <p className="truncate font-semibold">
             {line.bus.registrationNumber}
             <span className="text-sm font-normal text-muted"> · {BUS_TYPE_LABELS[line.bus.busType]}</span>
           </p>
         </div>
         <div className="shrink-0 text-right">
-          <span className={`text-xl font-extrabold tabular-nums ${tone}`}>{formatInr(line.profit)}</span>
+          <span className={`text-xl font-semibold tabular-nums ${tone}`}>{formatInr(line.profit)}</span>
           {change != null ? (
             <p className={`text-xs font-bold ${change >= 0 ? "text-money-in" : "text-money-out"}`}>
               {change >= 0 ? "▲" : "▼"} {formatInr(Math.abs(change))} vs {lastLabel}

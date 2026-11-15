@@ -11,8 +11,8 @@ export function ActionButtons({ book, form }: { book: DayBook; form: EntryFormSt
   const { scanning, openSheet } = form;
   return canWrite ? (
     <div className="flex flex-col gap-2.5 lg:hidden">
-      <label className="flex min-h-16 cursor-pointer items-center justify-center gap-3 rounded-3xl bg-white px-4 text-base font-bold text-brand shadow-[0_1px_0_rgba(26,27,46,0.04)] active:bg-brand-soft">
-        <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-soft">
+      <label className="flex min-h-16 cursor-pointer items-center justify-center gap-3 rounded-xl border border-line bg-surface px-4 text-base font-bold text-brand shadow-[0_1px_0_rgba(26,27,46,0.04)] active:bg-brand-soft">
+        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-soft">
           <CameraIcon />
         </span>
         {scanning ? "Reading the bill…" : "Scan a bill"}
@@ -22,7 +22,7 @@ export function ActionButtons({ book, form }: { book: DayBook; form: EntryFormSt
         <button
           type="button"
           onClick={() => openSheet("income")}
-          className="flex min-h-14 items-center justify-center gap-2 rounded-3xl bg-white text-[15px] font-bold text-money-in"
+          className="flex min-h-14 items-center justify-center gap-2 rounded-xl border border-line bg-surface text-sm font-bold text-money-in"
         >
           <ArrowIcon direction="in" />
           Money in
@@ -30,7 +30,7 @@ export function ActionButtons({ book, form }: { book: DayBook; form: EntryFormSt
         <button
           type="button"
           onClick={() => openSheet("expense")}
-          className="flex min-h-14 items-center justify-center gap-2 rounded-3xl bg-white text-[15px] font-bold text-money-out"
+          className="flex min-h-14 items-center justify-center gap-2 rounded-xl border border-line bg-surface text-sm font-bold text-money-out"
         >
           <ArrowIcon direction="out" />
           Money out
@@ -45,8 +45,8 @@ export function EntryPanels({ book, form }: { book: DayBook; form: EntryFormStat
   const { sheetOpen, setSheetOpen } = form;
   return (
     <>
-      <aside className="hidden flex-col gap-4 rounded-3xl bg-white p-5 lg:sticky lg:top-24 lg:flex">
-        <h2 className="text-lg font-extrabold">Add cash entry</h2>
+      <aside className="hidden flex-col gap-4 rounded-xl border border-line bg-surface p-5 lg:sticky lg:top-24 lg:flex">
+        <h2 className="text-lg font-semibold">Add cash entry</h2>
         <EntryForm book={book} form={form} place="side" />
       </aside>
 
@@ -62,10 +62,10 @@ export function EntryPanels({ book, form }: { book: DayBook; form: EntryFormStat
             role="dialog"
             aria-modal="true"
             aria-label="Add cash entry"
-            className="mx-auto flex max-h-[90dvh] w-full max-w-lg flex-col gap-4 overflow-y-auto rounded-t-[28px] bg-white px-5 pb-[max(24px,env(safe-area-inset-bottom))] pt-5"
+            className="mx-auto flex max-h-[90dvh] w-full max-w-lg flex-col gap-4 overflow-y-auto rounded-t-2xl bg-surface px-5 pb-[max(24px,env(safe-area-inset-bottom))] pt-5"
           >
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-extrabold">Add cash entry</h2>
+              <h2 className="text-lg font-semibold">Add cash entry</h2>
               <button
                 type="button"
                 className="px-2 text-sm font-bold text-brand"

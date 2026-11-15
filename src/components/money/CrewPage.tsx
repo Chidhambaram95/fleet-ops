@@ -211,20 +211,20 @@ export function CrewPage({
             <input
               type="month"
               aria-label="Month"
-              className="h-11 rounded-2xl bg-canvas px-3 text-sm font-semibold"
+              className="h-11 rounded-lg bg-canvas px-3 text-sm font-semibold"
               value={month}
               onChange={(event) => event.target.value && setMonth(event.target.value)}
             />
           }
         >
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-2xl bg-canvas p-3">
+            <div className="rounded-lg bg-canvas p-3">
               <p className="text-xs text-muted">Paid</p>
-              <p className="text-lg font-extrabold text-money-in">{formatInr(monthPaid)}</p>
+              <p className="text-lg font-semibold text-money-in">{formatInr(monthPaid)}</p>
             </div>
-            <div className="rounded-2xl bg-canvas p-3">
+            <div className="rounded-lg bg-canvas p-3">
               <p className="text-xs text-muted">Still to pay</p>
-              <p className="text-lg font-extrabold text-money-out">{formatInr(monthDue)}</p>
+              <p className="text-lg font-semibold text-money-out">{formatInr(monthDue)}</p>
             </div>
           </div>
           {loading ? (
@@ -267,7 +267,7 @@ export function CrewPage({
                             <input
                               inputMode="numeric"
                               aria-label={`Amount for ${item.name}`}
-                              className="h-11 w-24 rounded-2xl bg-canvas px-3 text-right"
+                              className="h-11 w-24 rounded-lg bg-canvas px-3 text-right"
                               placeholder={String(leftInr || "")}
                               value={payAmounts[item.id] ?? ""}
                               onChange={(event) => setPayAmounts((all) => ({ ...all, [item.id]: event.target.value }))}
@@ -276,7 +276,7 @@ export function CrewPage({
                               type="button"
                               disabled={saving}
                               onClick={() => paySalary(item)}
-                              className="h-11 rounded-2xl bg-brand px-4 text-sm font-bold text-white disabled:opacity-50"
+                              className="h-11 rounded-lg bg-brand px-4 text-sm font-bold text-white disabled:opacity-50"
                             >
                               {payments.length ? "Pay the rest" : "Mark paid"}
                             </button>
@@ -295,13 +295,13 @@ export function CrewPage({
       {section === "advances" ? (
         <Card title="Trip advances not settled">
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-2xl bg-canvas p-3">
+            <div className="rounded-lg bg-canvas p-3">
               <p className="text-xs text-muted">To pay drivers</p>
-              <p className="text-lg font-extrabold text-money-out">{formatInr(toPay)}</p>
+              <p className="text-lg font-semibold text-money-out">{formatInr(toPay)}</p>
             </div>
-            <div className="rounded-2xl bg-canvas p-3">
+            <div className="rounded-lg bg-canvas p-3">
               <p className="text-xs text-muted">Drivers to return</p>
-              <p className="text-lg font-extrabold text-money-in">{formatInr(toCollect)}</p>
+              <p className="text-lg font-semibold text-money-in">{formatInr(toCollect)}</p>
             </div>
           </div>
           {openAdvances.length === 0 ? (

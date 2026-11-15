@@ -11,8 +11,8 @@ export default function LoginPage() {
   const contactUrl = whatsAppChatUrl(FLEETOPS_WHATSAPP, FLEETOPS_ENQUIRY);
   return (
     <>
-      <section className="flex flex-col gap-4 rounded-3xl bg-white p-6">
-        <h1 className="text-2xl font-extrabold leading-tight">Sign in</h1>
+      <section className="flex flex-col gap-4 rounded-xl border border-line bg-surface p-6">
+        <h1 className="text-2xl font-semibold leading-tight">Sign in</h1>
         <AuthForm />
         <p className="text-center text-sm text-muted">
           New here? Ask your company admin to send you an invite on WhatsApp.
@@ -23,10 +23,10 @@ export default function LoginPage() {
         href={contactUrl}
         target="_blank"
         rel="noreferrer"
-        className="flex items-center justify-between gap-3 rounded-3xl bg-brand-soft px-5 py-4 text-brand-dark"
+        className="flex items-center justify-between gap-3 rounded-xl bg-brand-soft px-5 py-4 text-brand-dark"
       >
         <span className="flex flex-col">
-          <span className="font-extrabold">Want Fleet Ops for your buses?</span>
+          <span className="font-semibold">Want Fleet Ops for your buses?</span>
           <span className="text-sm">Contact Fleet Ops on WhatsApp</span>
         </span>
         <span aria-hidden="true" className="text-xl">›</span>

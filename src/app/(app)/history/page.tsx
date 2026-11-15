@@ -12,14 +12,14 @@ export const metadata: Metadata = {
 
 export default async function HistoryPage() {
   if (!hasPublicSupabaseEnv()) {
-    return <p className="rounded-3xl bg-white px-4 py-6 text-muted">Add Supabase keys to see the history.</p>;
+    return <p className="rounded-xl border border-line bg-surface px-4 py-6 text-muted">Add Supabase keys to see the history.</p>;
   }
   try {
     const supabase = await getRequestSupabase();
     const membership = await getRequestMembership();
     if (!canManage(membership.role)) {
       return (
-        <p className="rounded-3xl bg-white px-4 py-6 text-muted">
+        <p className="rounded-xl border border-line bg-surface px-4 py-6 text-muted">
           Only admins and managers can see the change history.
         </p>
       );
@@ -35,6 +35,6 @@ export default async function HistoryPage() {
   } catch (error) {
     const message =
       error instanceof SessionError || error instanceof Error ? error.message : "Could not load the history.";
-    return <p className="rounded-3xl bg-white px-4 py-6 text-money-out">{message}</p>;
+    return <p className="rounded-xl border border-line bg-surface px-4 py-6 text-money-out">{message}</p>;
   }
 }

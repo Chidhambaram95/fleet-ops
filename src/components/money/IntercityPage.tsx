@@ -155,11 +155,11 @@ export function IntercityPage({ organizationId, module }: { organizationId: stri
                 </label>
               </div>
               <fieldset className="flex flex-col gap-2">
-                <legend className="mb-1.5 text-[13px] font-semibold">Buses covered (shared equally in reports)</legend>
+                <legend className="mb-1.5 text-sm font-semibold">Buses covered (shared equally in reports)</legend>
                 {intercityBuses.map((bus) => {
                   const checked = incomeBuses.includes(bus.id);
                   return (
-                    <label key={bus.id} className="flex min-h-11 items-center gap-3 rounded-2xl bg-canvas px-4">
+                    <label key={bus.id} className="flex min-h-11 items-center gap-3 rounded-lg bg-canvas px-4">
                       <input
                         type="checkbox"
                         className="size-5 accent-brand"

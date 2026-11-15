@@ -247,7 +247,7 @@ export function TeamSettings({
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-extrabold">Team & logins</h1>
+        <h1 className="text-2xl font-semibold">Team & logins</h1>
         <p className="text-sm text-muted">
           {isAdmin
             ? "Add a person with their email or mobile number and a password, or invite them on WhatsApp. Crew members need one bus."
@@ -256,15 +256,15 @@ export function TeamSettings({
       </div>
 
       {error ? <p role="alert" className="text-sm text-money-out">{error}</p> : null}
-      {notice ? <p className="rounded-2xl bg-brand-soft px-4 py-3 text-sm font-semibold">{notice}</p> : null}
+      {notice ? <p className="rounded-lg bg-brand-soft px-4 py-3 text-sm font-semibold">{notice}</p> : null}
 
       {!isAdmin ? null : viewOnly ? (
-        <p className="rounded-3xl bg-white px-4 py-4 text-sm text-muted">
+        <p className="rounded-xl border border-line bg-surface px-4 py-4 text-sm text-muted">
           The app is view-only until the payment is received. Invites and role changes open again after that.
         </p>
       ) : (
       <form
-        className="flex flex-col gap-2 rounded-3xl bg-white p-4 md:p-5"
+        className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4 md:p-5"
         onSubmit={(event) => {
           event.preventDefault();
           void (addMode === "direct" ? addDirect() : addMember());
@@ -272,7 +272,7 @@ export function TeamSettings({
       >
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-semibold">Add someone</p>
-          <div role="group" aria-label="How to add" className="flex rounded-2xl bg-canvas p-1 text-sm font-semibold">
+          <div role="group" aria-label="How to add" className="flex rounded-lg bg-canvas p-1 text-sm font-semibold">
             {(["direct", "invite"] as const).map((mode) => (
               <button
                 key={mode}
@@ -282,7 +282,7 @@ export function TeamSettings({
                   setAddMode(mode);
                   setError("");
                 }}
-                className={`rounded-xl px-3 py-1.5 ${addMode === mode ? "bg-white text-brand" : "text-muted"}`}
+                className={`rounded-xl px-3 py-1.5 ${addMode === mode ? "bg-surface text-brand" : "text-muted"}`}
               >
                 {mode === "direct" ? "With a password" : "WhatsApp invite"}
               </button>
@@ -295,7 +295,7 @@ export function TeamSettings({
           placeholder="Name"
           aria-label="Name"
           autoComplete="off"
-          className="h-12 rounded-2xl bg-canvas px-4 text-base font-normal"
+          className="h-12 rounded-lg bg-canvas px-4 text-base font-normal"
         />
         {addMode === "direct" ? (
           <>
@@ -306,7 +306,7 @@ export function TeamSettings({
               aria-label="Email or mobile number"
               autoComplete="off"
               autoCapitalize="none"
-              className="h-12 rounded-2xl bg-canvas px-4 text-base font-normal"
+              className="h-12 rounded-lg bg-canvas px-4 text-base font-normal"
             />
             <input
               value={newPassword}
@@ -315,7 +315,7 @@ export function TeamSettings({
               aria-label="Password for this person"
               type="text"
               autoComplete="new-password"
-              className="h-12 rounded-2xl bg-canvas px-4 text-base font-normal"
+              className="h-12 rounded-lg bg-canvas px-4 text-base font-normal"
             />
           </>
         ) : (
@@ -326,15 +326,15 @@ export function TeamSettings({
             aria-label="WhatsApp number"
             inputMode="tel"
             autoComplete="off"
-            className="h-12 rounded-2xl bg-canvas px-4 text-base font-normal"
+            className="h-12 rounded-lg bg-canvas px-4 text-base font-normal"
           />
         )}
-        <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
+        <label className="flex flex-col gap-1.5 text-sm font-semibold">
           Role
           <select
             value={newRole}
             onChange={(event) => setNewRole(event.target.value as UserRole)}
-            className="h-11 rounded-2xl bg-canvas px-3 text-sm"
+            className="h-11 rounded-lg bg-canvas px-3 text-sm"
           >
             {USER_ROLES.map((option) => (
               <option key={option} value={option}>
@@ -344,12 +344,12 @@ export function TeamSettings({
           </select>
         </label>
         {newRole === "crew" ? (
-          <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
+          <label className="flex flex-col gap-1.5 text-sm font-semibold">
             Bus
             <select
               value={newBusId}
               onChange={(event) => setNewBusId(event.target.value)}
-              className="h-11 rounded-2xl bg-canvas px-3 text-sm"
+              className="h-11 rounded-lg bg-canvas px-3 text-sm"
             >
               <option value="">
                 {buses.length === 0 ? "No buses yet" : "Pick their bus"}
@@ -365,7 +365,7 @@ export function TeamSettings({
         <button
           type="submit"
           disabled={adding}
-          className="h-12 rounded-2xl bg-brand px-4 text-[15px] font-bold text-white disabled:opacity-60"
+          className="h-12 rounded-lg bg-brand px-4 text-sm font-bold text-white disabled:opacity-60"
         >
           {adding ? "Saving…" : addMode === "direct" ? "Add person" : "Create invite"}
         </button>
@@ -373,7 +373,7 @@ export function TeamSettings({
       )}
 
       {added ? (
-        <section className="flex flex-col gap-1 rounded-3xl bg-brand-soft p-4 text-sm">
+        <section className="flex flex-col gap-1 rounded-xl bg-brand-soft p-4 text-sm">
           <p className="font-semibold">{added.name || "They"} can sign in now.</p>
           <p>
             Login: <span className="font-semibold">{added.login}</span> · Password: the one you typed. Tell them both;
@@ -383,7 +383,7 @@ export function TeamSettings({
       ) : null}
 
       {fresh ? (
-        <section className="flex flex-col gap-2 rounded-3xl bg-brand-soft p-3">
+        <section className="flex flex-col gap-2 rounded-xl bg-brand-soft p-3">
           <p className="text-sm font-semibold">Invite ready for {fresh.name}</p>
           <InviteShare
             token={fresh.token}
@@ -395,7 +395,7 @@ export function TeamSettings({
       ) : null}
 
       {invites.length > 0 ? (
-        <section className="flex flex-col gap-2 rounded-3xl bg-white p-4 md:p-5">
+        <section className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4 md:p-5">
           <p className="text-sm font-semibold">Waiting to join</p>
           {invites.map((invite) => (
             <div key={invite.id} className="flex flex-col gap-2 border-t border-line pt-2">
@@ -425,7 +425,7 @@ export function TeamSettings({
         </section>
       ) : null}
 
-      <div className="overflow-x-auto rounded-3xl bg-white">
+      <div className="overflow-x-auto rounded-xl border border-line bg-surface">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-line text-xs uppercase tracking-wide text-muted">
             <tr>
@@ -544,7 +544,7 @@ export function TeamSettings({
                         onChange={(event) =>
                           onRoleChange(member, event.target.value as UserRole)
                         }
-                        className="h-11 rounded-2xl bg-canvas px-3 text-sm disabled:opacity-60"
+                        className="h-11 rounded-lg bg-canvas px-3 text-sm disabled:opacity-60"
                       >
                         {USER_ROLES.map((option) => (
                           <option key={option} value={option}>
@@ -560,7 +560,7 @@ export function TeamSettings({
                             onBusChange(member.userId, event.target.value)
                           }
                           aria-label={`Bus for ${member.displayName}`}
-                          className="h-11 rounded-2xl bg-canvas px-3 text-sm disabled:opacity-60"
+                          className="h-11 rounded-lg bg-canvas px-3 text-sm disabled:opacity-60"
                         >
                           <option value="">
                             {buses.length === 0 ? "No buses yet" : "Pick their bus"}
@@ -578,7 +578,7 @@ export function TeamSettings({
                           disabled={pending || viewOnly}
                           onChange={(event) => void onModuleChange(member.userId, event.target.value)}
                           aria-label={`Bus types for ${member.displayName}`}
-                          className="h-11 rounded-2xl bg-canvas px-3 text-sm disabled:opacity-60"
+                          className="h-11 rounded-lg bg-canvas px-3 text-sm disabled:opacity-60"
                         >
                           <option value="">All bus types</option>
                           {modules.map((item) => (

@@ -37,7 +37,7 @@ import {
   wholeNumber,
 } from "@/components/ui/kit";
 
-const READ_ONLY = "flex h-12 w-full min-w-0 items-center justify-between gap-2 rounded-2xl border border-dashed border-line bg-white px-4 text-base";
+const READ_ONLY = "flex h-12 w-full min-w-0 items-center justify-between gap-2 rounded-lg border border-dashed border-line bg-surface px-4 text-base";
 
 type Loaded = {
   buses: Bus[];
@@ -188,7 +188,7 @@ export function PayRoadTaxPage({
 
   const busesHref = moduleHref(module, "buses");
   const missingNote = bus && missing.length ? (
-    <p className="rounded-2xl bg-warn-bg px-4 py-3 text-sm text-warn-ink">
+    <p className="rounded-lg bg-warn-bg px-4 py-3 text-sm text-warn-ink">
       {bus.registrationNumber} has no {missing.join(" or ")} yet.{" "}
       {isAdmin ? (
         <Link href={busesHref} className="font-bold underline">
@@ -228,7 +228,7 @@ export function PayRoadTaxPage({
         VERIFY DETAILS, then Submit.
       </li>
       <li>Tax Mode: QUARTERLY. Then Payment.</li>
-      <li className="rounded-2xl bg-brand-soft p-3">
+      <li className="rounded-lg bg-brand-soft p-3">
         <b>Before Confirm Payment, check:</b>
         <br />
         Owner Name is <b>{details.ownerName || "not added"}</b>
@@ -253,7 +253,7 @@ export function PayRoadTaxPage({
       />
       <ErrorText message={error} />
       {!data.migrated ? (
-        <p className="rounded-2xl bg-warn-bg px-4 py-3 text-sm text-warn-ink">
+        <p className="rounded-lg bg-warn-bg px-4 py-3 text-sm text-warn-ink">
           Run migration 0028 on the database first. It adds the owner name and chassis number to each bus.
         </p>
       ) : null}
@@ -336,7 +336,7 @@ export function PayRoadTaxPage({
                   </p>
                   <button
                     type="button"
-                    className="self-center text-[13px] font-semibold text-brand"
+                    className="self-center text-sm font-semibold text-brand"
                     onClick={() => setShowManual((open) => !open)}
                   >
                     {showManual ? "Hide the by-hand steps" : "Or fill Vahan in by hand"}

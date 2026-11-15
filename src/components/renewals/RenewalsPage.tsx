@@ -225,7 +225,7 @@ export function RenewalsPage({
                 {document.id === "road_tax" ? (
                   <Link
                     href={`${moduleHref(module, "renewals")}/road-tax?bus=${encodeURIComponent(ownerId)}`}
-                    className="px-2 text-[13px] font-semibold text-brand"
+                    className="px-2 text-sm font-semibold text-brand"
                   >
                     Pay on Vahan
                   </Link>
@@ -316,7 +316,7 @@ export function RenewalsPage({
           <input
             type="file"
             accept="image/*"
-            className="h-12 w-full min-w-0 rounded-2xl bg-canvas px-3 py-3 text-sm"
+            className="h-12 w-full min-w-0 rounded-lg bg-canvas px-3 py-3 text-sm"
             onChange={(event) => setDraft({ ...draft, photo: event.target.files?.[0] ?? null })}
           />
         </label>
@@ -357,18 +357,18 @@ export function RenewalsPage({
       />
       <ErrorText message={error} />
 
-      <section className="flex flex-col gap-3 rounded-3xl bg-brand p-4 text-white md:p-5">
+      <section className="flex flex-col gap-3 rounded-xl bg-brand p-4 text-white md:p-5">
         <div className="grid grid-cols-3 gap-3 text-center">
           <div>
-            <p className="text-2xl font-extrabold">{counts.expired}</p>
+            <p className="text-2xl font-semibold">{counts.expired}</p>
             <p className="text-xs text-brand-pale">Expired</p>
           </div>
           <div>
-            <p className="text-2xl font-extrabold">{counts.week}</p>
+            <p className="text-2xl font-semibold">{counts.week}</p>
             <p className="text-xs text-brand-pale">In 7 days</p>
           </div>
           <div>
-            <p className="text-2xl font-extrabold">{counts.month}</p>
+            <p className="text-2xl font-semibold">{counts.month}</p>
             <p className="text-xs text-brand-pale">In 30 days</p>
           </div>
         </div>
@@ -376,7 +376,7 @@ export function RenewalsPage({
           <button
             type="button"
             onClick={sendReminder}
-            className="h-12 rounded-2xl bg-white text-[15px] font-bold text-brand"
+            className="h-12 rounded-lg bg-surface text-sm font-bold text-brand"
           >
             Send reminder on WhatsApp
           </button>

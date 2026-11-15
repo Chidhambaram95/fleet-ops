@@ -1,27 +1,44 @@
 @import "tailwindcss";
 
-/* Theme C (Calm): indigo on a soft lavender ground, soft rounded corners. */
+/* Fleet Ops tokens: indigo brand on a neutral canvas, white surfaces with visible borders. */
 @theme {
   --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
-  --color-canvas: #f3f4fb;
+
+  /* surfaces */
+  --color-canvas: #f6f7fb;
+  --color-surface: #ffffff;
+  --color-subtle: #f1f2f7;
+
+  /* text */
   --color-ink: #1a1b2e;
   --color-muted: #5b5e7a;
-  --color-line: #eeeff7;
+  --color-faint: #8a8da6;
+
+  /* lines */
+  --color-line: #e3e5ee;
+  --color-line-strong: #cfd2e0;
+
+  /* brand */
   --color-brand: #3a3fb8;
   --color-brand-dark: #2a2e8c;
   --color-brand-mid: #4c51c6;
   --color-brand-soft: #e6e7fa;
   --color-brand-pale: #d9daf6;
+
+  /* status */
   --color-money-in: #1e6b45;
   --color-money-out: #a3321c;
+  --color-success-bg: #e3f4ea;
+  --color-danger-bg: #fdecea;
   --color-warn-bg: #fff5e5;
   --color-warn-ink: #8a5300;
-}
 
-:root {
-  --background: #f3f4fb;
-  --foreground: #1a1b2e;
-  --accent: #3a3fb8;
+  /* module accents */
+  --color-mod-town: #3a3fb8;
+  --color-mod-omni: #0f766e;
+  --color-mod-tour: #d97706;
+
+  --color-whatsapp: #1f8f4e;
 }
 
 html {
@@ -29,18 +46,21 @@ html {
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color-canvas);
+  color: var(--color-ink);
   font-family: var(--font-sans);
   min-height: 100dvh;
 }
 
-button,
-a,
-input,
-select,
-textarea {
-  min-height: 44px;
+/* 44px touch targets on touch devices only. */
+@media (pointer: coarse) {
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+  }
 }
 
 :where(input, select, textarea, button, a):focus-visible {

@@ -119,7 +119,7 @@ export function MileageScreen({
           <label className="flex items-center gap-2 text-sm font-semibold text-muted">
             <span className="sr-only">Period</span>
             <select
-              className={`${FIELD} w-auto bg-white`}
+              className={`${FIELD} w-auto bg-surface`}
               value={period}
               onChange={(event) => setPeriod(event.target.value as MileagePeriod)}
             >
@@ -135,15 +135,15 @@ export function MileageScreen({
       <ErrorText message={error || actionError} />
 
       {loading ? (
-        <p className="rounded-3xl bg-white px-4 py-6 text-center text-muted">Loading…</p>
+        <p className="rounded-xl border border-line bg-surface px-4 py-6 text-center text-muted">Loading…</p>
       ) : summary.buses.length === 0 ? (
-        <p className="rounded-3xl bg-white px-4 py-6 text-center text-muted">Add buses to see their mileage.</p>
+        <p className="rounded-xl border border-line bg-surface px-4 py-6 text-center text-muted">Add buses to see their mileage.</p>
       ) : (
         <>
-          <section aria-label="Summary" className="flex flex-wrap items-center gap-5 rounded-3xl bg-white p-4 md:p-5">
+          <section aria-label="Summary" className="flex flex-wrap items-center gap-5 rounded-xl border border-line bg-surface p-4 md:p-5">
             <StatusDonut counts={summary.counts} size={124} />
             <div className="flex min-w-[180px] flex-1 flex-col gap-2">
-              <p className={`text-xl font-extrabold md:text-2xl ${needLook ? "text-money-out" : ""}`}>
+              <p className={`text-xl font-semibold md:text-2xl ${needLook ? "text-money-out" : ""}`}>
                 {needLook === 0
                   ? summary.counts.ok
                     ? "All buses are normal"
@@ -172,11 +172,11 @@ export function MileageScreen({
               return (
                 <article
                   key={view.bus.id}
-                  className={`overflow-hidden rounded-3xl border-2 bg-white ${
+                  className={`overflow-hidden rounded-xl border-2 bg-surface ${
                     view.status === "alert"
-                      ? "border-[#f2c9bf]"
+                      ? "border-danger-bg"
                       : view.status === "warn"
-                        ? "border-[#f5dcae]"
+                        ? "border-warn-bg"
                         : "border-white"
                   }`}
                 >
@@ -188,9 +188,9 @@ export function MileageScreen({
                   >
                     <KmplRing kmpl={view.latestKmpl} usual={view.usual} status={view.status} />
                     <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                      <span className="truncate text-[15px] font-extrabold">{view.bus.registrationNumber}</span>
+                      <span className="truncate text-sm font-semibold">{view.bus.registrationNumber}</span>
                       <span
-                        className={`text-[13px] font-semibold ${
+                        className={`text-sm font-semibold ${
                           view.status === "alert" ? "text-money-out" : view.status === "warn" ? "text-warn-ink" : "text-muted"
                         }`}
                       >
@@ -223,7 +223,7 @@ export function MileageScreen({
                       ) : null}
                       <p className="text-sm leading-relaxed">{view.advice}</p>
                       {view.alerts.length > 1 ? (
-                        <ul className="flex flex-col gap-1 text-[13px] text-muted">
+                        <ul className="flex flex-col gap-1 text-xs text-muted">
                           {view.alerts.slice(1).map((alert) => (
                             <li key={alert.key}>Also: {alert.title}</li>
                           ))}
@@ -235,21 +235,21 @@ export function MileageScreen({
                             type="button"
                             disabled={saving === view.bus.id}
                             onClick={() => void markChecked(view)}
-                            className="h-11 grow rounded-2xl bg-brand px-4 text-sm font-bold text-white disabled:opacity-50 md:grow-0"
+                            className="h-11 grow rounded-lg bg-brand px-4 text-sm font-bold text-white disabled:opacity-50 md:grow-0"
                           >
                             {saving === view.bus.id ? "Saving…" : "Mark checked"}
                           </button>
                           <button
                             type="button"
                             onClick={() => sendWhatsApp(view)}
-                            className="h-11 grow rounded-2xl bg-canvas px-4 text-sm font-bold text-money-in md:grow-0"
+                            className="h-11 grow rounded-lg bg-canvas px-4 text-sm font-bold text-money-in md:grow-0"
                           >
                             Send on WhatsApp
                           </button>
                           {view.alerts[0]?.tripId ? (
                             <Link
                               href={`${moduleHref(module, "trips")}/${view.alerts[0].tripId}`}
-                              className="flex h-11 grow items-center justify-center rounded-2xl bg-canvas px-4 text-sm font-bold text-brand md:grow-0"
+                              className="flex h-11 grow items-center justify-center rounded-lg bg-canvas px-4 text-sm font-bold text-brand md:grow-0"
                             >
                               Open trip sheet
                             </Link>
@@ -312,7 +312,7 @@ function BusTargets({
 
   if (!open) {
     return (
-      <button type="button" onClick={() => setOpen(true)} className="self-start text-[13px] font-semibold text-brand">
+      <button type="button" onClick={() => setOpen(true)} className="self-start text-sm font-semibold text-brand">
         {view.bus.targetKmpl || view.bus.tankLitres
           ? `Expected ${view.bus.targetKmpl ?? "–"} km/L · tank ${view.bus.tankLitres ?? "–"} L · Change`
           : "Set expected mileage and tank size"}
@@ -320,26 +320,26 @@ function BusTargets({
     );
   }
   return (
-    <div className="flex flex-col gap-2 rounded-2xl bg-canvas p-3">
+    <div className="flex flex-col gap-2 rounded-lg bg-canvas p-3">
       <div className="grid grid-cols-2 gap-2">
-        <label className="flex min-w-0 flex-col gap-1 text-[13px] font-semibold">
+        <label className="flex min-w-0 flex-col gap-1 text-sm font-semibold">
           Expected km/L
           <input
             inputMode="decimal"
             value={target}
             onChange={(event) => setTarget(event.target.value)}
             placeholder={view.usual ? view.usual.toFixed(1) : "e.g. 4.2"}
-            className="h-11 w-full min-w-0 rounded-xl bg-white px-3 text-base"
+            className="h-11 w-full min-w-0 rounded-xl bg-surface px-3 text-base"
           />
         </label>
-        <label className="flex min-w-0 flex-col gap-1 text-[13px] font-semibold">
+        <label className="flex min-w-0 flex-col gap-1 text-sm font-semibold">
           Tank size (L)
           <input
             inputMode="numeric"
             value={tank}
             onChange={(event) => setTank(event.target.value)}
             placeholder="e.g. 250"
-            className="h-11 w-full min-w-0 rounded-xl bg-white px-3 text-base"
+            className="h-11 w-full min-w-0 rounded-xl bg-surface px-3 text-base"
           />
         </label>
       </div>

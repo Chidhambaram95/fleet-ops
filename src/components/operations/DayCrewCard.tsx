@@ -18,7 +18,7 @@ import { shiftDate } from "@domain/operations/totals";
 import type { Bus } from "@domain/operations/types";
 import { Card, ErrorText, messageFromUnknown, useLoaded } from "@/components/ui/kit";
 
-const SELECT = "h-11 w-full min-w-0 rounded-2xl bg-canvas px-3 text-[15px] disabled:opacity-70";
+const SELECT = "h-11 w-full min-w-0 rounded-lg bg-canvas px-3 text-sm disabled:opacity-70";
 
 /**
  * Who drove each Town bus that day, and who was conductor and cleaner.
@@ -91,7 +91,7 @@ export function DayCrewCard({
                 }
               })
             }
-            className="min-h-10 rounded-full bg-brand-soft px-4 text-[13px] font-bold text-brand-dark disabled:opacity-50"
+            className="min-h-10 rounded-full bg-brand-soft px-4 text-sm font-bold text-brand-dark disabled:opacity-50"
           >
             {saving === "copy" ? "Copying…" : "Same crew as yesterday"}
           </button>
@@ -99,7 +99,7 @@ export function DayCrewCard({
       }
     >
       {needing.length ? (
-        <p role="status" className="rounded-2xl bg-[#FFF4E0] px-3 py-2 text-sm font-semibold text-[#7A4B00]">
+        <p role="status" className="rounded-lg bg-warn-bg px-3 py-2 text-sm font-semibold text-warn-ink">
           {needing.length === 1 ? "1 bus still needs" : `${needing.length} buses still need`} a driver or conductor
           before you can close the day.
         </p>

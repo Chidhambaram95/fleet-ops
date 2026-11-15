@@ -57,18 +57,18 @@ export function BusProfitCards({
     return (
       <div
         key={key}
-        className={`flex flex-col gap-2 rounded-2xl p-4 ${rowIndex == null ? "bg-brand-soft" : "bg-canvas"}`}
+        className={`flex flex-col gap-2 rounded-lg p-4 ${rowIndex == null ? "bg-brand-soft" : "bg-canvas"}`}
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="truncate font-extrabold">{String(row[C.bus])}</p>
+            <p className="truncate font-semibold">{String(row[C.bus])}</p>
             <p className="text-xs text-muted">{[row[C.type], km, days].filter(Boolean).join(" · ")}</p>
           </div>
           {rate ? <span className="shrink-0 text-xs text-muted">{rate}</span> : null}
         </div>
         {line("Bus profit, before company costs", money(row[C.busProfit]))}
         {line("Shared costs", money(row[C.shared]), `font-semibold ${toneClass(row[C.shared])}`)}
-        <div className="flex items-center justify-between gap-3 pt-1 font-extrabold">
+        <div className="flex items-center justify-between gap-3 pt-1 font-semibold">
           <span>Profit</span>
           <span className={`tabular-nums ${toneClass(row[C.profit])}`}>{money(row[C.profit])}</span>
         </div>
@@ -97,7 +97,7 @@ const GROUP_LABELS = { fixed: "Fixed costs (EMI, insurance, permit)", overhead: 
 /** What is behind one bus's figures: days, own costs and each shared cost. */
 export function BusDetailPanel({ detail, onClose }: { detail: BusDetail; onClose: () => void }) {
   const row = (label: string, value: number, strong = false) => (
-    <div className={`flex items-center justify-between gap-3 text-sm ${strong ? "font-extrabold" : ""}`}>
+    <div className={`flex items-center justify-between gap-3 text-sm ${strong ? "font-semibold" : ""}`}>
       <span className={strong ? "" : "text-muted"}>{label}</span>
       <span className={`tabular-nums ${strong ? toneClass(value) : ""}`}>{formatInr(value)}</span>
     </div>
@@ -106,11 +106,11 @@ export function BusDetailPanel({ detail, onClose }: { detail: BusDetail; onClose
   return (
     <section
       aria-label={`Breakdown for ${detail.title}`}
-      className="flex flex-col gap-3 rounded-2xl bg-white p-4 ring-2 ring-brand print:hidden"
+      className="flex flex-col gap-3 rounded-lg bg-surface p-4 ring-2 ring-brand print:hidden"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="font-extrabold">{detail.title}</h3>
+          <h3 className="font-semibold">{detail.title}</h3>
           {detail.rangeDays ? (
             <p className="text-sm text-muted">
               Ran {detail.daysRun} of {detail.rangeDays} days · didn&apos;t run {detail.daysOff}

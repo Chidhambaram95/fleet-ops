@@ -223,7 +223,7 @@ export function MoveForm({
       </label>
       {busId ? (
         <fieldset className="flex flex-col gap-1.5">
-          <legend className="mb-1.5 text-[13px] font-semibold">
+          <legend className="mb-1.5 text-sm font-semibold">
             {mode === "rotate" ? "Move to" : "Wheel position"}
           </legend>
           <div className="grid grid-cols-2 gap-2">
@@ -239,7 +239,7 @@ export function MoveForm({
                   disabled={blocked}
                   aria-pressed={position === id}
                   onClick={() => setPosition(id)}
-                  className={`min-h-12 rounded-2xl px-3 py-2 text-left text-sm disabled:opacity-40 ${
+                  className={`min-h-12 rounded-lg px-3 py-2 text-left text-sm disabled:opacity-40 ${
                     position === id ? "bg-brand text-white" : "bg-canvas"
                   }`}
                 >
@@ -282,7 +282,7 @@ export function MoveForm({
       ) : null}
 
       {mode === "retread_in" ? (
-        <p className="rounded-2xl bg-brand-soft px-4 py-3 text-sm text-brand">
+        <p className="rounded-lg bg-brand-soft px-4 py-3 text-sm text-brand">
           The tyre keeps its number, {moving?.tyreNumber}. The retread bill is charged to the next bus it is fitted on.
         </p>
       ) : null}
@@ -317,7 +317,7 @@ export function MoveForm({
       ) : null}
 
       {mode === "rotate" && swapWith ? (
-        <p className="rounded-2xl bg-warn-bg px-4 py-3 text-sm text-warn-ink">
+        <p className="rounded-lg bg-warn-bg px-4 py-3 text-sm text-warn-ink">
           {swapWith.tyreNumber} moves to {positionLabel(moving?.currentPosition)}, and {moving?.tyreNumber} moves to{" "}
           {positionLabel(position)}.
         </p>
@@ -334,7 +334,7 @@ export function MoveForm({
             </select>
           </label>
           <fieldset className="flex flex-col gap-1.5">
-            <legend className="mb-1.5 text-[13px] font-semibold">Then</legend>
+            <legend className="mb-1.5 text-sm font-semibold">Then</legend>
             <div className="grid grid-cols-2 gap-2">
               {(
                 [
@@ -349,7 +349,7 @@ export function MoveForm({
                   type="button"
                   aria-pressed={after === id}
                   onClick={() => setAfter(id)}
-                  className={`min-h-12 rounded-2xl px-2 text-sm font-bold ${after === id ? "bg-brand text-white" : "bg-canvas text-ink"}`}
+                  className={`min-h-12 rounded-lg px-2 text-sm font-bold ${after === id ? "bg-brand text-white" : "bg-canvas text-ink"}`}
                 >
                   {label}
                 </button>
@@ -416,7 +416,7 @@ export function MoveForm({
       {mode === "retread_in" && fitNow ? busAndPosition : null}
 
       {fitting && moving && pending > 0 ? (
-        <p className="rounded-2xl bg-brand-soft px-4 py-3 text-sm text-brand">
+        <p className="rounded-lg bg-brand-soft px-4 py-3 text-sm text-brand">
           {formatInr(pending)} {moving.retreadCount || mode === "retread_in" ? "(retread and repair bills)" : "(purchase price)"} will be charged to{" "}
           {busId ? busName(busId) : "this bus"}.
         </p>
@@ -605,7 +605,7 @@ export function TyreForm({
           <input className={FIELD} value={draft.vendor} onChange={(event) => set({ vendor: event.target.value })} />
         </label>
       </div>
-      <p className="-mb-1 text-[13px] font-extrabold">Warranty</p>
+      <p className="-mb-1 text-sm font-semibold">Warranty</p>
       <div className="grid grid-cols-2 gap-3">
         <label className={LABEL}>
           Months
@@ -630,7 +630,7 @@ export function TyreForm({
         <input
           type="file"
           accept="image/*"
-          className="h-12 w-full min-w-0 rounded-2xl bg-canvas px-3 py-3 text-sm"
+          className="h-12 w-full min-w-0 rounded-lg bg-canvas px-3 py-3 text-sm"
           onChange={(event) => set({ photo: event.target.files?.[0] ?? null })}
         />
       </label>

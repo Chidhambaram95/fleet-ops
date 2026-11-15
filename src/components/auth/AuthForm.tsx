@@ -46,7 +46,7 @@ export function AuthForm() {
       onSubmit={(event) => void onSubmit(event)}
       className="flex flex-col gap-3"
     >
-      <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
+      <label className="flex flex-col gap-1.5 text-sm font-semibold">
         Email or phone number
         <input
           type="text"
@@ -55,10 +55,10 @@ export function AuthForm() {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           required
-          className="h-12 rounded-2xl bg-canvas px-4 text-base font-normal"
+          className="h-12 rounded-lg bg-canvas px-4 text-base font-normal"
         />
       </label>
-      <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
+      <label className="flex flex-col gap-1.5 text-sm font-semibold">
         Password
         <input
           type="password"
@@ -67,7 +67,7 @@ export function AuthForm() {
           onChange={(event) => setPassword(event.target.value)}
           minLength={6}
           required
-          className="h-12 rounded-2xl bg-canvas px-4 text-base font-normal"
+          className="h-12 rounded-lg bg-canvas px-4 text-base font-normal"
         />
       </label>
       <Link href="/forgot-password" className="self-end text-sm font-semibold text-brand">
@@ -77,7 +77,7 @@ export function AuthForm() {
       <button
         type="submit"
         disabled={busy}
-        className="h-12 rounded-2xl bg-brand px-4 text-base font-bold text-white disabled:opacity-60"
+        className="h-12 rounded-lg bg-brand px-4 text-base font-bold text-white disabled:opacity-60"
       >
         {busy ? "Please wait…" : "Sign in"}
       </button>

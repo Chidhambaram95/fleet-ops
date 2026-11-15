@@ -68,9 +68,9 @@ export function RenewalsDueCard({
   return (
     <Link
       href={module ? moduleHref(module, "renewals") : "/renewals"}
-      className="flex flex-col gap-2 rounded-3xl bg-warn-bg p-4 text-warn-ink"
+      className="flex flex-col gap-2 rounded-xl bg-warn-bg p-4 text-warn-ink"
     >
-      <span className="flex items-center justify-between gap-2 font-extrabold">
+      <span className="flex items-center justify-between gap-2 font-semibold">
         <span>
           {items.length} renewal{items.length === 1 ? "" : "s"} due soon
         </span>

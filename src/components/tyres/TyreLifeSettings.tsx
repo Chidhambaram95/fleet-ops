@@ -43,9 +43,9 @@ export function TyreLifeSettings({ organizationId, viewOnly }: { organizationId:
   }
 
   return (
-    <section className="flex flex-col gap-3 rounded-3xl bg-white p-4 md:p-5">
+    <section className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 md:p-5">
       <div>
-        <h2 className="font-extrabold">Tyre life</h2>
+        <h2 className="font-semibold">Tyre life</h2>
         <p className="text-sm text-muted">
           How far a tyre should run when it has no warranty km of its own. The tyre colours turn amber at 70% and red at
           90% of this.

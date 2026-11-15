@@ -82,7 +82,7 @@ export function TourHome({ organizationId }: { organizationId: string }) {
           !org.viewOnly ? (
             <Link
               href={`${moduleHref("tour", "enquiries")}?new=1`}
-              className="flex min-h-12 items-center gap-2 rounded-2xl bg-brand px-5 text-[15px] font-bold text-white"
+              className="flex min-h-12 items-center gap-2 rounded-lg bg-brand px-5 text-sm font-bold text-white"
             >
               <span aria-hidden="true" className="text-xl leading-none">+</span>
               New enquiry
@@ -93,9 +93,9 @@ export function TourHome({ organizationId }: { organizationId: string }) {
       <ErrorText message={error} />
       <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
         {tiles.map((tile) => (
-          <Link key={tile.label} href={tile.href} className="flex min-w-0 flex-col gap-1 rounded-3xl bg-white p-4">
-            <span className="text-[13px] font-semibold text-muted">{tile.label}</span>
-            <span className={`text-xl font-extrabold ${tile.tone === "out" ? "text-money-out" : ""}`}>
+          <Link key={tile.label} href={tile.href} className="flex min-w-0 flex-col gap-1 rounded-xl border border-line bg-surface p-4">
+            <span className="text-xs font-semibold text-muted">{tile.label}</span>
+            <span className={`text-xl font-semibold ${tile.tone === "out" ? "text-money-out" : ""}`}>
               {loading ? "…" : tile.value}
             </span>
             <span className="text-xs text-muted">{tile.detail}</span>
@@ -105,7 +105,7 @@ export function TourHome({ organizationId }: { organizationId: string }) {
       <Card
         title="Tours coming up"
         action={
-          <Link href={moduleHref("tour", "enquiries")} className="text-[13px] font-semibold text-brand">
+          <Link href={moduleHref("tour", "enquiries")} className="text-sm font-semibold text-brand">
             {figures.openEnquiries} open enquir{figures.openEnquiries === 1 ? "y" : "ies"}
           </Link>
         }
@@ -133,7 +133,7 @@ export function TourHome({ organizationId }: { organizationId: string }) {
       <RenewalsDueCard supabase={supabase} organizationId={organizationId} module="tour" />
       <MileageCard supabase={supabase} organizationId={organizationId} module="tour" />
       {!loading && data.buses.length === 0 ? (
-        <p className="rounded-3xl bg-white px-4 py-6 text-muted">
+        <p className="rounded-xl border border-line bg-surface px-4 py-6 text-muted">
           No tour buses yet.{" "}
           <Link href={moduleHref("tour", "buses")} className="font-bold text-brand">
             Add a bus

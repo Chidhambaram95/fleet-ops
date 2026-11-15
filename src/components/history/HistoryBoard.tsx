@@ -76,23 +76,23 @@ export function HistoryBoard({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-extrabold">Change history</h1>
+        <h1 className="text-2xl font-semibold">Change history</h1>
         <p className="text-sm text-muted">
           Who added, changed or deleted money records in the last year. Days close on their own after 3
           days; changing a closed day needs a comment, which shows here.
         </p>
       </div>
 
-      <section className="flex flex-col gap-3 rounded-3xl bg-white p-4">
+      <section className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
         <h2 className="font-bold">Open a closed day</h2>
-        <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
+        <label className="flex flex-col gap-1.5 text-sm font-semibold">
           Day
           <input
             type="date"
             value={openDay}
             max={todayInIst()}
             onChange={(event) => setOpenDay(event.target.value)}
-            className="h-11 rounded-2xl bg-canvas px-3 text-base font-normal sm:w-56"
+            className="h-11 rounded-lg bg-canvas px-3 text-base font-normal sm:w-56"
           />
         </label>
         {openDay ? (
@@ -105,12 +105,12 @@ export function HistoryBoard({
         )}
       </section>
 
-      <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
+      <label className="flex flex-col gap-1.5 text-sm font-semibold">
         Show
         <select
           value={table}
           onChange={(event) => setTable(event.target.value)}
-          className="h-11 rounded-2xl bg-white px-3 text-base font-normal sm:w-64"
+          className="h-11 rounded-lg bg-surface px-3 text-base font-normal sm:w-64"
         >
           <option value="">All records</option>
           {RECORD_FILTERS.map((item) => (
@@ -121,12 +121,12 @@ export function HistoryBoard({
         </select>
       </label>
 
-      {error ? <p className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-money-out">{error}</p> : null}
+      {error ? <p className="rounded-lg bg-surface px-4 py-3 text-sm font-semibold text-money-out">{error}</p> : null}
 
       {rows.length === 0 && !loading && !error ? (
-        <p className="rounded-3xl bg-white px-4 py-6 text-muted">No changes yet.</p>
+        <p className="rounded-xl border border-line bg-surface px-4 py-6 text-muted">No changes yet.</p>
       ) : (
-        <ol className="flex flex-col rounded-3xl bg-white px-4 py-1">
+        <ol className="flex flex-col rounded-xl border border-line bg-surface px-4 py-1">
           {rows.map((row, index) => {
             const fields = changedFields(row);
             const day = dayOf(row);
@@ -150,7 +150,7 @@ export function HistoryBoard({
                   </ul>
                 ) : null}
                 {row.reason ? (
-                  <p className="rounded-xl bg-[#FFF4E0] px-2.5 py-1.5 text-xs text-[#7A4B00]">
+                  <p className="rounded-xl bg-warn-bg px-2.5 py-1.5 text-xs text-warn-ink">
                     Comment: {row.reason}
                   </p>
                 ) : null}
@@ -165,7 +165,7 @@ export function HistoryBoard({
         <button
           type="button"
           onClick={() => void load(rows[rows.length - 1]?.id)}
-          className="min-h-11 self-center rounded-full bg-white px-5 text-sm font-bold text-brand"
+          className="min-h-11 self-center rounded-full bg-surface px-5 text-sm font-bold text-brand"
         >
           Show older changes
         </button>

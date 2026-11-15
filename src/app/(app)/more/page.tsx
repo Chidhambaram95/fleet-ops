@@ -60,13 +60,13 @@ export default async function MorePage() {
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
-      <h1 className="text-2xl font-extrabold">Menu</h1>
+      <h1 className="text-2xl font-semibold">Menu</h1>
       {sections
         .filter((section) => section.rows.length > 0)
         .map((section) => (
           <section key={section.title} className="flex flex-col gap-2">
             <h2 className="px-1 text-sm font-bold text-muted">{section.title}</h2>
-            <nav aria-label={section.title} className="flex flex-col rounded-3xl bg-white px-4 py-1">
+            <nav aria-label={section.title} className="flex flex-col rounded-xl border border-line bg-surface px-4 py-1">
               {section.rows.map((row, index) => (
                 <Link
                   key={row.href}
@@ -77,7 +77,7 @@ export default async function MorePage() {
                 >
                   <span className="flex flex-col">
                     <span className="text-base font-bold">{row.label}</span>
-                    <span className="text-[13px] text-muted">{row.hint}</span>
+                    <span className="text-xs text-muted">{row.hint}</span>
                   </span>
                   <span aria-hidden="true" className="text-xl text-muted">
                     ›

@@ -112,7 +112,7 @@ export function ModuleHome({ organizationId, module }: { organizationId: string;
           !org.viewOnly ? (
             <Link
               href={`${trips}/new`}
-              className="flex min-h-12 items-center gap-2 rounded-2xl bg-brand px-5 text-[15px] font-bold text-white"
+              className="flex min-h-12 items-center gap-2 rounded-lg bg-brand px-5 text-sm font-bold text-white"
             >
               <span aria-hidden="true" className="text-xl leading-none">+</span>
               New trip sheet
@@ -123,10 +123,10 @@ export function ModuleHome({ organizationId, module }: { organizationId: string;
       <ErrorText message={error} />
       <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
         {tiles.map((tile) => (
-          <Link key={tile.label} href={tile.href} className="flex min-w-0 flex-col gap-1 rounded-3xl bg-white p-4">
-            <span className="text-[13px] font-semibold text-muted">{tile.label}</span>
+          <Link key={tile.label} href={tile.href} className="flex min-w-0 flex-col gap-1 rounded-xl border border-line bg-surface p-4">
+            <span className="text-xs font-semibold text-muted">{tile.label}</span>
             <span
-              className={`text-xl font-extrabold ${
+              className={`text-xl font-semibold ${
                 tile.tone === "in" ? "text-money-in" : tile.tone === "out" ? "text-money-out" : ""
               }`}
             >
@@ -141,7 +141,7 @@ export function ModuleHome({ organizationId, module }: { organizationId: string;
       <RenewalsDueCard supabase={supabase} organizationId={organizationId} module={module} />
       <MileageCard supabase={supabase} organizationId={organizationId} module={module} />
       {!loading && data.buses === 0 ? (
-        <p className="rounded-3xl bg-white px-4 py-6 text-muted">
+        <p className="rounded-xl border border-line bg-surface px-4 py-6 text-muted">
           No buses in this module yet.{" "}
           <Link href={moduleHref(module, "buses")} className="font-bold text-brand">
             Add a bus

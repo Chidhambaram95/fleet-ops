@@ -55,14 +55,14 @@ export function EntryForm({ book, form, place }: { book: DayBook; form: EntryFor
       </div>
 
       {kind === "expense" ? (
-        <label className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-brand-pale px-3 text-sm font-bold text-brand active:bg-brand-soft">
+        <label className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-brand-pale px-3 text-sm font-bold text-brand active:bg-brand-soft">
           <CameraIcon />
           {scanning ? "Reading the bill…" : "Scan a bill instead"}
           <ScanInput book={book} form={form} />
         </label>
       ) : null}
 
-      <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
+      <label className="flex flex-col gap-1.5 text-sm font-semibold">
         Bus
         <select
           value={busId}
@@ -88,7 +88,7 @@ export function EntryForm({ book, form, place }: { book: DayBook; form: EntryFor
       </label>
 
       <fieldset className="flex flex-col gap-1.5">
-        <legend className="mb-1.5 text-[13px] font-semibold">For</legend>
+        <legend className="mb-1.5 text-sm font-semibold">For</legend>
         <div className="flex flex-wrap gap-2">
           {categories.map((item) => (
             <button
@@ -108,7 +108,7 @@ export function EntryForm({ book, form, place }: { book: DayBook; form: EntryFor
         </div>
       </fieldset>
 
-      <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
+      <label className="flex flex-col gap-1.5 text-sm font-semibold">
         Amount (₹)
         <input
           ref={place === "side" ? sideAmountRef : undefined}
@@ -118,15 +118,15 @@ export function EntryForm({ book, form, place }: { book: DayBook; form: EntryFor
           value={amount}
           onChange={(event) => setAmount(event.target.value)}
           placeholder="0"
-          className="h-14 rounded-2xl bg-canvas px-4 text-2xl font-bold"
+          className="h-14 rounded-lg bg-canvas px-4 text-2xl font-bold"
         />
       </label>
 
       {kind === "expense" && category === "diesel" ? (
-        <fieldset className="flex flex-col gap-3 rounded-2xl bg-canvas p-3">
+        <fieldset className="flex flex-col gap-3 rounded-lg bg-canvas p-3">
           <legend className="sr-only">For mileage</legend>
           <div className="grid grid-cols-2 gap-3">
-            <label className="flex min-w-0 flex-col gap-1.5 text-[13px] font-semibold">
+            <label className="flex min-w-0 flex-col gap-1.5 text-sm font-semibold">
               Odometer (km)
               <input
                 inputMode="numeric"
@@ -134,17 +134,17 @@ export function EntryForm({ book, form, place }: { book: DayBook; form: EntryFor
                 value={dieselKm}
                 onChange={(event) => setDieselKm(event.target.value)}
                 placeholder={odometers.get(busId)?.toString() ?? "e.g. 120500"}
-                className="h-12 w-full min-w-0 rounded-2xl bg-white px-4 text-base"
+                className="h-12 w-full min-w-0 rounded-lg bg-surface px-4 text-base"
               />
             </label>
-            <label className="flex min-w-0 flex-col gap-1.5 text-[13px] font-semibold">
+            <label className="flex min-w-0 flex-col gap-1.5 text-sm font-semibold">
               Litres
               <input
                 inputMode="decimal"
                 value={dieselLitres}
                 onChange={(event) => setDieselLitres(event.target.value)}
                 placeholder="e.g. 85"
-                className="h-12 w-full min-w-0 rounded-2xl bg-white px-4 text-base"
+                className="h-12 w-full min-w-0 rounded-lg bg-surface px-4 text-base"
               />
             </label>
           </div>
@@ -163,7 +163,7 @@ export function EntryForm({ book, form, place }: { book: DayBook; form: EntryFor
         </fieldset>
       ) : null}
 
-      <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
+      <label className="flex flex-col gap-1.5 text-sm font-semibold">
         Note (optional)
         <input
           value={note}
@@ -180,7 +180,7 @@ export function EntryForm({ book, form, place }: { book: DayBook; form: EntryFor
       <button
         type="submit"
         disabled={saving || loading || !busId || !canWrite}
-        className="h-14 rounded-2xl bg-brand px-4 text-base font-bold text-white disabled:opacity-50"
+        className="h-14 rounded-lg bg-brand px-4 text-base font-bold text-white disabled:opacity-50"
       >
         {org.viewOnly
           ? "View only until payment is received"
@@ -212,7 +212,7 @@ function KindButton({
       onClick={onClick}
       className={`h-11 rounded-full text-sm font-bold ${
         active
-          ? "bg-white text-ink shadow-[0_1px_3px_rgba(26,27,46,0.15)]"
+          ? "bg-surface text-ink shadow-[0_1px_3px_rgba(26,27,46,0.15)]"
           : "text-muted"
       }`}
     >

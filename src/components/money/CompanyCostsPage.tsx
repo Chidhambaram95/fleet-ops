@@ -55,7 +55,7 @@ function appliesLabel(choice: AppliesTo, buses: readonly Bus[]) {
 
 const CHIP: Record<CostAppliesTo, string> = {
   all: "bg-brand-soft text-brand",
-  type: "bg-[#e3f4ea] text-money-in",
+  type: "bg-success-bg text-money-in",
   buses: "bg-warn-bg text-warn-ink",
 };
 
@@ -105,7 +105,7 @@ function AppliesToPicker({
   const radio = (selected: boolean) => (
     <span
       aria-hidden="true"
-      className={`grid size-5 shrink-0 place-items-center rounded-full border-2 ${selected ? "border-brand bg-brand text-[11px] text-white" : "border-line bg-white"}`}
+      className={`grid size-5 shrink-0 place-items-center rounded-full border-2 ${selected ? "border-brand bg-brand text-xs text-white" : "border-line bg-surface"}`}
     >
       {selected ? "✓" : ""}
     </span>
@@ -123,7 +123,7 @@ function AppliesToPicker({
 
   return (
     <div ref={box} className="relative flex flex-col gap-1.5">
-      <span className="text-[13px] font-semibold">Applies to</span>
+      <span className="text-sm font-semibold">Applies to</span>
       <button
         type="button"
         aria-haspopup="listbox"
@@ -147,8 +147,8 @@ function AppliesToPicker({
         />
       ) : null}
       {open ? (
-        <div className="fixed inset-x-0 bottom-0 z-50 flex max-h-[80vh] flex-col gap-0.5 overflow-y-auto rounded-t-3xl bg-white p-3 pb-0 shadow-xl ring-1 ring-line md:absolute md:inset-x-0 md:top-full md:bottom-auto md:z-20 md:mt-1 md:max-h-[60vh] md:rounded-2xl md:p-2">
-          <span className="px-3 pt-1 pb-2 text-base font-extrabold md:hidden">Applies to</span>
+        <div className="fixed inset-x-0 bottom-0 z-50 flex max-h-[80vh] flex-col gap-0.5 overflow-y-auto rounded-t-2xl bg-surface p-3 pb-0 shadow-xl ring-1 ring-line md:absolute md:inset-x-0 md:top-full md:bottom-auto md:z-20 md:mt-1 md:max-h-[60vh] md:rounded-lg md:p-2">
+          <span className="px-3 pt-1 pb-2 text-base font-semibold md:hidden">Applies to</span>
           <button
             type="button"
             className={option(value.appliesTo === "all")}
@@ -199,7 +199,7 @@ function AppliesToPicker({
               <span className="text-xs text-muted">{MODULE_LABELS[bus.busType]}</span>
             </label>
           ))}
-          <div className="sticky bottom-0 -mx-3 mt-1 bg-white px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:-mx-2 md:px-2 md:pb-2">
+          <div className="sticky bottom-0 -mx-3 mt-1 bg-surface px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:-mx-2 md:px-2 md:pb-2">
             <button
               type="button"
               className="h-11 w-full rounded-full bg-brand text-sm font-bold text-white md:h-10 md:bg-canvas md:text-brand"

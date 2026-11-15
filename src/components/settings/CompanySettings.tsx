@@ -10,7 +10,7 @@ import { TyreLifeSettings } from "@/components/tyres/TyreLifeSettings";
 import { MODULE_TITLES } from "@domain/modules/modules";
 import { todayInIst } from "@domain/operations/totals";
 
-const field = "h-12 rounded-2xl bg-canvas px-4 text-base font-normal";
+const field = "h-12 rounded-lg bg-canvas px-4 text-base font-normal";
 
 export function CompanySettings({ profile, organizationId }: { profile: CompanyProfile; organizationId: string }) {
   const router = useRouter();
@@ -48,14 +48,14 @@ export function CompanySettings({ profile, organizationId }: { profile: CompanyP
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-extrabold">Company settings</h1>
+        <h1 className="text-2xl font-semibold">Company settings</h1>
         <p className="text-sm text-muted">
           The WhatsApp number is where the daily summary is sent.
         </p>
       </div>
 
       <form
-        className="flex flex-col gap-3 rounded-3xl bg-white p-4 md:p-5"
+        className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 md:p-5"
         onSubmit={(event) => {
           event.preventDefault();
           void save();
@@ -65,19 +65,19 @@ export function CompanySettings({ profile, organizationId }: { profile: CompanyP
           <p className="text-sm text-muted">The app is view-only until the payment is received.</p>
         ) : null}
         <fieldset disabled={viewOnly} className="flex flex-col gap-3 disabled:opacity-70">
-        <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
+        <label className="flex flex-col gap-1.5 text-sm font-semibold">
           Company name
           <input value={name} onChange={(e) => setName(e.target.value)} required className={field} />
         </label>
-        <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
+        <label className="flex flex-col gap-1.5 text-sm font-semibold">
           Town
           <input value={town} onChange={(e) => setTown(e.target.value)} className={field} />
         </label>
-        <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
+        <label className="flex flex-col gap-1.5 text-sm font-semibold">
           GSTIN (optional)
           <input value={gstin} onChange={(e) => setGstin(e.target.value)} className={field} />
         </label>
-        <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
+        <label className="flex flex-col gap-1.5 text-sm font-semibold">
           WhatsApp number for daily summaries
           <input
             value={whatsapp}
@@ -87,13 +87,13 @@ export function CompanySettings({ profile, organizationId }: { profile: CompanyP
             className={field}
           />
         </label>
-        <fieldset className="flex flex-col gap-1.5 text-[13px] font-semibold">
+        <fieldset className="flex flex-col gap-1.5 text-sm font-semibold">
           <legend className="mb-1">Bus types you run</legend>
           <div className="flex flex-wrap gap-2">
             {allowed.map((type) => (
               <label
                 key={type}
-                className={`flex min-h-11 items-center gap-2 rounded-2xl border-2 px-3 text-sm ${
+                className={`flex min-h-11 items-center gap-2 rounded-lg border-2 px-3 text-sm ${
                   enabled.includes(type) ? "border-brand bg-brand-soft" : "border-line"
                 }`}
               >
@@ -120,7 +120,7 @@ export function CompanySettings({ profile, organizationId }: { profile: CompanyP
           <button
             type="submit"
             disabled={busy}
-            className="h-12 rounded-2xl bg-brand px-4 text-[15px] font-bold text-white disabled:opacity-60"
+            className="h-12 rounded-lg bg-brand px-4 text-sm font-bold text-white disabled:opacity-60"
           >
             {busy ? "Saving…" : "Save"}
           </button>
@@ -134,7 +134,7 @@ export function CompanySettings({ profile, organizationId }: { profile: CompanyP
       <TyreLifeSettings organizationId={organizationId} viewOnly={viewOnly} />
 
       {profile.subscription ? (
-        <section className="flex flex-col gap-1 rounded-3xl bg-white p-4 text-sm md:p-5">
+        <section className="flex flex-col gap-1 rounded-xl border border-line bg-surface p-4 text-sm md:p-5">
           <p className="font-semibold">Fleet Ops plan</p>
           <p className="text-muted">
             {profile.subscription.planLabel}

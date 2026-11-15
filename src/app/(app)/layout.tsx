@@ -110,8 +110,8 @@ export default async function AppShellLayout({
   if (closedCompany) {
     return (
       <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-4 px-4">
-        <section className="flex flex-col gap-3 rounded-3xl bg-white p-6">
-          <h1 className="text-xl font-extrabold">{closedCompany} is closed</h1>
+        <section className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-6">
+          <h1 className="text-xl font-semibold">{closedCompany} is closed</h1>
           <p className="text-muted">
             This company&apos;s Fleet Ops account has been deactivated, so no one can open it. Please contact
             Fleet Ops to reopen it.
@@ -130,8 +130,8 @@ export default async function AppShellLayout({
     );
     return (
       <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-4 px-4">
-        <section className="flex flex-col gap-3 rounded-3xl bg-white p-6">
-          <h1 className="text-xl font-extrabold">You are not part of a company</h1>
+        <section className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-6">
+          <h1 className="text-xl font-semibold">You are not part of a company</h1>
           <p className="text-muted">
             This login is not linked to any company on Fleet Ops. Ask your company admin for a new invite
             link, or contact Fleet Ops.
@@ -140,7 +140,7 @@ export default async function AppShellLayout({
             href={contactUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex h-12 items-center justify-center rounded-2xl bg-[#1f8f4e] px-5 text-[15px] font-bold text-white"
+            className="flex h-12 items-center justify-center rounded-lg bg-whatsapp px-5 text-sm font-bold text-white"
           >
             Contact Fleet Ops on WhatsApp
           </a>

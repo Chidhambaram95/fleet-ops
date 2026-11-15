@@ -42,8 +42,8 @@ import {
 } from "./tripForm";
 import { friendlyErrorMessage } from "@domain/platform/errors";
 
-const FIELD = "h-12 w-full min-w-0 rounded-2xl bg-canvas px-4 text-base disabled:opacity-70";
-const LABEL = "flex min-w-0 flex-col gap-1.5 text-[13px] font-semibold";
+const FIELD = "h-12 w-full min-w-0 rounded-lg bg-canvas px-4 text-base disabled:opacity-70";
+const LABEL = "flex min-w-0 flex-col gap-1.5 text-sm font-semibold";
 
 type Step = "photo" | "reading" | "form";
 
@@ -308,22 +308,22 @@ export function TripEditor({
     return (
       <div className="mx-auto flex w-full max-w-xl flex-col gap-4">
         <BackLink href={tripsHref} />
-        <h1 className="text-2xl font-extrabold">New trip</h1>
+        <h1 className="text-2xl font-semibold">New trip</h1>
         <p className="text-muted">
           Take a clear photo of the whole trip sheet. The app reads it and fills the
           form for you to check.
         </p>
         {org.viewOnly ? (
-          <p className="rounded-3xl bg-white px-4 py-4 text-muted">
+          <p className="rounded-xl border border-line bg-surface px-4 py-4 text-muted">
             The app is view-only until the payment is received.
           </p>
         ) : (
           <>
-            <label className="flex min-h-40 cursor-pointer flex-col items-center justify-center gap-3 rounded-3xl bg-brand px-6 text-center text-white active:bg-brand-dark">
-              <span className="flex h-16 w-16 items-center justify-center rounded-3xl bg-brand-mid">
+            <label className="flex min-h-40 cursor-pointer flex-col items-center justify-center gap-3 rounded-xl bg-brand px-6 text-center text-white active:bg-brand-dark">
+              <span className="flex h-16 w-16 items-center justify-center rounded-xl bg-brand-mid">
                 <CameraIcon className="h-8 w-8" />
               </span>
-              <span className="text-xl font-extrabold">Photo of trip sheet</span>
+              <span className="text-xl font-semibold">Photo of trip sheet</span>
               <span className="text-sm text-brand-pale">Keep the sheet flat, in good light</span>
               <input
                 type="file"
@@ -339,7 +339,7 @@ export function TripEditor({
             <button
               type="button"
               onClick={() => setStep("form")}
-              className="h-14 rounded-3xl bg-white text-base font-bold text-brand"
+              className="h-14 rounded-xl border border-line bg-surface text-base font-bold text-brand"
             >
               Type it in instead
             </button>
@@ -354,9 +354,9 @@ export function TripEditor({
       <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-4 py-10 text-center">
         {photo.url ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={photo.url} alt="Trip sheet" className="max-h-72 rounded-3xl object-contain" />
+          <img src={photo.url} alt="Trip sheet" className="max-h-72 rounded-xl object-contain" />
         ) : null}
-        <p className="text-lg font-extrabold">Reading the trip sheet…</p>
+        <p className="text-lg font-semibold">Reading the trip sheet…</p>
         <p className="text-sm text-muted">This takes a few seconds.</p>
       </div>
     );
@@ -367,7 +367,7 @@ export function TripEditor({
       <BackLink href={tripsHref} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 flex-col">
-          <h1 className="text-2xl font-extrabold">
+          <h1 className="text-2xl font-semibold">
             {trip ? `Trip${trip.sheetNo ? ` #${trip.sheetNo}` : ""}` : "New trip"}
           </h1>
           {bus ? (
@@ -381,16 +381,16 @@ export function TripEditor({
       </div>
 
       {fromPhoto && !trip ? (
-        <p className="rounded-3xl bg-brand-soft px-4 py-3 text-sm font-semibold text-brand-dark">
+        <p className="rounded-xl bg-brand-soft px-4 py-3 text-sm font-semibold text-brand-dark">
           Filled from the photo. Check every number against the sheet before you approve.
         </p>
       ) : null}
       {org.viewOnly ? (
-        <p className="rounded-3xl bg-white px-4 py-3 text-sm text-muted">
+        <p className="rounded-xl border border-line bg-surface px-4 py-3 text-sm text-muted">
           The app is view-only until the payment is received. This trip can be read but not changed.
         </p>
       ) : approved ? (
-        <p className="rounded-3xl bg-white px-4 py-3 text-sm text-muted">
+        <p className="rounded-xl border border-line bg-surface px-4 py-3 text-sm text-muted">
           {isAdmin
             ? "This trip is approved and counts in reports. As admin you can still correct it."
             : "This trip is approved and counts in reports. Only an admin can change it now."}
@@ -413,20 +413,20 @@ export function TripEditor({
               href={photo.url}
               target="_blank"
               rel="noreferrer"
-              className="block overflow-hidden rounded-3xl bg-white p-2"
+              className="block overflow-hidden rounded-xl border border-line bg-surface p-2"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={photo.url}
                 alt="Trip sheet photo"
-                className="max-h-56 w-full rounded-2xl object-contain lg:max-h-[60vh]"
+                className="max-h-56 w-full rounded-lg object-contain lg:max-h-[60vh]"
               />
               <span className="block pt-2 text-center text-xs font-semibold text-brand">
                 Tap to open full size
               </span>
             </a>
           ) : !locked ? (
-            <label className="flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-3xl bg-white px-4 text-sm font-bold text-brand">
+            <label className="flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-xl border border-line bg-surface px-4 text-sm font-bold text-brand">
               <CameraIcon className="h-5 w-5" />
               Add the trip sheet photo
               <input
@@ -446,9 +446,9 @@ export function TripEditor({
 
           <ChecksCard checks={checks} />
 
-          <section className="flex flex-col gap-3 rounded-3xl bg-brand p-5 text-white">
-            <span className="text-[13px] font-semibold text-brand-pale">Advance settlement</span>
-            <span className="text-[28px] font-extrabold leading-tight">
+          <section className="flex flex-col gap-3 rounded-xl bg-brand p-5 text-white">
+            <span className="text-sm font-semibold text-brand-pale">Advance settlement</span>
+            <span className="text-2xl font-semibold leading-tight">
               {settlementText(totals.balanceInr)}
             </span>
             <div className="grid grid-cols-2 gap-2.5 text-sm">
@@ -468,8 +468,8 @@ export function TripEditor({
 
         <fieldset disabled={locked || saving} className={`flex min-w-0 flex-col gap-4 ${locked ? "opacity-80" : ""}`}>
           {booking ? (
-            <section className="flex flex-col gap-1 rounded-3xl bg-brand-soft p-4 text-sm">
-              <span className="font-extrabold text-brand">
+            <section className="flex flex-col gap-1 rounded-xl bg-brand-soft p-4 text-sm">
+              <span className="font-semibold text-brand">
                 Tour for {booking.booking.customerName}
               </span>
               <span className="text-muted">
@@ -602,7 +602,7 @@ export function TripEditor({
                           set("diesel", form.diesel.map((item, i) => (i === index ? { ...item, paidBy } : item)))
                         }
                         className={`h-10 min-h-10 rounded-full px-4 text-sm font-bold ${
-                          row.paidBy === paidBy ? "bg-white text-ink shadow-[0_1px_3px_rgba(26,27,46,0.15)]" : "text-muted"
+                          row.paidBy === paidBy ? "bg-surface text-ink shadow-[0_1px_3px_rgba(26,27,46,0.15)]" : "text-muted"
                         }`}
                       >
                         {paidBy === "cash" ? "Cash" : "Credit"}
@@ -704,13 +704,13 @@ export function TripEditor({
       </div>
 
       {error ? (
-        <p role="alert" className="rounded-3xl bg-white px-4 py-3 text-sm font-semibold text-money-out">
+        <p role="alert" className="rounded-xl border border-line bg-surface px-4 py-3 text-sm font-semibold text-money-out">
           {error}
         </p>
       ) : null}
 
       {confirmApprove ? (
-        <div className="flex flex-col gap-3 rounded-3xl bg-warn-bg p-4">
+        <div className="flex flex-col gap-3 rounded-xl bg-warn-bg p-4">
           <p className="font-bold text-warn-ink">
             {checks.length === 1 ? "1 thing needs" : `${checks.length} things need`} checking.
             Approve anyway?
@@ -720,14 +720,14 @@ export function TripEditor({
               type="button"
               disabled={saving}
               onClick={() => void save(true)}
-              className="h-12 rounded-2xl bg-brand px-5 font-bold text-white disabled:opacity-50"
+              className="h-12 rounded-lg bg-brand px-5 font-bold text-white disabled:opacity-50"
             >
               Yes, approve
             </button>
             <button
               type="button"
               onClick={() => setConfirmApprove(false)}
-              className="h-12 rounded-2xl bg-white px-5 font-bold text-ink"
+              className="h-12 rounded-lg bg-surface px-5 font-bold text-ink"
             >
               Go back and check
             </button>
@@ -741,7 +741,7 @@ export function TripEditor({
             type="button"
             disabled={saving}
             onClick={() => void save(true)}
-            className="h-14 flex-1 basis-48 rounded-2xl bg-brand px-5 text-base font-bold text-white disabled:opacity-50"
+            className="h-14 flex-1 basis-48 rounded-lg bg-brand px-5 text-base font-bold text-white disabled:opacity-50"
           >
             {saving ? "Saving…" : "Approve trip sheet"}
           </button>
@@ -751,7 +751,7 @@ export function TripEditor({
             type="button"
             disabled={saving}
             onClick={() => void save(false)}
-            className="h-14 flex-1 basis-40 rounded-2xl bg-white px-5 text-base font-bold text-brand disabled:opacity-50"
+            className="h-14 flex-1 basis-40 rounded-lg bg-surface px-5 text-base font-bold text-brand disabled:opacity-50"
           >
             {approved ? (saving ? "Saving…" : "Save changes") : "Save as draft"}
           </button>
@@ -759,7 +759,7 @@ export function TripEditor({
         <button
           type="button"
           onClick={sendWhatsApp}
-          className="h-14 flex-1 basis-40 rounded-2xl bg-white px-5 text-base font-bold text-money-in"
+          className="h-14 flex-1 basis-40 rounded-lg bg-surface px-5 text-base font-bold text-money-in"
         >
           Send on WhatsApp
         </button>
@@ -795,7 +795,7 @@ function BackLink({ href }: { href: string }) {
 
 export function StatusBadge({ approved }: { approved: boolean }) {
   return approved ? (
-    <span className="inline-flex min-h-8 shrink-0 items-center whitespace-nowrap rounded-full bg-[#E3F2EA] px-3 text-xs font-bold text-money-in">
+    <span className="inline-flex min-h-8 shrink-0 items-center whitespace-nowrap rounded-full bg-success-bg px-3 text-xs font-bold text-money-in">
       Approved
     </span>
   ) : (
@@ -808,20 +808,20 @@ export function StatusBadge({ approved }: { approved: boolean }) {
 function ChecksCard({ checks }: { checks: { id: string; message: string }[] }) {
   if (checks.length === 0) {
     return (
-      <p className="rounded-3xl bg-white px-4 py-3 text-sm font-semibold text-money-in">
+      <p className="rounded-xl border border-line bg-surface px-4 py-3 text-sm font-semibold text-money-in">
         Everything adds up.
       </p>
     );
   }
   return (
-    <section className="flex flex-col gap-2 rounded-3xl bg-warn-bg p-4">
-      <h2 className="flex items-center gap-2 font-extrabold text-warn-ink">
-        <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-[#FFE2B3] px-1.5 text-xs">
+    <section className="flex flex-col gap-2 rounded-xl bg-warn-bg p-4">
+      <h2 className="flex items-center gap-2 font-semibold text-warn-ink">
+        <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-warn-bg px-1.5 text-xs">
           {checks.length}
         </span>
         Needs checking
       </h2>
-      <ul className="flex flex-col gap-1.5 text-sm text-[#6B4A12]">
+      <ul className="flex flex-col gap-1.5 text-sm text-warn-ink">
         {checks.map((check) => (
           <li key={check.id}>• {check.message}</li>
         ))}
@@ -832,7 +832,7 @@ function ChecksCard({ checks }: { checks: { id: string; message: string }[] }) {
 
 function Figure({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-brand-mid px-3 py-2.5">
+    <div className="rounded-lg bg-brand-mid px-3 py-2.5">
       <div className="text-xs text-brand-pale">{label}</div>
       <div className="font-bold">{value}</div>
     </div>
@@ -841,8 +841,8 @@ function Figure({ label, value }: { label: string; value: string }) {
 
 function Card({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-3 rounded-3xl bg-white p-4 md:p-5">
-      <h2 className="font-extrabold">{title}</h2>
+    <section className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 md:p-5">
+      <h2 className="font-semibold">{title}</h2>
       {children}
     </section>
   );
@@ -853,7 +853,7 @@ function AddButton({ onClick, children }: { onClick: () => void; children: React
     <button
       type="button"
       onClick={onClick}
-      className="flex h-12 items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-brand-pale text-sm font-bold text-brand"
+      className="flex h-12 items-center justify-center gap-2 rounded-lg border-2 border-dashed border-brand-pale text-sm font-bold text-brand"
     >
       + {children}
     </button>
@@ -866,7 +866,7 @@ function RemoveButton({ label, onClick }: { label: string; onClick: () => void }
       type="button"
       aria-label={label}
       onClick={onClick}
-      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-lg text-muted hover:bg-canvas"
+      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg text-lg text-muted hover:bg-canvas"
     >
       ✕
     </button>

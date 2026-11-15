@@ -21,7 +21,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
     companies = await listCompanies(supabase);
   } catch (error) {
     return (
-      <p className="rounded-2xl bg-white p-4 text-red-700">
+      <p className="rounded-lg bg-surface p-4 text-red-700">
         {error instanceof Error ? error.message : "Could not load this company."} Run the 0013 migration
         in the Supabase SQL editor first.
       </p>
@@ -42,13 +42,13 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="flex flex-col gap-5">
-      <Link href="/admin/companies" className="self-start text-sm font-bold text-[#3A3FB8]">
+      <Link href="/admin/companies" className="self-start text-sm font-bold text-brand">
         ‹ All companies
       </Link>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold">{company.name}</h1>
-          <p className="text-sm text-[#5B5E7A]">
+          <h1 className="text-2xl font-semibold">{company.name}</h1>
+          <p className="text-sm text-muted">
             {company.busCount} buses{company.maxBuses != null ? ` of ${company.maxBuses} allowed` : ""} ·{" "}
             {members.length} people
             {company.deactivatedAt ? " · Deactivated" : ""}
@@ -56,7 +56,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
         </div>
         <Link
           href={`/admin/payments?org=${company.organizationId}`}
-          className="flex min-h-11 items-center rounded-2xl bg-white px-4 text-sm font-bold text-[#3A3FB8]"
+          className="flex min-h-11 items-center rounded-lg bg-surface px-4 text-sm font-bold text-brand"
         >
           Payments ›
         </Link>
@@ -65,26 +65,26 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
       <section className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-3">
         {onTrial ? (
           <>
-            <div className="flex flex-col gap-0.5 rounded-[18px] bg-white p-3.5">
-              <span className="text-xs text-[#5B5E7A]">Trial started</span>
-              <span className="font-extrabold">{company.trialStartsOn ? shortDate(company.trialStartsOn) : "—"}</span>
+            <div className="flex flex-col gap-0.5 rounded-xl border border-line bg-surface p-3.5">
+              <span className="text-xs text-muted">Trial started</span>
+              <span className="font-semibold">{company.trialStartsOn ? shortDate(company.trialStartsOn) : "—"}</span>
             </div>
-            <div className="flex flex-col gap-0.5 rounded-[18px] bg-white p-3.5">
-              <span className="text-xs text-[#5B5E7A]">Trial ends</span>
-              <span className="font-extrabold">
+            <div className="flex flex-col gap-0.5 rounded-xl border border-line bg-surface p-3.5">
+              <span className="text-xs text-muted">Trial ends</span>
+              <span className="font-semibold">
                 {company.subscription.trialEndsOn ? shortDate(company.subscription.trialEndsOn) : "—"}
               </span>
             </div>
           </>
         ) : (
-          <div className="flex flex-col gap-0.5 rounded-[18px] bg-white p-3.5">
-            <span className="text-xs text-[#5B5E7A]">Next payment due</span>
-            <span className="font-extrabold">{status.dueOn ? shortDate(status.dueOn) : "—"}</span>
+          <div className="flex flex-col gap-0.5 rounded-xl border border-line bg-surface p-3.5">
+            <span className="text-xs text-muted">Next payment due</span>
+            <span className="font-semibold">{status.dueOn ? shortDate(status.dueOn) : "—"}</span>
           </div>
         )}
-        <div className="flex flex-col gap-0.5 rounded-[18px] bg-white p-3.5">
-          <span className="text-xs text-[#5B5E7A]">Plan</span>
-          <span className="font-extrabold">
+        <div className="flex flex-col gap-0.5 rounded-xl border border-line bg-surface p-3.5">
+          <span className="text-xs text-muted">Plan</span>
+          <span className="font-semibold">
             {company.subscription.amountInr
               ? `₹${company.subscription.amountInr.toLocaleString("en-IN")} / ${company.subscription.billingPeriod}`
               : "Not set"}

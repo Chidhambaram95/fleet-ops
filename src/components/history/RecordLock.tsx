@@ -153,7 +153,7 @@ export function RecordLock({
           <button
             type="button"
             onClick={() => setStep("close")}
-            className="min-h-10 rounded-full bg-white px-4 font-bold text-muted"
+            className="min-h-10 rounded-full bg-surface px-4 font-bold text-muted"
           >
             Close this day
           </button>
@@ -166,7 +166,7 @@ export function RecordLock({
   return (
     <section
       aria-label={`This ${what} is closed`}
-      className={`flex flex-col gap-2 rounded-2xl px-4 py-3 text-sm ${open ? "bg-brand-soft text-brand-dark" : "bg-[#FFF4E0] text-[#7A4B00]"}`}
+      className={`flex flex-col gap-2 rounded-lg px-4 py-3 text-sm ${open ? "bg-brand-soft text-brand-dark" : "bg-warn-bg text-warn-ink"}`}
     >
       {open ? (
         <p className="font-semibold">
@@ -182,13 +182,13 @@ export function RecordLock({
       {!open && manager ? (
         step === "open" ? (
           <div className="flex flex-col gap-2">
-            <label className="flex flex-col gap-1 text-[13px] font-semibold">
+            <label className="flex flex-col gap-1 text-sm font-semibold">
               Why does it need a change?
               <input
                 value={reason}
                 onChange={(event) => setReason(event.target.value)}
                 placeholder="Diesel bill was entered twice"
-                className="h-11 rounded-xl bg-white px-3 text-base font-normal text-ink"
+                className="h-11 rounded-xl bg-surface px-3 text-base font-normal text-ink"
               />
             </label>
             <div className="flex gap-2">
@@ -209,7 +209,7 @@ export function RecordLock({
           <button
             type="button"
             onClick={() => setStep("open")}
-            className="min-h-10 self-start rounded-full bg-white px-4 font-bold text-ink"
+            className="min-h-10 self-start rounded-full bg-surface px-4 font-bold text-ink"
           >
             Change with a comment
           </button>

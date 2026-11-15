@@ -63,13 +63,13 @@ export function TripsList({ organizationId, module }: { organizationId: string; 
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold">Trip sheets</h1>
+          <h1 className="text-2xl font-semibold">Trip sheets</h1>
           <p className="text-sm text-muted">One trip sheet is one round trip.</p>
         </div>
         {!org.viewOnly ? (
           <Link
             href={`${moduleHref(module, "trips")}/new`}
-            className="flex min-h-12 items-center gap-2 rounded-2xl bg-brand px-5 text-[15px] font-bold text-white"
+            className="flex min-h-12 items-center gap-2 rounded-lg bg-brand px-5 text-sm font-bold text-white"
           >
             <span aria-hidden="true" className="text-xl leading-none">+</span>
             New trip sheet
@@ -77,7 +77,7 @@ export function TripsList({ organizationId, module }: { organizationId: string; 
         ) : null}
       </div>
 
-      <div className="grid grid-cols-2 rounded-full bg-white p-1">
+      <div className="grid grid-cols-2 rounded-full bg-surface p-1">
         {(["draft", "approved"] as const).map((value) => (
           <button
             key={value}
@@ -97,7 +97,7 @@ export function TripsList({ organizationId, module }: { organizationId: string; 
       {loading ? <p className="text-sm text-muted">Loading trips…</p> : null}
 
       {!loading && shown.length === 0 && !error ? (
-        <p className="rounded-3xl bg-white px-4 py-6 text-center text-muted">
+        <p className="rounded-xl border border-line bg-surface px-4 py-6 text-center text-muted">
           {filter === "draft"
             ? "Nothing to approve. Tap “New trip sheet” when a bus comes back."
             : "No approved trips yet."}
@@ -113,11 +113,11 @@ export function TripsList({ organizationId, module }: { organizationId: string; 
             <Link
               key={trip.id}
               href={`${moduleHref(module, "trips")}/${trip.id}`}
-              className="flex flex-col gap-2 rounded-3xl bg-white p-4 hover:bg-white/80"
+              className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4 hover:bg-surface/80"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="truncate font-extrabold">
+                  <p className="truncate font-semibold">
                     {bus?.registrationNumber ?? "Bus removed"}
                     {trip.sheetNo ? (
                       <span className="font-semibold text-muted"> · Sheet {trip.sheetNo}</span>
@@ -127,7 +127,7 @@ export function TripsList({ organizationId, module }: { organizationId: string; 
                 </div>
                 <StatusBadge approved={trip.status === "approved"} />
               </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-muted">
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
                 {trip.startedAt ? <span>{tripDateTime(trip.startedAt)}</span> : null}
                 {km != null ? <span>{km.toLocaleString("en-IN")} km</span> : null}
                 {trip.dieselLitres ? (

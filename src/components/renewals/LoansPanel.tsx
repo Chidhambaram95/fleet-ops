@@ -79,7 +79,7 @@ const STATUS_CLASS: Record<EmiStatus | "overdue" | "soon", string> = {
   overdue: "bg-money-out text-white",
   missed: "bg-money-out text-white",
   funds_added: "bg-warn-bg text-money-out",
-  cleared: "bg-[#e3f4ea] text-money-in",
+  cleared: "bg-success-bg text-money-in",
 };
 
 export const ALERT_CLASS: Record<EmiAlert["kind"], string> = {
@@ -264,7 +264,7 @@ export function LoansPanel({
   const loanFormCard = loanForm ? (
     <Card title={loanForm.id ? "Change loan" : "Add a loan"}>
       <fieldset className="flex flex-col gap-1.5">
-        <legend className="mb-1.5 text-[13px] font-semibold">Buses on this loan</legend>
+        <legend className="mb-1.5 text-sm font-semibold">Buses on this loan</legend>
         <div className="flex flex-wrap gap-2">
           {myBuses.map((bus) => {
             const on = loanForm.busIds.includes(bus.id);

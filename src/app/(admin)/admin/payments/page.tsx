@@ -34,7 +34,7 @@ export default async function PaymentsPage({
     companies = await listCompanies(supabase);
   } catch (error) {
     return (
-      <p className="rounded-2xl bg-white p-4 text-red-700">
+      <p className="rounded-lg bg-surface p-4 text-red-700">
         {error instanceof Error ? error.message : "Could not load payments."}
       </p>
     );
@@ -50,19 +50,19 @@ export default async function PaymentsPage({
   const today = todayInIst();
   const status = selected ? subscriptionStatus(selected.subscription, today) : null;
 
-  const tile = "flex flex-col gap-0.5 rounded-[18px] bg-[#F3F4FB] p-3.5";
+  const tile = "flex flex-col gap-0.5 rounded-xl bg-canvas p-3.5";
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-extrabold">Payments</h1>
-        <p className="text-sm text-[#5B5E7A]">
+        <h1 className="text-2xl font-semibold">Payments</h1>
+        <p className="text-sm text-muted">
           Every company pays into the one Fleet Ops account below. Each company has its own plan amount and
           due date, so this tracks who has paid and who is due. A company turns view-only 15 days after an
           unpaid due date.
         </p>
       </div>
       <div className="flex flex-wrap items-start gap-5">
-        <nav aria-label="Companies" className="flex w-full flex-col gap-1 rounded-3xl bg-white p-2.5 sm:max-w-xs">
+        <nav aria-label="Companies" className="flex w-full flex-col gap-1 rounded-xl border border-line bg-surface p-2.5 sm:max-w-xs">
           {companies.map((company) => {
             const s = subscriptionStatus(company.subscription, today);
             const active = company.organizationId === selected?.organizationId;
@@ -70,11 +70,11 @@ export default async function PaymentsPage({
               <Link
                 key={company.organizationId}
                 href={`/admin/payments?org=${company.organizationId}`}
-                className={`flex items-center justify-between gap-2 rounded-2xl p-3 ${active ? "bg-[#E6E7FA]" : ""}`}
+                className={`flex items-center justify-between gap-2 rounded-lg p-3 ${active ? "bg-brand-soft" : ""}`}
               >
                 <span className="flex min-w-0 flex-col">
                   <span className="truncate font-bold">{company.name}</span>
-                  <span className="text-xs text-[#5B5E7A]">
+                  <span className="text-xs text-muted">
                     {company.deactivatedAt
                       ? "Deactivated"
                       : s.dueOn
@@ -83,28 +83,28 @@ export default async function PaymentsPage({
                   </span>
                 </span>
                 {s.state === "overdue" || s.state === "view_only" ? (
-                  <span className="rounded-full bg-[#FDECEA] px-2.5 py-1 text-xs font-bold text-[#A3321C]">Overdue</span>
+                  <span className="rounded-full bg-danger-bg px-2.5 py-1 text-xs font-bold text-money-out">Overdue</span>
                 ) : s.state === "due_soon" ? (
-                  <span className="rounded-full bg-[#FFF5E5] px-2.5 py-1 text-xs font-bold text-[#8A5300]">Due soon</span>
+                  <span className="rounded-full bg-warn-bg px-2.5 py-1 text-xs font-bold text-warn-ink">Due soon</span>
                 ) : null}
               </Link>
             );
           })}
-          {companies.length === 0 ? <p className="p-3 text-sm text-[#5B5E7A]">No companies yet.</p> : null}
+          {companies.length === 0 ? <p className="p-3 text-sm text-muted">No companies yet.</p> : null}
         </nav>
 
         <div className="flex min-w-0 flex-1 basis-[460px] flex-col gap-4">
           {selected && status ? (
-            <section className="flex flex-col gap-4 rounded-3xl bg-white p-5">
+            <section className="flex flex-col gap-4 rounded-xl border border-line bg-surface p-5">
               <div>
-                <h2 className="text-xl font-extrabold">{selected.name}</h2>
-                <p className="text-sm text-[#5B5E7A]">Fleet Ops subscription</p>
+                <h2 className="text-xl font-semibold">{selected.name}</h2>
+                <p className="text-sm text-muted">Fleet Ops subscription</p>
               </div>
               <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3">
-                <div className={tile}><span className="text-xs text-[#5B5E7A]">Plan</span><span className="font-extrabold">{selected.subscription.planLabel}</span></div>
+                <div className={tile}><span className="text-xs text-muted">Plan</span><span className="font-semibold">{selected.subscription.planLabel}</span></div>
                 <div className={tile}>
-                  <span className="text-xs text-[#5B5E7A]">Amount</span>
-                  <span className="font-extrabold">
+                  <span className="text-xs text-muted">Amount</span>
+                  <span className="font-semibold">
                     {selected.subscription.amountInr
                       ? `₹${selected.subscription.amountInr.toLocaleString("en-IN")} / ${selected.subscription.billingPeriod}`
                       : "Not set"}
@@ -113,24 +113,24 @@ export default async function PaymentsPage({
                 {/* Trial dates show only until the first payment, then they are gone. */}
                 {status.onTrial ? (
                   <div className={tile}>
-                    <span className="text-xs text-[#5B5E7A]">Trial</span>
-                    <span className="font-extrabold">
+                    <span className="text-xs text-muted">Trial</span>
+                    <span className="font-semibold">
                       {selected.trialStartsOn ? shortDate(selected.trialStartsOn) : "—"} to{" "}
                       {selected.subscription.trialEndsOn ? shortDate(selected.subscription.trialEndsOn) : "—"}
                     </span>
                   </div>
                 ) : null}
                 <div className={tile}>
-                  <span className="text-xs text-[#5B5E7A]">{status.onTrial ? "Trial ends" : "Next due"}</span>
-                  <span className="font-extrabold">
+                  <span className="text-xs text-muted">{status.onTrial ? "Trial ends" : "Next due"}</span>
+                  <span className="font-semibold">
                     {status.dueOn && status.daysLeft !== null
                       ? `${shortDate(status.dueOn)} · ${status.daysLeft >= 0 ? `in ${status.daysLeft} days` : `${-status.daysLeft} days ago`}`
                       : "—"}
                   </span>
                 </div>
                 <div className={tile}>
-                  <span className="text-xs text-[#5B5E7A]">What they see now</span>
-                  <span className="font-extrabold">
+                  <span className="text-xs text-muted">What they see now</span>
+                  <span className="font-semibold">
                     {{ ok: "Nothing", due_soon: "Gentle banner", overdue: "Overdue popup", view_only: "View-only app" }[status.state]}
                   </span>
                 </div>
@@ -146,11 +146,11 @@ export default async function PaymentsPage({
           ) : null}
 
           {selected ? (
-            <section className="overflow-x-auto rounded-3xl bg-white px-5 pb-3 pt-2">
-              <h2 className="py-3 text-base font-extrabold">Payment history</h2>
+            <section className="overflow-x-auto rounded-xl border border-line bg-surface px-5 pb-3 pt-2">
+              <h2 className="py-3 text-base font-semibold">Payment history</h2>
               <table className="w-full min-w-[520px] border-collapse text-sm">
                 <thead>
-                  <tr className="text-left text-[#5B5E7A]">
+                  <tr className="text-left text-muted">
                     <th className="py-2 pr-2 font-semibold">Paid on</th>
                     <th className="py-2 pr-2 font-semibold">Paid until</th>
                     <th className="py-2 pr-2 font-semibold">Mode</th>
@@ -160,33 +160,33 @@ export default async function PaymentsPage({
                 </thead>
                 <tbody>
                   {payments.map((p) => (
-                    <tr key={p.id} className="border-t border-[#EEEFF7]">
+                    <tr key={p.id} className="border-t border-line">
                       <td className="py-3 pr-2">{p.paidOn}</td>
                       <td className="py-3 pr-2">{p.paidUntil}</td>
                       <td className="py-3 pr-2">{MODE_LABELS[p.mode] ?? p.mode}</td>
-                      <td className="py-3 pr-2 text-[#5B5E7A]">{p.reference || "—"}</td>
+                      <td className="py-3 pr-2 text-muted">{p.reference || "—"}</td>
                       <td className="py-3 text-right font-bold">₹{p.amountInr.toLocaleString("en-IN")}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              {payments.length === 0 ? <p className="py-3 text-sm text-[#5B5E7A]">No payments recorded yet.</p> : null}
+              {payments.length === 0 ? <p className="py-3 text-sm text-muted">No payments recorded yet.</p> : null}
             </section>
           ) : null}
 
-          <section className="overflow-x-auto rounded-3xl bg-white px-5 pb-3 pt-2">
-            <h2 className="py-3 text-base font-extrabold">
+          <section className="overflow-x-auto rounded-xl border border-line bg-surface px-5 pb-3 pt-2">
+            <h2 className="py-3 text-base font-semibold">
               All payments received
               {allPayments.length ? ` · ₹${allPaymentsTotal.toLocaleString("en-IN")}` : ""}
             </h2>
             {allPayments.length === LISTED_PAYMENTS ? (
-              <p className="pb-2 text-xs text-[#5B5E7A]">
+              <p className="pb-2 text-xs text-muted">
                 The total counts every payment. The list shows the latest {LISTED_PAYMENTS}.
               </p>
             ) : null}
             <table className="w-full min-w-[480px] border-collapse text-sm">
               <thead>
-                <tr className="text-left text-[#5B5E7A]">
+                <tr className="text-left text-muted">
                   <th className="py-2 pr-2 font-semibold">Paid on</th>
                   <th className="py-2 pr-2 font-semibold">Company</th>
                   <th className="py-2 pr-2 font-semibold">Mode</th>
@@ -195,7 +195,7 @@ export default async function PaymentsPage({
               </thead>
               <tbody>
                 {allPayments.map((p) => (
-                  <tr key={p.id} className="border-t border-[#EEEFF7]">
+                  <tr key={p.id} className="border-t border-line">
                     <td className="py-3 pr-2">{p.paidOn}</td>
                     <td className="py-3 pr-2">{companyName(p.organizationId)}</td>
                     <td className="py-3 pr-2">{MODE_LABELS[p.mode] ?? p.mode}</td>
@@ -204,7 +204,7 @@ export default async function PaymentsPage({
                 ))}
               </tbody>
             </table>
-            {allPayments.length === 0 ? <p className="py-3 text-sm text-[#5B5E7A]">No payments recorded yet.</p> : null}
+            {allPayments.length === 0 ? <p className="py-3 text-sm text-muted">No payments recorded yet.</p> : null}
           </section>
 
           <PaymentDetailsForm initial={details} />

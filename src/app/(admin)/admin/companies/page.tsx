@@ -10,10 +10,10 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 export const metadata = { title: "Companies · Fleet Ops" };
 
 const badge: Record<string, string> = {
-  ok: "bg-[#E3F4EA] text-[#1E6B45]",
-  due_soon: "bg-[#FFF5E5] text-[#8A5300]",
-  overdue: "bg-[#FDECEA] text-[#A3321C]",
-  view_only: "bg-[#1A1B2E] text-white",
+  ok: "bg-success-bg text-money-in",
+  due_soon: "bg-warn-bg text-warn-ink",
+  overdue: "bg-danger-bg text-money-out",
+  view_only: "bg-ink text-white",
 };
 
 export default async function CompaniesPage() {
@@ -23,7 +23,7 @@ export default async function CompaniesPage() {
     companies = await listCompanies(supabase);
   } catch (error) {
     return (
-      <p className="rounded-2xl bg-white p-4 text-red-700">
+      <p className="rounded-lg bg-surface p-4 text-red-700">
         {error instanceof Error ? error.message : "Could not load companies."} Run the
         0008 migration in the Supabase SQL editor first.
       </p>
@@ -49,16 +49,16 @@ export default async function CompaniesPage() {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-extrabold">Companies</h1>
-        <p className="text-sm text-[#5B5E7A]">
+        <h1 className="text-2xl font-semibold">Companies</h1>
+        <p className="text-sm text-muted">
           {companies.length} {companies.length === 1 ? "company" : "companies"} on Fleet Ops
         </p>
       </div>
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {tiles.map((tile) => (
-          <div key={tile.label} className="flex flex-col gap-0.5 rounded-[18px] bg-white p-3.5">
-            <span className="text-xs text-[#5B5E7A]">{tile.label}</span>
-            <span className="text-xl font-extrabold">{tile.value}</span>
+          <div key={tile.label} className="flex flex-col gap-0.5 rounded-xl border border-line bg-surface p-3.5">
+            <span className="text-xs text-muted">{tile.label}</span>
+            <span className="text-xl font-semibold">{tile.value}</span>
           </div>
         ))}
       </section>
@@ -78,26 +78,26 @@ export default async function CompaniesPage() {
                   ? "Overdue"
                   : "View-only";
           return (
-            <article key={company.organizationId} className="relative flex flex-col gap-3 rounded-3xl bg-white p-4 hover:ring-2 hover:ring-[#D9DAF6]">
+            <article key={company.organizationId} className="relative flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 hover:ring-2 hover:ring-brand-pale">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <h2 className="truncate font-extrabold">
+                  <h2 className="truncate font-semibold">
                     {/* The whole card opens the company; the stretched link covers it. */}
-                    <Link href={`/admin/companies/${company.organizationId}`} className="after:absolute after:inset-0 after:rounded-3xl">
+                    <Link href={`/admin/companies/${company.organizationId}`} className="after:absolute after:inset-0 after:rounded-xl">
                       {company.name}
                     </Link>
                   </h2>
-                  <p className="text-xs text-[#5B5E7A]">
+                  <p className="text-xs text-muted">
                     {[company.town, company.busTypes.map((t) => BUS_TYPE_LABELS[t]).join(", ")]
                       .filter(Boolean)
                       .join(" · ")}
                   </p>
                 </div>
-                <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${company.deactivatedAt ? "bg-[#EEEFF7] text-[#5B5E7A]" : badge[status.state]}`}>
+                <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${company.deactivatedAt ? "bg-line text-muted" : badge[status.state]}`}>
                   {label}
                 </span>
               </div>
-              <p className="text-sm text-[#5B5E7A]">
+              <p className="text-sm text-muted">
                 {company.busCount}
                 {company.maxBuses != null ? ` of ${company.maxBuses}` : ""} buses · {company.memberCount} people
                 {company.adminName ? ` · Admin ${company.adminName}` : ""}
@@ -110,8 +110,8 @@ export default async function CompaniesPage() {
                   : `Next due ${shortDate(company.subscription.nextDueOn)}`}
               </p>
               {company.pendingInviteToken ? (
-                <div className="relative z-10 flex flex-col gap-1.5 rounded-2xl bg-[#F3F4FB] p-3">
-                  <span className="text-xs font-semibold text-[#5B5E7A]">
+                <div className="relative z-10 flex flex-col gap-1.5 rounded-lg bg-canvas p-3">
+                  <span className="text-xs font-semibold text-muted">
                     Admin has not joined yet
                   </span>
                   <InviteShare
@@ -122,7 +122,7 @@ export default async function CompaniesPage() {
                   />
                 </div>
               ) : null}
-              <span className="text-sm font-bold text-[#3A3FB8]">Open company ›</span>
+              <span className="text-sm font-bold text-brand">Open company ›</span>
             </article>
           );
         })}

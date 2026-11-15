@@ -15,7 +15,7 @@ import type { Bus } from "@domain/operations/types";
 import { friendlyErrorMessage } from "@domain/platform/errors";
 import { shortDay } from "@/components/ui/kit";
 
-const inputClass = "h-12 rounded-2xl bg-canvas px-4 text-base font-normal";
+const inputClass = "h-12 rounded-lg bg-canvas px-4 text-base font-normal";
 const REASON_LABELS = new Map(OFF_ROAD_REASONS.map((item) => [item.id, item.label]));
 
 /**
@@ -99,7 +99,7 @@ export function OffRoadDays({
   if (!buses.length) return null;
 
   return (
-    <section className="flex flex-col gap-3 rounded-3xl bg-white p-4 md:p-5">
+    <section className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 md:p-5">
       <div>
         <h2 className="font-bold">Days off the road</h2>
         <p className="text-sm text-muted">
@@ -124,7 +124,7 @@ export function OffRoadDays({
             ))}
           </select>
           <div className="grid grid-cols-2 gap-2">
-            <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
+            <label className="flex flex-col gap-1.5 text-sm font-semibold">
               From
               <input
                 type="date"
@@ -137,7 +137,7 @@ export function OffRoadDays({
                 className={inputClass}
               />
             </label>
-            <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
+            <label className="flex flex-col gap-1.5 text-sm font-semibold">
               To
               <input
                 type="date"
@@ -171,7 +171,7 @@ export function OffRoadDays({
           <button
             type="submit"
             disabled={saving || !from}
-            className="h-12 rounded-2xl bg-brand px-4 text-[15px] font-bold text-white disabled:opacity-60"
+            className="h-12 rounded-lg bg-brand px-4 text-sm font-bold text-white disabled:opacity-60"
           >
             {saving ? "Saving…" : "Mark off road"}
           </button>

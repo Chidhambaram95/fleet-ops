@@ -18,7 +18,7 @@ import {
 } from "@data/roadTax/repository";
 
 const inputClass =
-  "h-12 rounded-2xl bg-canvas px-4 text-base font-normal";
+  "h-12 rounded-lg bg-canvas px-4 text-base font-normal";
 
 type BusForm = {
   registrationNumber: string;
@@ -104,7 +104,7 @@ function BusFields({
         className={inputClass}
       />
       {showType ? (
-      <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
+      <label className="flex flex-col gap-1.5 text-sm font-semibold">
         Bus type
         <select
           value={form.busType}
@@ -171,7 +171,7 @@ function BusFields({
       />
       {showVahan ? (
         <>
-          <p className="mt-1 text-[13px] font-semibold">For road tax on Vahan (optional)</p>
+          <p className="mt-1 text-sm font-semibold">For road tax on Vahan (optional)</p>
           <input
             value={form.ownerName}
             onChange={(event) => set("ownerName", event.target.value.toUpperCase())}
@@ -334,7 +334,7 @@ export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; m
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-extrabold">{MODULE_TITLES[module]}</h1>
+        <h1 className="text-2xl font-semibold">{MODULE_TITLES[module]}</h1>
         <p className="text-sm text-muted">
           {canEdit
             ? "Add a bus, change its details, or remove it."
@@ -348,7 +348,7 @@ export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; m
 
       {canEdit ? (
         <form
-          className="flex flex-col gap-2 rounded-3xl bg-white p-4 md:p-5"
+          className="flex flex-col gap-2 rounded-xl border border-line bg-surface p-4 md:p-5"
           onSubmit={(event) => {
             event.preventDefault();
             void addBus();
@@ -359,7 +359,7 @@ export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; m
           <button
             type="submit"
             disabled={saving || loading || !isComplete(form)}
-            className="h-12 rounded-2xl bg-brand px-4 text-[15px] font-bold text-white disabled:opacity-60"
+            className="h-12 rounded-lg bg-brand px-4 text-sm font-bold text-white disabled:opacity-60"
           >
             Add bus
           </button>
@@ -371,7 +371,7 @@ export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; m
         {buses.map((bus) => (
           <article
             key={bus.id}
-            className="flex flex-col gap-3 rounded-[20px] bg-white px-4 py-3"
+            className="flex flex-col gap-3 rounded-xl border border-line bg-surface px-4 py-3"
           >
             {editingId === bus.id ? (
               <form
@@ -386,7 +386,7 @@ export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; m
                   <button
                     type="submit"
                     disabled={saving || !isComplete(editForm)}
-                    className="rounded-2xl bg-brand px-4 text-sm font-bold text-white disabled:opacity-60"
+                    className="rounded-lg bg-brand px-4 text-sm font-bold text-white disabled:opacity-60"
                   >
                     Save
                   </button>
@@ -457,7 +457,7 @@ export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; m
           </article>
         ))}
         {!loading && buses.length === 0 && !error ? (
-          <p className="rounded-[20px] bg-white px-4 py-4 text-muted">
+          <p className="rounded-xl border border-line bg-surface px-4 py-4 text-muted">
             {canEdit ? "No buses yet. Add the first one above." : "No buses yet."}
           </p>
         ) : null}

@@ -16,7 +16,7 @@ export const STATUS_LABELS: Record<BusStatus, string> = {
 };
 
 export const STATUS_PILLS: Record<BusStatus, string> = {
-  alert: "bg-[#fbe9e5] text-money-out",
+  alert: "bg-danger-bg text-money-out",
   warn: "bg-warn-bg text-warn-ink",
   ok: "bg-brand-soft text-brand-dark",
   none: "bg-canvas text-muted",

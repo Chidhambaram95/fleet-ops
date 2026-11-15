@@ -45,9 +45,9 @@ export function TourQuoteSettings({ organizationId, viewOnly }: { organizationId
   }
 
   return (
-    <section className="flex flex-col gap-3 rounded-3xl bg-white p-4 md:p-5">
+    <section className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 md:p-5">
       <div>
-        <h2 className="font-extrabold">Tour quotes</h2>
+        <h2 className="font-semibold">Tour quotes</h2>
         <p className="text-sm text-muted">Starting values for every new quote. You can change them on each quote.</p>
       </div>
       <fieldset disabled={viewOnly} className="grid gap-3 md:grid-cols-3">

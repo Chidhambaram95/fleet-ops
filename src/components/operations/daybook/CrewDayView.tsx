@@ -17,11 +17,11 @@ export function CrewDayView({ book, form, odo }: { book: DayBook; form: EntryFor
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
       <div className="flex min-w-0 flex-col gap-4">
-        <section className="flex flex-col gap-1 rounded-3xl bg-brand p-5 text-white">
-          <span className="text-[13px] font-semibold text-brand-pale">
+        <section className="flex flex-col gap-1 rounded-xl bg-brand p-5 text-white">
+          <span className="text-sm font-semibold text-brand-pale">
             Your bus · Today, {displayDate(todayInIst())}
           </span>
-          <span className="text-2xl font-extrabold tracking-tight">
+          <span className="text-2xl font-semibold tracking-tight">
             {myBus ? myBus.registrationNumber : loading ? "…" : "No bus yet"}
           </span>
           {myBus?.routeLabel ? (
@@ -32,7 +32,7 @@ export function CrewDayView({ book, form, odo }: { book: DayBook; form: EntryFor
         <DayRecordLock book={book} />
 
         {!loading && !myBus && !error ? (
-          <p className="rounded-[20px] bg-white px-4 py-4 text-muted">
+          <p className="rounded-xl border border-line bg-surface px-4 py-4 text-muted">
             No bus is given to you yet. Ask your admin.
           </p>
         ) : null}
@@ -42,28 +42,28 @@ export function CrewDayView({ book, form, odo }: { book: DayBook; form: EntryFor
         {lastSaved ? (
           <p
             role="status"
-            className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-money-in"
+            className="rounded-lg bg-surface px-4 py-3 text-sm font-semibold text-money-in"
           >
             {lastSaved}
           </p>
         ) : null}
 
         {error && !sheetOpen ? (
-          <p className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-money-out lg:hidden">
+          <p className="rounded-lg bg-surface px-4 py-3 text-sm font-semibold text-money-out lg:hidden">
             {error}
           </p>
         ) : null}
 
         {myBus ? (
           <form
-            className="flex flex-col gap-3 rounded-3xl bg-white p-5"
+            className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-5"
             onSubmit={(event) => {
               event.preventDefault();
               void saveOdometer();
             }}
           >
             <h2 className="font-bold">Odometer</h2>
-            <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
+            <label className="flex flex-col gap-1.5 text-sm font-semibold">
               Odometer reading (km)
               <input
                 inputMode="numeric"
@@ -80,7 +80,7 @@ export function CrewDayView({ book, form, odo }: { book: DayBook; form: EntryFor
             <button
               type="submit"
               disabled={odometerSaving || org.viewOnly}
-              className="h-12 rounded-2xl bg-brand px-4 text-base font-bold text-white disabled:opacity-50"
+              className="h-12 rounded-lg bg-brand px-4 text-base font-bold text-white disabled:opacity-50"
             >
               {org.viewOnly
                 ? "View only until payment is received"

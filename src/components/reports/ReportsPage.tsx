@@ -301,7 +301,7 @@ export function ReportsPage({
         </div>
 
         <div>
-          <h2 className="text-lg font-extrabold">{table.title}</h2>
+          <h2 className="text-lg font-semibold">{table.title}</h2>
           <p className="text-sm text-muted">
             {kind === "renewals"
               ? `As of ${shortDay(today)}`
@@ -313,10 +313,10 @@ export function ReportsPage({
 
         <div className={`grid grid-cols-2 gap-3 ${table.summary.length === 4 ? "md:grid-cols-4" : "md:grid-cols-3"}`}>
           {table.summary.map((item) => (
-            <div key={item.label} className="rounded-2xl bg-canvas p-3">
+            <div key={item.label} className="rounded-lg bg-canvas p-3">
               <p className="text-xs text-muted">{item.label}</p>
               <p
-                className={`text-lg font-extrabold ${
+                className={`text-lg font-semibold ${
                   item.tone === "in"
                     ? "text-money-in"
                     : item.tone === "out"
@@ -364,7 +364,7 @@ export function ReportsPage({
               ))}
             </div>
             <div className="-mx-4 hidden overflow-x-auto px-4 md:mx-0 md:block md:px-0 print:block">
-              <table className={`w-full min-w-max ${kind === "bus_profit" ? "text-[13px]" : "text-sm"}`}>
+              <table className={`w-full min-w-max ${kind === "bus_profit" ? "text-sm" : "text-sm"}`}>
                 <thead>
                   <tr className="text-left text-xs text-muted">
                     {table.columns.map((column, index) => (
@@ -404,7 +404,7 @@ export function ReportsPage({
                 </tbody>
                 {table.total ? (
                   <tfoot>
-                    <tr className="font-extrabold">
+                    <tr className="font-semibold">
                       {table.total.map((cell, index) => (
                         <td
                           key={index}
@@ -432,7 +432,7 @@ export function ReportsPage({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 print:hidden">
         <button
           type="button"
-          className="h-12 rounded-2xl bg-[#1f8f4e] px-5 text-[15px] font-bold text-white"
+          className="h-12 rounded-lg bg-whatsapp px-5 text-sm font-bold text-white"
           onClick={() =>
             window.open(whatsAppChatUrl("", whatsappText(table, filters, scope)), "_blank", "noopener")
           }

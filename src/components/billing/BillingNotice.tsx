@@ -53,11 +53,11 @@ export function BillingNotice({
     if (!isAdminOrManager || bannerHidden) return null;
     return (
       <div className="mx-auto mt-3 w-full max-w-6xl px-4 md:px-8">
-        <div className="flex items-center gap-3 rounded-2xl border border-[#F0DDB8] bg-white py-2.5 pl-3.5 pr-1">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FFF5E5] text-[#8A5300]">
+        <div className="flex items-center gap-3 rounded-lg border border-warn-bg bg-surface py-2.5 pl-3.5 pr-1">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-warn-bg text-warn-ink">
             <CalendarIcon />
           </span>
-          <div className="flex min-w-0 flex-1 flex-col text-[13px]">
+          <div className="flex min-w-0 flex-1 flex-col text-sm">
             <span className="font-bold">
               {status.onTrial
                 ? `Free trial ends on ${dueLabel}`
@@ -66,7 +66,7 @@ export function BillingNotice({
             <button
               type="button"
               onClick={() => setShowDetails((open) => !open)}
-              className="min-h-0 self-start font-bold text-[#3A3FB8]"
+              className="min-h-0 self-start font-bold text-brand"
             >
               {showDetails ? "Hide payment details" : "See payment details ›"}
             </button>
@@ -75,21 +75,21 @@ export function BillingNotice({
             type="button"
             aria-label="Hide for now"
             onClick={() => setBannerHidden(true)}
-            className="flex h-11 w-11 shrink-0 items-center justify-center text-[#5B5E7A]"
+            className="flex h-11 w-11 shrink-0 items-center justify-center text-muted"
           >
             ✕
           </button>
         </div>
         {showDetails ? (
-          <div className="mt-2 flex flex-col gap-2 rounded-2xl bg-white p-3.5 text-[13px]">
+          <div className="mt-2 flex flex-col gap-2 rounded-lg bg-surface p-3.5 text-sm">
             {rows.length === 0 ? (
-              <p className="text-[#5B5E7A]">Payment details will be shared by Fleet Ops.</p>
+              <p className="text-muted">Payment details will be shared by Fleet Ops.</p>
             ) : (
               rows
                 .filter(([, value]) => value)
                 .map(([label, value]) => (
                   <div key={label} className="flex justify-between gap-3">
-                    <span className="text-[#5B5E7A]">{label}</span>
+                    <span className="text-muted">{label}</span>
                     <span className="font-bold">{value}</span>
                   </div>
                 ))
@@ -98,7 +98,7 @@ export function BillingNotice({
               <button
                 type="button"
                 onClick={() => void copyDetails()}
-                className="rounded-2xl bg-[#1A1B2E] text-sm font-bold text-white"
+                className="rounded-lg bg-ink text-sm font-bold text-white"
               >
                 {copied ? "Copied" : "Copy payment details"}
               </button>
@@ -113,38 +113,38 @@ export function BillingNotice({
   return (
     <>
       <div
-        className={`mx-auto mt-3 w-full max-w-6xl px-4 md:px-8 text-[13px] font-bold`}
+        className={`mx-auto mt-3 w-full max-w-6xl px-4 md:px-8 text-sm font-bold`}
         role="status"
       >
-        <div className="rounded-2xl bg-[#FDECEA] px-3.5 py-2.5 text-[#7A2A1C]">
+        <div className="rounded-lg bg-danger-bg px-3.5 py-2.5 text-money-out">
           {viewOnly
             ? `Payment overdue since ${dueLabel}. The app is view-only until the payment is received.`
             : `Plan payment overdue since ${dueLabel}`}
         </div>
       </div>
       {popupOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1A1B2E]/60 p-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-5">
           <section
             role="dialog"
             aria-label="Payment overdue"
-            className="flex max-h-full w-full max-w-sm flex-col items-center gap-3 overflow-y-auto rounded-[32px] bg-white px-5 pb-4 pt-6 text-center"
+            className="flex max-h-full w-full max-w-sm flex-col items-center gap-3 overflow-y-auto rounded-xl border border-line bg-surface px-5 pb-4 pt-6 text-center"
           >
-            <span className="flex h-[72px] w-[72px] items-center justify-center rounded-3xl bg-[#FDECEA] text-[#A3321C]">
+            <span className="flex h-[72px] w-[72px] items-center justify-center rounded-xl bg-danger-bg text-money-out">
               <WarningIcon />
             </span>
-            <h2 className="text-[21px] font-extrabold">Payment overdue</h2>
-            <p className="text-sm text-[#5B5E7A]">
+            <h2 className="text-xl font-semibold">Payment overdue</h2>
+            <p className="text-sm text-muted">
               Your Fleet Ops plan was due on {dueLabel}.
               {amountInr ? ` Please pay ₹${amountInr.toLocaleString("en-IN")}` : " Please pay"} by
               bank transfer or UPI.
             </p>
             {rows.some(([, value]) => value) ? (
-              <div className="flex w-full flex-col gap-2 rounded-[18px] bg-[#F3F4FB] px-3.5 py-3 text-left text-[13px]">
+              <div className="flex w-full flex-col gap-2 rounded-xl bg-canvas px-3.5 py-3 text-left text-sm">
                 {rows
                   .filter(([, value]) => value)
                   .map(([label, value]) => (
                     <div key={label} className="flex justify-between gap-2">
-                      <span className="text-[#5B5E7A]">{label}</span>
+                      <span className="text-muted">{label}</span>
                       <span className="font-bold">{value}</span>
                     </div>
                   ))}
@@ -154,18 +154,18 @@ export function BillingNotice({
               <button
                 type="button"
                 onClick={() => void copyDetails()}
-                className="h-[50px] w-full rounded-2xl bg-[#1A1B2E] text-[15px] font-bold text-white"
+                className="h-[50px] w-full rounded-lg bg-ink text-sm font-bold text-white"
               >
                 {copied ? "Copied" : "Copy payment details"}
               </button>
             ) : null}
-            <p className="text-xs text-[#5B5E7A]">
+            <p className="text-xs text-muted">
               Already paid? It will clear once Fleet Ops confirms it.
             </p>
             <button
               type="button"
               onClick={() => setPopupOpen(false)}
-              className="h-11 text-[13px] font-semibold text-[#5B5E7A]"
+              className="h-11 text-xs font-semibold text-muted"
             >
               Close
             </button>

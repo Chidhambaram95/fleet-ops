@@ -268,11 +268,11 @@ export function TyreDetail({
         ← Tyres
       </Link>
 
-      <section className="flex flex-col gap-3 rounded-3xl bg-brand p-4 text-white md:p-5">
+      <section className="flex flex-col gap-3 rounded-xl bg-brand p-4 text-white md:p-5">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="text-xs text-brand-pale">Tyre number</p>
-            <h1 className="truncate text-2xl font-extrabold">{tyre.tyreNumber}</h1>
+            <h1 className="truncate text-2xl font-semibold">{tyre.tyreNumber}</h1>
             <p className="text-sm text-brand-pale">
               {[tyre.brand, tyre.size, tyre.boughtAs === "retreaded" ? "bought retreaded" : ""].filter(Boolean).join(" · ") ||
                 "No brand entered"}
@@ -283,26 +283,26 @@ export function TyreDetail({
         <p className="font-semibold">{whereNow(tyre, busName)}</p>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div>
-            <p className="text-xl font-extrabold">{kmText(km)}</p>
+            <p className="text-xl font-semibold">{kmText(km)}</p>
             <p className="text-xs text-brand-pale">{stint ? `incl. ${kmText(stint)} on this bus so far` : "Total run"}</p>
           </div>
           <div>
-            <p className="text-xl font-extrabold">{tyre.retreadCount}</p>
+            <p className="text-xl font-semibold">{tyre.retreadCount}</p>
             <p className="text-xs text-brand-pale">Retreads</p>
           </div>
           <div>
-            <p className="text-xl font-extrabold">{formatInr(spent)}</p>
+            <p className="text-xl font-semibold">{formatInr(spent)}</p>
             <p className="text-xs text-brand-pale">{credits ? "Spent, less warranty credit" : "Spent (price, retreads, repairs)"}</p>
           </div>
           <div>
-            <p className="text-xl font-extrabold">{perKm != null ? `₹${perKm.toFixed(2)}` : "–"}</p>
+            <p className="text-xl font-semibold">{perKm != null ? `₹${perKm.toFixed(2)}` : "–"}</p>
             <p className="text-xs text-brand-pale">Per km</p>
           </div>
         </div>
       </section>
 
       {pendingClaim ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-warn-bg px-4 py-3 text-warn-ink md:px-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-warn-bg px-4 py-3 text-warn-ink md:px-5">
           <p className="text-sm font-semibold">
             Warranty claim with {pendingClaim.dealer || "the dealer"} since {shortDay(pendingClaim.raisedOn)} · {pendingClaim.reason}
           </p>
@@ -317,7 +317,7 @@ export function TyreDetail({
       {!org.viewOnly && (actions.length || canClaim) ? (
         <div className={`grid grid-cols-2 gap-2 ${actions.length > 2 ? "sm:grid-cols-6" : "sm:grid-cols-4"}`}>
           {canClaim ? (
-            <button type="button" onClick={() => setPanel("claim")} className="h-12 rounded-2xl bg-white px-5 text-[15px] font-bold text-brand">
+            <button type="button" onClick={() => setPanel("claim")} className="h-12 rounded-lg bg-surface px-5 text-sm font-bold text-brand">
               Warranty claim
             </button>
           ) : null}
@@ -325,7 +325,7 @@ export function TyreDetail({
             <button
               type="button"
               onClick={() => void togglePile()}
-              className={onPile ? PRIMARY : "h-12 rounded-2xl bg-white px-5 text-[15px] font-bold text-brand"}
+              className={onPile ? PRIMARY : "h-12 rounded-lg bg-surface px-5 text-sm font-bold text-brand"}
             >
               {onPile ? "Take off scrap pile" : "Put in scrap pile"}
             </button>
@@ -335,7 +335,7 @@ export function TyreDetail({
               key={action.mode}
               type="button"
               onClick={() => setPanel(action.mode)}
-              className={index === 0 && !onPile ? PRIMARY : "h-12 rounded-2xl bg-white px-5 text-[15px] font-bold text-brand"}
+              className={index === 0 && !onPile ? PRIMARY : "h-12 rounded-lg bg-surface px-5 text-sm font-bold text-brand"}
             >
               {action.label}
             </button>
@@ -368,7 +368,7 @@ export function TyreDetail({
                 <li key={life.number} className="relative flex gap-3 pb-4 last:pb-0">
                   {index < lives.length - 1 ? <span className="absolute left-[15px] top-8 h-full w-0.5 bg-brand-pale" /> : null}
                   <span
-                    className={`z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-extrabold ${
+                    className={`z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
                       life.ended ? "bg-brand-soft text-brand" : "bg-brand text-white"
                     }`}
                   >
@@ -445,7 +445,7 @@ export function TyreDetail({
               <p className="text-sm text-muted">No warranty entered.</p>
             ) : (
               <p
-                className={`rounded-2xl px-4 py-3 text-sm font-semibold ${
+                className={`rounded-lg px-4 py-3 text-sm font-semibold ${
                   warranty === "over" ? "bg-money-out text-white" : warranty === "ending" ? "bg-warn-bg text-warn-ink" : "bg-brand-soft text-brand"
                 }`}
               >

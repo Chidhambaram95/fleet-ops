@@ -101,8 +101,8 @@ export function ClaimForm({
   return (
     <Card title={`Warranty claim · ${tyre.tyreNumber}`}>
       <p
-        className={`rounded-2xl px-4 py-3 text-sm ${
-          state === "over" ? "bg-[#fbe9e5] text-money-out" : "bg-brand-soft text-brand"
+        className={`rounded-lg px-4 py-3 text-sm ${
+          state === "over" ? "bg-danger-bg text-money-out" : "bg-brand-soft text-brand"
         }`}
       >
         {kmText(km)} run
@@ -209,7 +209,7 @@ export function CloseClaimForm({
   }
 
   const choice = (active: boolean) =>
-    `min-h-12 rounded-2xl px-2 text-sm font-bold ${active ? "bg-brand text-white" : "bg-canvas text-ink"}`;
+    `min-h-12 rounded-lg px-2 text-sm font-bold ${active ? "bg-brand text-white" : "bg-canvas text-ink"}`;
 
   return (
     <Card title={`Dealer's answer · ${tyre?.tyreNumber ?? "Tyre"}`}>
@@ -218,7 +218,7 @@ export function CloseClaimForm({
         {claim.dealer ? ` with ${claim.dealer}` : ""} · {claim.reason}
       </p>
       <fieldset className="flex flex-col gap-1.5">
-        <legend className="mb-1.5 text-[13px] font-semibold">What did the dealer do?</legend>
+        <legend className="mb-1.5 text-sm font-semibold">What did the dealer do?</legend>
         <div className="grid grid-cols-3 gap-2">
           {(
             [
@@ -256,20 +256,20 @@ export function CloseClaimForm({
             New tyre number
             <input className={FIELD} value={newNumber} onChange={(event) => setNewNumber(event.target.value)} />
           </label>
-          <p className="rounded-2xl bg-brand-soft px-4 py-3 text-sm text-brand">
+          <p className="rounded-lg bg-brand-soft px-4 py-3 text-sm text-brand">
             The dealer keeps {tyre?.tyreNumber}. The new tyre goes into stock as {[tyre?.brand, tyre?.size].filter(Boolean).join(" ") || "the same brand and size"}
             , priced at the top-up, which is charged to the first bus it is fitted on.
           </p>
         </>
       ) : null}
       {outcome === "credited" ? (
-        <p className="rounded-2xl bg-brand-soft px-4 py-3 text-sm text-brand">
+        <p className="rounded-lg bg-brand-soft px-4 py-3 text-sm text-brand">
           The dealer keeps {tyre?.tyreNumber}. The credit is taken off the tyre cost of the bus that paid for it.
         </p>
       ) : null}
       {outcome === "rejected" ? (
         <fieldset className="flex flex-col gap-1.5">
-          <legend className="mb-1.5 text-[13px] font-semibold">The tyre goes</legend>
+          <legend className="mb-1.5 text-sm font-semibold">The tyre goes</legend>
           <div className="grid grid-cols-2 gap-2">
             <button type="button" aria-pressed={after === "stock"} className={choice(after === "stock")} onClick={() => setAfter("stock")}>
               Back to stock

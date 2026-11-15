@@ -33,14 +33,14 @@ export function BottomNav({
   const reportsActive = Boolean(openModule) && isActive(pathname, reportsHref);
   const moreActive = !homeActive && !secondActive && !reportsActive;
   const tab = (active: boolean) =>
-    `flex flex-col items-center justify-center gap-0.5 text-[11px] ${
+    `flex flex-col items-center justify-center gap-0.5 text-xs ${
       active ? "font-bold text-brand" : "font-medium text-muted"
     }`;
 
   return (
     <nav
       aria-label="Main"
-      className={`fixed inset-x-0 bottom-0 z-40 grid ${openModule ? "grid-cols-5" : "grid-cols-3"} items-center rounded-t-3xl bg-white px-2 pb-[max(12px,env(safe-area-inset-bottom))] pt-2 shadow-[0_-2px_12px_rgba(26,27,46,0.08)] md:hidden print:hidden`}
+      className={`fixed inset-x-0 bottom-0 z-40 grid ${openModule ? "grid-cols-5" : "grid-cols-3"} items-center rounded-t-2xl bg-surface px-2 pb-[max(12px,env(safe-area-inset-bottom))] pt-2 shadow-[0_-2px_12px_rgba(26,27,46,0.08)] md:hidden print:hidden`}
     >
       <Link href={homeHref} aria-current={homeActive ? "page" : undefined} className={tab(homeActive)}>
         <HomeIcon />

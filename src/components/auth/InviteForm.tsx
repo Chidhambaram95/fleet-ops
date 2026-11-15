@@ -8,7 +8,7 @@ import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 import { createInviteLoginAction } from "@/app/(auth)/invite/[token]/actions";
 
 const field =
-  "h-12 rounded-2xl bg-canvas px-4 text-base font-normal";
+  "h-12 rounded-lg bg-canvas px-4 text-base font-normal";
 
 export function InviteForm({
   token,
@@ -50,16 +50,16 @@ export function InviteForm({
   return (
     <form onSubmit={(event) => void onSubmit(event)} className="flex flex-col gap-3">
       {hasLogin ? null : (
-        <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
+        <label className="flex flex-col gap-1.5 text-sm font-semibold">
           Your name
           <input value={name} onChange={(e) => setName(e.target.value)} required className={field} />
         </label>
       )}
-      <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
+      <label className="flex flex-col gap-1.5 text-sm font-semibold">
         Email
         <input type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required className={field} />
       </label>
-      <label className="flex flex-col gap-1.5 text-[13px] font-semibold">
+      <label className="flex flex-col gap-1.5 text-sm font-semibold">
         {hasLogin ? "Password" : "Create a password"}
         <input
           type="password"
@@ -75,7 +75,7 @@ export function InviteForm({
       <button
         type="submit"
         disabled={busy}
-        className="h-12 rounded-2xl bg-brand px-4 text-base font-bold text-white disabled:opacity-60"
+        className="h-12 rounded-lg bg-brand px-4 text-base font-bold text-white disabled:opacity-60"
       >
         {busy ? "Please wait…" : "Join"}
       </button>

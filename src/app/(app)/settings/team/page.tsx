@@ -12,7 +12,7 @@ import { canManage } from "@domain/rbac/roles";
 export default async function TeamSettingsPage() {
   if (!hasPublicSupabaseEnv()) {
     return (
-      <p className="rounded-3xl bg-white px-4 py-6 text-muted">
+      <p className="rounded-xl border border-line bg-surface px-4 py-6 text-muted">
         Add Supabase keys to <code className="text-sm">.env.local</code> before
         managing the team.
       </p>
@@ -24,7 +24,7 @@ export default async function TeamSettingsPage() {
     const membership = await getRequestMembership();
     if (!canManage(membership.role)) {
       return (
-        <p className="rounded-3xl bg-white px-4 py-6 text-muted">
+        <p className="rounded-xl border border-line bg-surface px-4 py-6 text-muted">
           Only admins and managers can open the team.
         </p>
       );
@@ -60,7 +60,7 @@ export default async function TeamSettingsPage() {
         ? error.message
         : "Could not load the team.";
     return (
-      <p className="rounded-3xl bg-white px-4 py-6 text-money-out">
+      <p className="rounded-xl border border-line bg-surface px-4 py-6 text-money-out">
         {message}
       </p>
     );

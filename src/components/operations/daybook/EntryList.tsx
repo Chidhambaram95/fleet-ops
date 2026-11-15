@@ -21,7 +21,7 @@ export function EntryList({ book }: { book: DayBook }) {
             type="button"
             disabled={loading}
             onClick={sendToOperator}
-            className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-white px-3.5 text-[13px] font-bold text-money-in disabled:opacity-40"
+            className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-surface px-3.5 text-sm font-bold text-money-in disabled:opacity-40"
           >
             <SendIcon />
             Send daily summary on WhatsApp
@@ -31,7 +31,7 @@ export function EntryList({ book }: { book: DayBook }) {
             disabled={loading}
             onClick={downloadCsv}
             aria-label="Download as a file"
-            className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-white px-3.5 text-[13px] font-bold text-muted disabled:opacity-40"
+            className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-surface px-3.5 text-xs font-bold text-muted disabled:opacity-40"
           >
             <DownloadIcon />
             <span className="hidden sm:inline">Download</span>
@@ -39,11 +39,11 @@ export function EntryList({ book }: { book: DayBook }) {
         </div>
       </div>
       {entries.length === 0 ? (
-        <p className="rounded-[20px] bg-white px-4 py-4 text-muted">
+        <p className="rounded-xl border border-line bg-surface px-4 py-4 text-muted">
           Nothing added yet. Add the first ticket money or diesel bill.
         </p>
       ) : (
-        <div className="rounded-[20px] bg-white px-4 py-1">
+        <div className="rounded-xl border border-line bg-surface px-4 py-1">
           {entries.map((entry, index) => {
             const bus = buses.find((item) => item.id === entry.busId);
             return (
@@ -74,7 +74,7 @@ export function EntryList({ book }: { book: DayBook }) {
                   {canUndo ? (
                     <button
                       type="button"
-                      className="px-2 text-[13px] font-semibold text-muted"
+                      className="px-2 text-xs font-semibold text-muted"
                       onClick={() => void removeEntry(entry.id)}
                     >
                       Undo

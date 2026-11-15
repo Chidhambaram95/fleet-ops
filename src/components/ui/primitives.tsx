@@ -1,13 +1,13 @@
 import type { ReactNode } from "react";
 
-/** Shared theme C building blocks for the money, renewals and report pages. */
+/** Shared building blocks for the money, renewals and report pages. */
 export const FIELD =
-  "h-12 w-full min-w-0 rounded-2xl bg-canvas px-4 text-base disabled:opacity-70";
-export const LABEL = "flex min-w-0 flex-col gap-1.5 text-[13px] font-semibold";
+  "h-12 w-full min-w-0 rounded-lg border border-line-strong bg-surface px-3 text-base text-ink placeholder:text-faint focus:border-brand disabled:bg-subtle disabled:text-muted lg:h-10 lg:text-sm";
+export const LABEL = "flex min-w-0 flex-col gap-1.5 text-sm font-medium text-ink";
 export const PRIMARY =
-  "h-12 rounded-2xl bg-brand px-5 text-[15px] font-bold text-white disabled:opacity-50";
+  "inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-brand px-5 text-sm font-semibold text-white hover:bg-brand-dark disabled:opacity-50 lg:h-10";
 export const SECONDARY =
-  "h-12 rounded-2xl bg-canvas px-5 text-[15px] font-bold text-brand disabled:opacity-50";
+  "inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-line-strong bg-surface px-5 text-sm font-semibold text-ink hover:bg-subtle disabled:opacity-50 lg:h-10";
 
 export function PageHeader({
   title,
@@ -21,7 +21,7 @@ export function PageHeader({
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 className="text-2xl font-extrabold">{title}</h1>
+        <h1 className="text-xl font-semibold tracking-tight text-ink lg:text-2xl">{title}</h1>
         {hint ? <p className="text-sm text-muted">{hint}</p> : null}
       </div>
       {action}
@@ -39,10 +39,10 @@ export function Card({
   action?: ReactNode;
 }) {
   return (
-    <section className="flex min-w-0 flex-col gap-3 rounded-3xl bg-white p-4 md:p-5">
+    <section className="flex min-w-0 flex-col gap-3 rounded-xl border border-line bg-surface p-4 lg:p-5">
       {title || action ? (
         <div className="flex flex-wrap items-center justify-between gap-2">
-          {title ? <h2 className="font-extrabold">{title}</h2> : <span />}
+          {title ? <h2 className="text-base font-semibold text-ink">{title}</h2> : <span />}
           {action}
         </div>
       ) : null}
@@ -61,15 +61,18 @@ export function Tabs<T extends string>({
   onChange: (next: T) => void;
 }) {
   return (
-    <div className="flex gap-1 overflow-x-auto rounded-full bg-white p-1">
+    <div role="tablist" className="flex gap-6 overflow-x-auto border-b border-line">
       {options.map((option) => (
         <button
           key={option.id}
           type="button"
-          aria-pressed={value === option.id}
+          role="tab"
+          aria-selected={value === option.id}
           onClick={() => onChange(option.id)}
-          className={`h-11 shrink-0 grow rounded-full px-4 text-sm font-bold ${
-            value === option.id ? "bg-brand text-white" : "text-muted"
+          className={`-mb-px inline-flex h-10 shrink-0 items-center gap-2 border-b-2 text-sm ${
+            value === option.id
+              ? "border-brand font-semibold text-ink"
+              : "border-transparent font-medium text-muted hover:text-ink"
           }`}
         >
           {option.label}
@@ -80,7 +83,7 @@ export function Tabs<T extends string>({
 }
 
 export function Empty({ children }: { children: ReactNode }) {
-  return <p className="rounded-3xl bg-white px-4 py-6 text-center text-muted">{children}</p>;
+  return <p className="rounded-xl border border-dashed border-line-strong bg-surface px-4 py-8 text-center text-sm text-muted">{children}</p>;
 }
 
 export function ErrorText({ message }: { message: string }) {
@@ -116,11 +119,11 @@ export function ListRow({
       }`}
     >
       <div className="min-w-0">
-        <p className="truncate font-semibold">{title}</p>
+        <p className="truncate text-sm font-medium text-ink">{title}</p>
         {detail ? <p className="truncate text-xs text-muted">{detail}</p> : null}
       </div>
       <div className="flex shrink-0 items-center gap-1">
-        {amount != null ? <span className={`font-bold ${toneClass}`}>{amount}</span> : null}
+        {amount != null ? <span className={`text-sm font-semibold tabular-nums ${toneClass}`}>{amount}</span> : null}
         {actions}
       </div>
     </div>
@@ -143,7 +146,7 @@ export function SmallButton({
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={`px-2 text-[13px] font-semibold disabled:opacity-40 ${
+      className={`px-2 text-sm font-semibold disabled:opacity-40 ${
         tone === "brand" ? "text-brand" : "text-muted"
       }`}
     >

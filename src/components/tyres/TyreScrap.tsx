@@ -76,10 +76,10 @@ export function ScrapSaleForm({
   return (
     <Card title="Sell scrap tyres">
       <fieldset className="flex flex-col gap-1">
-        <legend className="mb-1.5 text-[13px] font-semibold">
+        <legend className="mb-1.5 text-sm font-semibold">
           Tyres sold ({picked.size} of {pile.length})
         </legend>
-        <div className="flex max-h-64 flex-col overflow-y-auto rounded-2xl bg-canvas px-3 py-1">
+        <div className="flex max-h-64 flex-col overflow-y-auto rounded-lg bg-canvas px-3 py-1">
           {pile.map((tyre) => (
             <label key={tyre.id} className="flex min-h-11 items-center gap-3 text-sm">
               <input type="checkbox" className="h-5 w-5" checked={picked.has(tyre.id)} onChange={() => toggle(tyre.id)} />
@@ -102,7 +102,7 @@ export function ScrapSaleForm({
         </label>
       </div>
       <fieldset className="flex flex-col gap-1.5">
-        <legend className="mb-1.5 text-[13px] font-semibold">Received in</legend>
+        <legend className="mb-1.5 text-sm font-semibold">Received in</legend>
         <div className="grid grid-cols-2 gap-2">
           {(Object.keys(RECEIVED_VIA_LABELS) as ScrapReceivedVia[]).map((id) => (
             <button
@@ -110,7 +110,7 @@ export function ScrapSaleForm({
               type="button"
               aria-pressed={via === id}
               onClick={() => setVia(id)}
-              className={`min-h-12 rounded-2xl px-2 text-sm font-bold ${via === id ? "bg-brand text-white" : "bg-canvas text-ink"}`}
+              className={`min-h-12 rounded-lg px-2 text-sm font-bold ${via === id ? "bg-brand text-white" : "bg-canvas text-ink"}`}
             >
               {RECEIVED_VIA_LABELS[id]}
             </button>
@@ -125,7 +125,7 @@ export function ScrapSaleForm({
         Note (optional)
         <input className={FIELD} value={note} onChange={(event) => setNote(event.target.value)} />
       </label>
-      <p className="rounded-2xl bg-brand-soft px-4 py-3 text-sm text-brand">
+      <p className="rounded-lg bg-brand-soft px-4 py-3 text-sm text-brand">
         The ticked tyres are marked scrapped. The money counts as company income, not for any one bus.
       </p>
       <ErrorText message={error} />
@@ -193,7 +193,7 @@ export function ScrapSection({
         title={`Scrap pile${pile.length ? ` · ${pile.length} ${pile.length === 1 ? "tyre" : "tyres"}` : ""}`}
         action={
           !readOnly && pile.length ? (
-            <button type="button" className="h-10 rounded-2xl bg-brand px-4 text-sm font-bold text-white" onClick={onSell}>
+            <button type="button" className="h-10 rounded-lg bg-brand px-4 text-sm font-bold text-white" onClick={onSell}>
               Sell scrap
             </button>
           ) : null

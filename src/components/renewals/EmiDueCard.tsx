@@ -68,9 +68,9 @@ export function EmiDueCard({
   return (
     <Link
       href={emiHref(module)}
-      className={`flex flex-col gap-2 rounded-3xl p-4 ${late ? "bg-[#fbe7e3] text-money-out" : "bg-warn-bg text-warn-ink"}`}
+      className={`flex flex-col gap-2 rounded-xl p-4 ${late ? "bg-danger-bg text-money-out" : "bg-warn-bg text-warn-ink"}`}
     >
-      <span className="flex items-center justify-between gap-2 font-extrabold">
+      <span className="flex items-center justify-between gap-2 font-semibold">
         <span>
           {late ? "⚠ " : ""}EMI{lines.length === 1 ? "" : "s"} to look at
         </span>

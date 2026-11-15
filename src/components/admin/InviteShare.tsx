@@ -42,15 +42,15 @@ export function InviteShare({
         href={waUrl}
         target="_blank"
         rel="noreferrer"
-        className="inline-flex items-center rounded-2xl bg-[#25D366] px-4 text-sm font-bold text-[#06361A]"
+        className="inline-flex items-center rounded-lg bg-whatsapp px-4 text-sm font-bold text-white"
       >
         Send on WhatsApp
       </a>
       <button
         type="button"
         onClick={() => void copy()}
-        className={`rounded-2xl px-4 text-sm font-bold ${
-          tone === "dark" ? "bg-white/10 text-white" : "bg-[#F3F4FB] text-[#1A1B2E]"
+        className={`rounded-lg px-4 text-sm font-bold ${
+          tone === "dark" ? "bg-surface/10 text-white" : "bg-canvas text-ink"
         }`}
       >
         {copied ? "Link copied" : "Copy link"}

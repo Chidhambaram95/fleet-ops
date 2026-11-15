@@ -19,9 +19,9 @@ import { HEALTH_COLOURS } from "@/components/tyres/ChassisView";
 import { shortDay } from "@/components/ui/kit";
 
 const HEALTH_PILL: Record<TyreHealth, string> = {
-  good: "bg-[#e3f2ea] text-money-in",
+  good: "bg-success-bg text-money-in",
   watch: "bg-warn-bg text-warn-ink",
-  replace: "bg-[#fbe9e5] text-money-out",
+  replace: "bg-danger-bg text-money-out",
 };
 
 export function HealthPill({ health }: { health: TyreHealth }) {
@@ -71,7 +71,7 @@ function warrantyText(tyre: Tyre, today: string, km: number): { text: string; to
   return { text: `Warranty ends ${limits}.`, tone: "ok" };
 }
 
-const BANNER = { ok: "bg-brand-soft text-brand", warn: "bg-warn-bg text-warn-ink", bad: "bg-[#fbe9e5] text-money-out" };
+const BANNER = { ok: "bg-brand-soft text-brand", warn: "bg-warn-bg text-warn-ink", bad: "bg-danger-bg text-money-out" };
 
 /** What you see after tapping a tyre on the chassis. */
 export function TyreSheet({
@@ -106,7 +106,7 @@ export function TyreSheet({
   const short = ROAD_POSITIONS.find((item) => item.id === tyre.currentPosition)?.short;
   const warranty = warrantyText(tyre, today, km);
   const stint = currentStintKm(tyre, odometer);
-  const act = "flex min-h-12 items-center justify-center rounded-2xl px-2 text-sm font-bold";
+  const act = "flex min-h-12 items-center justify-center rounded-lg px-2 text-sm font-bold";
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-start justify-between gap-3">
@@ -115,7 +115,7 @@ export function TyreSheet({
             {positionLabel(tyre.currentPosition)}
             {short ? ` (${short})` : ""} · {busName}
           </p>
-          <p className="text-[22px] font-extrabold">{tyre.tyreNumber}</p>
+          <p className="text-xl font-semibold">{tyre.tyreNumber}</p>
           <p className="truncate text-xs text-muted">
             {[tyre.brand, tyre.size].filter(Boolean).join(" · ") || "No brand entered"}
             {tyre.fittedOdometerKm != null ? ` · fitted at ${tyre.fittedOdometerKm.toLocaleString("en-IN")} km` : ""}
@@ -135,13 +135,13 @@ export function TyreSheet({
           [kmText(km), "Total km"],
           [String(tyre.retreadCount), "Retreads"],
         ].map(([value, label]) => (
-          <div key={label} className="rounded-2xl bg-canvas px-2 py-2.5">
-            <p className="text-sm font-extrabold">{value}</p>
-            <p className="text-[11px] text-muted">{label}</p>
+          <div key={label} className="rounded-lg bg-canvas px-2 py-2.5">
+            <p className="text-sm font-semibold">{value}</p>
+            <p className="text-xs text-muted">{label}</p>
           </div>
         ))}
       </div>
-      {warranty ? <p className={`rounded-2xl px-4 py-3 text-sm font-semibold ${BANNER[warranty.tone]}`}>{warranty.text}</p> : null}
+      {warranty ? <p className={`rounded-lg px-4 py-3 text-sm font-semibold ${BANNER[warranty.tone]}`}>{warranty.text}</p> : null}
       <div className={`grid gap-2 ${readOnly ? "grid-cols-1" : "grid-cols-4"}`}>
         {!readOnly ? (
           <>

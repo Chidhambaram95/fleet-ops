@@ -21,7 +21,7 @@ import { useOdometerForm } from "./daybook/useOdometerForm";
 export function DailyLedger({ module }: { module?: ModuleId } = {}) {
   if (!hasPublicSupabaseEnv()) {
     return (
-      <p className="rounded-3xl bg-white px-4 py-6 text-muted">
+      <p className="rounded-xl border border-line bg-surface px-4 py-6 text-muted">
         Add <code className="text-sm">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
         <code className="text-sm">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to{" "}
         <code className="text-sm">.env.local</code>.
@@ -51,7 +51,7 @@ function DailyLedgerBoard({ module }: { module?: ModuleId }) {
         <DayAlertCards book={book} />
 
         {book.error && !form.sheetOpen ? (
-          <p className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-money-out lg:hidden">
+          <p className="rounded-lg bg-surface px-4 py-3 text-sm font-semibold text-money-out lg:hidden">
             {book.error}
           </p>
         ) : null}

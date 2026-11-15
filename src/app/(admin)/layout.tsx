@@ -23,17 +23,17 @@ export default async function AdminLayout({
   }
 
   const link =
-    "flex min-h-10 items-center rounded-full px-3.5 text-sm font-medium text-[#E6E7FA] hover:bg-white/10";
+    "flex min-h-10 items-center rounded-full px-3.5 text-sm font-medium text-brand-soft hover:bg-surface/10";
   return (
-    <div className="min-h-dvh bg-[#F3F4FB] text-[#1A1B2E]">
-      <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 bg-[#1A1B2E] px-4 py-3 text-white sm:px-8">
+    <div className="min-h-dvh bg-canvas text-ink">
+      <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 bg-ink px-4 py-3 text-white sm:px-8">
         <div className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#3A3FB8] font-extrabold">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand font-semibold">
             F
           </span>
           <span className="flex flex-col leading-tight">
-            <span className="font-extrabold">Fleet Ops</span>
-            <span className="text-xs text-[#C9CBF2]">Super-admin</span>
+            <span className="font-semibold">Fleet Ops</span>
+            <span className="text-xs text-brand-pale">Super-admin</span>
           </span>
         </div>
         <nav aria-label="Super-admin" className="flex flex-wrap gap-1">

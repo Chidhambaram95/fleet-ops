@@ -71,7 +71,7 @@ export function StatusPill({
 }) {
   const claim = onClaim && status === "in_stock";
   const pile = !claim && onPile && status === "in_stock";
-  const tone = claim ? "bg-warn-bg text-warn-ink" : pile ? "bg-[#fbe9e5] text-money-out" : STATUS_CLASS[status];
+  const tone = claim ? "bg-warn-bg text-warn-ink" : pile ? "bg-danger-bg text-money-out" : STATUS_CLASS[status];
   return (
     <span className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ${tone}`}>
       {claim ? "Claim pending" : pile ? "Scrap pile" : STATUS_LABELS[status]}
@@ -381,7 +381,7 @@ export function TyresPage({
 
   const rotateBanner =
     chassisMode === "rotate" ? (
-      <div className="flex flex-col gap-2 rounded-2xl bg-ink px-4 py-3 text-sm text-white">
+      <div className="flex flex-col gap-2 rounded-lg bg-ink px-4 py-3 text-sm text-white">
         {!pickedTyre ? (
           <p className="font-bold">Tap the tyre you want to move.</p>
         ) : !swapTarget ? (
@@ -400,7 +400,7 @@ export function TyresPage({
                 <input
                   inputMode="numeric"
                   aria-label="Odometer km"
-                  className="h-10 w-full min-w-0 rounded-xl bg-white px-3 text-[15px] font-semibold text-ink"
+                  className="h-10 w-full min-w-0 rounded-xl bg-surface px-3 text-sm font-semibold text-ink"
                   value={rotateOdometer}
                   onChange={(event) => setRotateOdometer(event.target.value)}
                 />
@@ -409,14 +409,14 @@ export function TyresPage({
                 type="button"
                 disabled={rotating}
                 onClick={() => void saveRotation()}
-                className="h-10 rounded-xl bg-white px-4 font-extrabold text-ink disabled:opacity-60"
+                className="h-10 rounded-xl bg-surface px-4 font-semibold text-ink disabled:opacity-60"
               >
                 {rotating ? "Saving…" : "Save"}
               </button>
             </div>
           </>
         )}
-        {rotateError ? <p className="rounded-xl bg-white px-3 py-2 text-money-out">{rotateError}</p> : null}
+        {rotateError ? <p className="rounded-xl bg-surface px-3 py-2 text-money-out">{rotateError}</p> : null}
       </div>
     ) : null;
 
@@ -439,7 +439,7 @@ export function TyresPage({
                   setPicked(null);
                   setStockPick(stockPick === tyre.id ? "" : tyre.id);
                 }}
-                className={`min-w-[120px] shrink-0 rounded-2xl px-3 py-2 text-left text-xs ${
+                className={`min-w-[120px] shrink-0 rounded-lg px-3 py-2 text-left text-xs ${
                   stockPick === tyre.id ? "bg-brand text-white" : "bg-canvas text-ink"
                 }`}
               >
@@ -451,7 +451,7 @@ export function TyresPage({
               </button>
             ))}
             {atRetreader.map((tyre) => (
-              <div key={tyre.id} className="min-w-[120px] shrink-0 rounded-2xl bg-warn-bg px-3 py-2 text-xs text-warn-ink">
+              <div key={tyre.id} className="min-w-[120px] shrink-0 rounded-lg bg-warn-bg px-3 py-2 text-xs text-warn-ink">
                 <b className="block text-sm">{tyre.tyreNumber}</b>
                 At retreader
                 <span className="block">{shortKm(tyre.totalKm)}</span>
@@ -477,7 +477,7 @@ export function TyresPage({
       />
       <ErrorText message={error} />
 
-      <section className="grid grid-cols-4 gap-2 rounded-3xl bg-brand p-4 text-center text-white md:p-5">
+      <section className="grid grid-cols-4 gap-2 rounded-xl bg-brand p-4 text-center text-white md:p-5">
         {[
           [counts.fitted, "Fitted"],
           [counts.stock, "In stock"],
@@ -485,7 +485,7 @@ export function TyresPage({
           [counts.warranty, "Warranty ending"],
         ].map(([value, label]) => (
           <div key={label}>
-            <p className="text-2xl font-extrabold">{value}</p>
+            <p className="text-2xl font-semibold">{value}</p>
             <p className="text-xs text-brand-pale">{label}</p>
           </div>
         ))}
@@ -525,12 +525,12 @@ export function TyresPage({
                       role="tab"
                       aria-selected={item.id === bus.id}
                       onClick={() => chooseBus(item.id)}
-                      className={`shrink-0 rounded-2xl px-4 py-2 text-left text-sm font-bold ${
-                        item.id === bus.id ? "bg-brand text-white" : "bg-white text-ink"
+                      className={`shrink-0 rounded-lg px-4 py-2 text-left text-sm font-bold ${
+                        item.id === bus.id ? "bg-brand text-white" : "bg-surface text-ink"
                       }`}
                     >
                       {item.registrationNumber}
-                      <small className={`block text-[11px] font-semibold ${item.id === bus.id ? "text-brand-pale" : "text-muted"}`}>
+                      <small className={`block text-xs font-semibold ${item.id === bus.id ? "text-brand-pale" : "text-muted"}`}>
                         {busSummary(item.id)}
                       </small>
                     </button>
@@ -540,14 +540,14 @@ export function TyresPage({
                   <div className="flex flex-col gap-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-lg font-extrabold">{bus.registrationNumber}</p>
+                        <p className="text-lg font-semibold">{bus.registrationNumber}</p>
                         <p className="text-xs text-muted">
                           {busOdometer != null ? `Odometer ${kmText(busOdometer)}` : "No odometer yet"}
                           {monthCharges.get(bus.id) ? ` · tyres this month ${formatInr(monthCharges.get(bus.id) ?? 0)}` : ""}
                         </p>
                       </div>
                       {!org.viewOnly ? (
-                        <div className="flex shrink-0 rounded-2xl bg-canvas p-1" role="group" aria-label="Chassis mode">
+                        <div className="flex shrink-0 rounded-lg bg-canvas p-1" role="group" aria-label="Chassis mode">
                           {(["view", "rotate"] as const).map((item) => (
                             <button
                               key={item}
@@ -555,7 +555,7 @@ export function TyresPage({
                               aria-pressed={chassisMode === item}
                               onClick={() => chooseMode(item)}
                               className={`rounded-xl px-3 py-1.5 text-sm font-bold ${
-                                chassisMode === item ? "bg-white text-brand shadow-sm" : "text-muted"
+                                chassisMode === item ? "bg-surface text-brand shadow-sm" : "text-muted"
                               }`}
                             >
                               {item === "view" ? "View" : "Rotate"}
@@ -586,7 +586,7 @@ export function TyresPage({
                     <div
                       role="dialog"
                       aria-label={`Tyre ${sheetTyre?.tyreNumber}`}
-                      className="fixed inset-x-0 bottom-0 z-50 max-h-[85dvh] overflow-y-auto rounded-t-3xl bg-white px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3 shadow-[0_-4px_20px_rgba(26,27,46,0.15)]"
+                      className="fixed inset-x-0 bottom-0 z-50 max-h-[85dvh] overflow-y-auto rounded-t-2xl bg-surface px-4 pb-[max(16px,env(safe-area-inset-bottom))] pt-3 shadow-[0_-4px_20px_rgba(26,27,46,0.15)]"
                     >
                       <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-line" />
                       {sheet}

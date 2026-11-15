@@ -163,7 +163,7 @@ export function FuelPage({ organizationId, module }: { organizationId: string; m
                 >
                   <div className="flex items-center justify-between gap-3">
                     <p className="truncate font-bold">{item.pump}</p>
-                    <p className="shrink-0 text-lg font-extrabold text-money-out">
+                    <p className="shrink-0 text-lg font-semibold text-money-out">
                       {formatInr(item.expectedInr)}
                     </p>
                   </div>
@@ -194,10 +194,10 @@ export function FuelPage({ organizationId, module }: { organizationId: string; m
 
           <Link
             href={moduleHref(module, "mileage")}
-            className="flex items-center justify-between gap-3 rounded-3xl bg-white p-4 md:p-5"
+            className="flex items-center justify-between gap-3 rounded-xl border border-line bg-surface p-4 md:p-5"
           >
             <span>
-              <span className="block font-extrabold">Mileage of each bus</span>
+              <span className="block font-semibold">Mileage of each bus</span>
               <span className="block text-sm text-muted">Km per litre, and buses that need a look</span>
             </span>
             <span aria-hidden="true" className="text-xl text-brand">
