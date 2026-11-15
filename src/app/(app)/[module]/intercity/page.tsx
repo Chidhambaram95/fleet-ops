@@ -1,17 +1,12 @@
 import { IntercityPage } from "@/components/money/IntercityPage";
-import { AccessMessage } from "@/app/(app)/editorAccess";
-import { moduleAccess } from "@/app/(app)/moduleAccess";
+import { withModule } from "@/app/(app)/moduleAccess";
 
-export default async function ModuleIntercityPage({ params }: { params: Promise<{ module: string }> }) {
-  const access = await moduleAccess((await params).module, "intercity");
-  if (!access.membership) {
-    return <AccessMessage message={access.message} />;
-  }
-  return (
+export default function ModuleIntercityPage({ params }: { params: Promise<{ module: string }> }) {
+  return withModule(params, "intercity", (access) => (
     <IntercityPage
       key={access.module}
       organizationId={access.membership.organizationId}
       module={access.module}
     />
-  );
+  ));
 }

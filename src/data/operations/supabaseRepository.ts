@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { throwIfError } from "@data/supabase/errors";
 import { getAuthenticatedUserId } from "@data/auth/session";
+import { shareInFlight } from "@data/supabase/inflight";
 import type { Bus, DailyEntry, NewBus, NewDailyEntry } from "@domain/operations/types";
 import {
   isUserRole,
@@ -67,7 +68,11 @@ export class SupabaseOperationsRepository
 {
   constructor(private readonly client: SupabaseClient) {}
 
-  async listBuses(organizationId: string) {
+  listBuses(organizationId: string): Promise<Bus[]> {
+    return shareInFlight(`buses:${organizationId}`, () => this.loadBuses(organizationId));
+  }
+
+  private async loadBuses(organizationId: string): Promise<Bus[]> {
     const { data, error } = await this.client
       .from("buses")
       .select(BUS_COLUMNS)

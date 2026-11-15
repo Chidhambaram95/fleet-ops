@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import { cache } from "react";
+import { cache, type ReactNode } from "react";
 import {
   getRequestCompanyProfile,
   getRequestMemberModule,
@@ -9,6 +9,7 @@ import {
 } from "@data/auth/requestSession";
 import type { ActiveMembership } from "@data/auth/session";
 import { hasPublicSupabaseEnv } from "@data/supabase/env";
+import { AccessMessage } from "./editorAccess";
 import {
   activeModules,
   hasScreen,
@@ -86,6 +87,25 @@ export async function moduleAccess(
     };
   }
   return { membership, module: param, companyModules: active };
+}
+
+/** What a module page gets once access is granted. */
+export type ModuleGrant = { membership: ActiveMembership; module: ModuleId; companyModules: ModuleId[] };
+
+/**
+ * Wraps a module page: checks access with moduleAccess() and shows the reason
+ * when it is refused, otherwise renders the page with the grant.
+ */
+export async function withModule(
+  params: Promise<{ module: string }>,
+  screen: Screen,
+  render: (access: ModuleGrant) => ReactNode,
+): Promise<ReactNode> {
+  const access = await moduleAccess((await params).module, screen);
+  if (!access.membership) {
+    return <AccessMessage message={access.message} />;
+  }
+  return render(access);
 }
 
 /**

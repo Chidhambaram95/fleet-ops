@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { shareInFlight } from "@data/supabase/inflight";
 import { str } from "@data/supabase/rows";
 import { DEFAULT_REMINDER_DAYS, type EmiStatus, type Loan, type LoanEmi } from "@domain/loans/emis";
 
@@ -48,7 +49,17 @@ function toEmi(row: Row): LoanEmi {
 }
 
 /** Loans and EMI records. Empty, without an error, before migration 0027. */
-export async function listLoans(
+export function listLoans(
+  client: SupabaseClient,
+  organizationId: string,
+  options: { quiet?: boolean } = {},
+): Promise<{ loans: Loan[]; emis: LoanEmi[] }> {
+  return shareInFlight(`loans:${organizationId}:${options.quiet ? "quiet" : "loud"}`, () =>
+    fetchLoans(client, organizationId, options),
+  );
+}
+
+async function fetchLoans(
   client: SupabaseClient,
   organizationId: string,
   { quiet = false }: { quiet?: boolean } = {},
@@ -131,7 +142,11 @@ export async function resetEmi(client: SupabaseClient, organizationId: string, i
   throwIfError(error);
 }
 
-export async function getEmiReminderDays(client: SupabaseClient, organizationId: string): Promise<number> {
+export function getEmiReminderDays(client: SupabaseClient, organizationId: string): Promise<number> {
+  return shareInFlight(`emi-reminder-days:${organizationId}`, () => fetchEmiReminderDays(client, organizationId));
+}
+
+async function fetchEmiReminderDays(client: SupabaseClient, organizationId: string): Promise<number> {
   const { data, error } = await client
     .from("organizations")
     .select("emi_reminder_days")

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { shareInFlight } from "@data/supabase/inflight";
 import { throwIfError } from "@data/supabase/errors";
 import { str } from "@data/supabase/rows";
 import type { Renewal, RenewalKind } from "@domain/renewals/types";
@@ -7,7 +8,11 @@ const PHOTO_BUCKET = "trip-sheets";
 
 type Row = Record<string, unknown>;
 
-export async function listRenewals(
+export function listRenewals(client: SupabaseClient, organizationId: string): Promise<Renewal[]> {
+  return shareInFlight(`renewals:${organizationId}`, () => fetchRenewals(client, organizationId));
+}
+
+async function fetchRenewals(
   client: SupabaseClient,
   organizationId: string,
 ): Promise<Renewal[]> {

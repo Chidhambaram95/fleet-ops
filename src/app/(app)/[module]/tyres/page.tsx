@@ -1,18 +1,13 @@
 import { TyresPage } from "@/components/tyres/TyresPage";
-import { AccessMessage } from "@/app/(app)/editorAccess";
-import { moduleAccess } from "@/app/(app)/moduleAccess";
+import { withModule } from "@/app/(app)/moduleAccess";
 
-export default async function ModuleTyresPage({ params }: { params: Promise<{ module: string }> }) {
-  const access = await moduleAccess((await params).module, "tyres");
-  if (!access.membership) {
-    return <AccessMessage message={access.message} />;
-  }
-  return (
+export default function ModuleTyresPage({ params }: { params: Promise<{ module: string }> }) {
+  return withModule(params, "tyres", (access) => (
     <TyresPage
       key={access.module}
       organizationId={access.membership.organizationId}
       module={access.module}
       role={access.membership.role}
     />
-  );
+  ));
 }

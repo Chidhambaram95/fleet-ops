@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { shareInFlight } from "@data/supabase/inflight";
 import { throwIfError } from "@data/supabase/errors";
 import { listTripsWithLines } from "@data/trips/repository";
 import {
@@ -30,7 +31,11 @@ type FillRow = {
 };
 
 /** Buses with their mileage target and tank size (both empty before migration 0024). */
-export async function listMileageBuses(client: SupabaseClient, organizationId: string): Promise<MileageBus[]> {
+export function listMileageBuses(client: SupabaseClient, organizationId: string): Promise<MileageBus[]> {
+  return shareInFlight(`mileage-buses:${organizationId}`, () => fetchMileageBuses(client, organizationId));
+}
+
+async function fetchMileageBuses(client: SupabaseClient, organizationId: string): Promise<MileageBus[]> {
   const full = await client
     .from("buses")
     .select("id, registration_number, bus_type, target_kmpl, tank_litres")
@@ -123,7 +128,15 @@ export type MileageData = {
 };
 
 /** Everything the mileage page, card and bell need for one module. */
-export async function loadMileage(
+export function loadMileage(
+  client: SupabaseClient,
+  organizationId: string,
+  module: ModuleId,
+): Promise<MileageData> {
+  return shareInFlight(`mileage:${organizationId}:${module}`, () => fetchMileage(client, organizationId, module));
+}
+
+async function fetchMileage(
   client: SupabaseClient,
   organizationId: string,
   module: ModuleId,

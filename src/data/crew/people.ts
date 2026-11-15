@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { shareInFlight } from "@data/supabase/inflight";
 import { throwIfError } from "@data/supabase/errors";
 import { insertRow, listRows, num, str, type DateRange } from "@data/supabase/rows";
 import type { CrewJob, CrewPerson, SalaryPayment } from "@domain/crew/types";
@@ -30,7 +31,11 @@ export async function listDayCrewBetween(
 
 // Crew people and salaries
 
-export async function listCrewPeople(
+export function listCrewPeople(client: SupabaseClient, organizationId: string): Promise<CrewPerson[]> {
+  return shareInFlight(`crew-people:${organizationId}`, () => fetchCrewPeople(client, organizationId));
+}
+
+async function fetchCrewPeople(
   client: SupabaseClient,
   organizationId: string,
 ): Promise<CrewPerson[]> {

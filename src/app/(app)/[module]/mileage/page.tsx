@@ -1,18 +1,13 @@
 import { MileagePage } from "@/components/mileage/MileagePage";
-import { AccessMessage } from "@/app/(app)/editorAccess";
-import { moduleAccess } from "@/app/(app)/moduleAccess";
+import { withModule } from "@/app/(app)/moduleAccess";
 
-export default async function ModuleMileagePage({ params }: { params: Promise<{ module: string }> }) {
-  const access = await moduleAccess((await params).module, "mileage");
-  if (!access.membership) {
-    return <AccessMessage message={access.message} />;
-  }
-  return (
+export default function ModuleMileagePage({ params }: { params: Promise<{ module: string }> }) {
+  return withModule(params, "mileage", (access) => (
     <MileagePage
       key={access.module}
       organizationId={access.membership.organizationId}
       module={access.module}
       isAdmin={access.membership.role === "admin"}
     />
-  );
+  ));
 }
