@@ -211,7 +211,7 @@ export function CrewPage({
             <input
               type="month"
               aria-label="Month"
-              className="h-11 rounded-lg bg-canvas px-3 text-sm font-semibold"
+              className="h-11 rounded-lg border border-line-strong bg-surface px-3 text-sm font-semibold"
               value={month}
               onChange={(event) => event.target.value && setMonth(event.target.value)}
             />
@@ -267,7 +267,7 @@ export function CrewPage({
                             <input
                               inputMode="numeric"
                               aria-label={`Amount for ${item.name}`}
-                              className="h-11 w-24 rounded-lg bg-canvas px-3 text-right"
+                              className="h-11 w-24 rounded-lg border border-line-strong bg-surface px-3 text-right"
                               placeholder={String(leftInr || "")}
                               value={payAmounts[item.id] ?? ""}
                               onChange={(event) => setPayAmounts((all) => ({ ...all, [item.id]: event.target.value }))}
@@ -276,7 +276,7 @@ export function CrewPage({
                               type="button"
                               disabled={saving}
                               onClick={() => paySalary(item)}
-                              className="h-11 rounded-lg bg-brand px-4 text-sm font-bold text-white disabled:opacity-50"
+                              className="h-11 rounded-lg bg-brand px-4 text-sm font-semibold text-white disabled:opacity-50"
                             >
                               {payments.length ? "Pay the rest" : "Mark paid"}
                             </button>
@@ -382,7 +382,7 @@ export function CrewPage({
                     type="button"
                     aria-pressed={person.job === job}
                     onClick={() => setPerson({ ...person, job })}
-                    className={`h-11 rounded-full text-sm font-bold ${
+                    className={`h-11 rounded-full text-sm font-semibold ${
                       person.job === job ? "bg-brand text-white" : "bg-canvas text-muted"
                     }`}
                   >

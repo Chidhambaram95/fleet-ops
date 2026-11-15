@@ -87,7 +87,7 @@ export function BookingsPage({ organizationId }: { organizationId: string }) {
               <StatusPill status={booking.status}>{running ? "Running now" : undefined}</StatusPill>
             </div>
             <p className="text-sm">
-              <span className="font-bold">{busName(booking.busId)}</span> · {tripLine(booking)}
+              <span className="font-semibold">{busName(booking.busId)}</span> · {tripLine(booking)}
               <br />
               <span className="text-muted">{whenLine(booking)}</span>
             </p>
@@ -295,7 +295,7 @@ function PaymentSheet({
       </button>
       {mine.length ? (
         <div className="flex flex-col">
-          <p className="text-sm font-bold">Payments so far</p>
+          <p className="text-sm font-semibold">Payments so far</p>
           {mine.map((payment) => (
             <div key={payment.id} className="flex items-center justify-between gap-2 border-t border-line py-2 text-sm">
               <span>

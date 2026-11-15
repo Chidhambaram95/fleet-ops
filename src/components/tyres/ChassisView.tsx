@@ -262,7 +262,7 @@ export function ChassisView({
           ))}
         </div>
         {!readOnly ? (
-          <button type="button" onClick={onAddSpare} className="text-sm font-bold text-brand">
+          <button type="button" onClick={onAddSpare} className="text-sm font-semibold text-brand">
             + Spare spot
           </button>
         ) : null}

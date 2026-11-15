@@ -191,7 +191,7 @@ export function PayRoadTaxPage({
     <p className="rounded-lg bg-warn-bg px-4 py-3 text-sm text-warn-ink">
       {bus.registrationNumber} has no {missing.join(" or ")} yet.{" "}
       {isAdmin ? (
-        <Link href={busesHref} className="font-bold underline">
+        <Link href={busesHref} className="font-semibold underline">
           Add it on the Buses page
         </Link>
       ) : (
@@ -203,7 +203,7 @@ export function PayRoadTaxPage({
   const manualSteps = bus && quarter ? (
     <ol className="flex list-decimal flex-col gap-3 pl-5 text-sm">
       <li>
-        <a href={VAHAN_HOME_URL} target="_blank" rel="noopener noreferrer" className="font-bold text-brand underline">
+        <a href={VAHAN_HOME_URL} target="_blank" rel="noopener noreferrer" className="font-semibold text-brand underline">
           Open Vahan
         </a>{" "}
         and close the “Update Your Mobile Number” box.

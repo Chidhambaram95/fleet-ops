@@ -271,7 +271,7 @@ export function LoansPanel({
             return (
               <label
                 key={bus.id}
-                className={`flex h-11 items-center gap-2 rounded-full px-4 text-sm font-semibold ${on ? "bg-brand text-white" : "bg-canvas"}`}
+                className={`flex h-11 items-center gap-2 rounded-lg px-4 text-sm font-semibold ${on ? "bg-brand text-white" : "bg-canvas"}`}
               >
                 <input
                   type="checkbox"
@@ -483,7 +483,7 @@ export function LoansPanel({
                 .join(" · ")}
             </p>
           </div>
-          <span className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ${STATUS_CLASS[chip]}`}>{chipText}</span>
+          <span className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${STATUS_CLASS[chip]}`}>{chipText}</span>
         </div>
         {canEdit ? (
           <div className="flex flex-wrap gap-1">
@@ -511,7 +511,7 @@ export function LoansPanel({
         title="EMI reminders"
         action={
           alerts.length ? (
-            <button type="button" onClick={sendReminder} className="text-sm font-bold text-brand">
+            <button type="button" onClick={sendReminder} className="text-sm font-semibold text-brand">
               Send on WhatsApp
             </button>
           ) : null
@@ -546,7 +546,7 @@ export function LoansPanel({
               ))}
             </select>
           ) : (
-            <span className="font-bold text-ink">{data.reminderDays}</span>
+            <span className="font-semibold text-ink">{data.reminderDays}</span>
           )}
           <span>days before each sweep, and again the day before.</span>
         </div>
@@ -591,15 +591,15 @@ export function LoansPanel({
             title={`${busesOf(loan, busName)} · ${loan.lender}${loan.loanRef ? ` (${loan.loanRef})` : ""}`}
             action={
               summary.closed ? (
-                <span className="rounded-full bg-canvas px-3 py-1 text-xs font-bold text-muted">Closed</span>
+                <span className="rounded-full bg-canvas px-3 py-1 text-xs font-semibold text-muted">Closed</span>
               ) : summary.endingSoon ? (
-                <span className="rounded-full bg-warn-bg px-3 py-1 text-xs font-bold text-warn-ink">Ending soon</span>
+                <span className="rounded-full bg-warn-bg px-3 py-1 text-xs font-semibold text-warn-ink">Ending soon</span>
               ) : null
             }
           >
             <div className="text-sm">
               <p>
-                <span className="font-bold">{formatInr(loan.emiInr)}</span> on the {loan.sweepDay}
+                <span className="font-semibold">{formatInr(loan.emiInr)}</span> on the {loan.sweepDay}
                 {ordinal(loan.sweepDay)} of each month{loan.debitAccount ? ` from ${loan.debitAccount}` : ""}
               </p>
               <p className="text-muted">

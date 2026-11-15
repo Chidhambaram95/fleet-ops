@@ -11,7 +11,7 @@ import {
 } from "@domain/companies/types";
 
 const input =
-  "rounded-lg border border-brand-pale bg-canvas px-3.5 text-base font-normal";
+  "rounded-lg border border-line-strong bg-surface px-3.5 text-base font-normal";
 
 export function AddCompanyForm() {
   const router = useRouter();
@@ -89,7 +89,7 @@ export function AddCompanyForm() {
             setCreated(null);
             setOpen(false);
           }}
-          className="self-start text-sm font-bold text-white underline"
+          className="self-start text-sm font-semibold text-white underline"
         >
           Done
         </button>
@@ -102,7 +102,7 @@ export function AddCompanyForm() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="self-start rounded-lg bg-brand px-5 text-sm font-bold text-white"
+        className="self-start rounded-lg bg-brand px-5 text-sm font-semibold text-white"
       >
         Add company
       </button>
@@ -172,14 +172,14 @@ export function AddCompanyForm() {
         <button
           type="submit"
           disabled={busy}
-          className="rounded-lg bg-brand px-5 text-sm font-bold text-white disabled:opacity-60"
+          className="rounded-lg bg-brand px-5 text-sm font-semibold text-white disabled:opacity-60"
         >
           {busy ? "Creating…" : "Create and get invite"}
         </button>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="rounded-lg bg-canvas px-5 text-sm font-bold"
+          className="rounded-lg bg-canvas px-5 text-sm font-semibold"
         >
           Cancel
         </button>

@@ -58,7 +58,7 @@ export function BillingNotice({
             <CalendarIcon />
           </span>
           <div className="flex min-w-0 flex-1 flex-col text-sm">
-            <span className="font-bold">
+            <span className="font-semibold">
               {status.onTrial
                 ? `Free trial ends on ${dueLabel}`
                 : `Fleet Ops plan renews on ${dueLabel}`}
@@ -66,7 +66,7 @@ export function BillingNotice({
             <button
               type="button"
               onClick={() => setShowDetails((open) => !open)}
-              className="min-h-0 self-start font-bold text-brand"
+              className="min-h-0 self-start font-semibold text-brand"
             >
               {showDetails ? "Hide payment details" : "See payment details ›"}
             </button>
@@ -90,7 +90,7 @@ export function BillingNotice({
                 .map(([label, value]) => (
                   <div key={label} className="flex justify-between gap-3">
                     <span className="text-muted">{label}</span>
-                    <span className="font-bold">{value}</span>
+                    <span className="font-semibold">{value}</span>
                   </div>
                 ))
             )}
@@ -98,7 +98,7 @@ export function BillingNotice({
               <button
                 type="button"
                 onClick={() => void copyDetails()}
-                className="rounded-lg bg-ink text-sm font-bold text-white"
+                className="rounded-lg bg-ink text-sm font-semibold text-white"
               >
                 {copied ? "Copied" : "Copy payment details"}
               </button>
@@ -113,7 +113,7 @@ export function BillingNotice({
   return (
     <>
       <div
-        className={`mx-auto mt-3 w-full max-w-6xl px-4 md:px-8 text-sm font-bold`}
+        className={`mx-auto mt-3 w-full max-w-6xl px-4 md:px-8 text-sm font-semibold`}
         role="status"
       >
         <div className="rounded-lg bg-danger-bg px-3.5 py-2.5 text-money-out">
@@ -145,7 +145,7 @@ export function BillingNotice({
                   .map(([label, value]) => (
                     <div key={label} className="flex justify-between gap-2">
                       <span className="text-muted">{label}</span>
-                      <span className="font-bold">{value}</span>
+                      <span className="font-semibold">{value}</span>
                     </div>
                   ))}
               </div>
@@ -154,7 +154,7 @@ export function BillingNotice({
               <button
                 type="button"
                 onClick={() => void copyDetails()}
-                className="h-[50px] w-full rounded-lg bg-ink text-sm font-bold text-white"
+                className="h-[50px] w-full rounded-lg bg-ink text-sm font-semibold text-white"
               >
                 {copied ? "Copied" : "Copy payment details"}
               </button>

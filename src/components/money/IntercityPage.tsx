@@ -98,7 +98,7 @@ export function IntercityPage({ organizationId, module }: { organizationId: stri
       <PageHeader title="Intercity payments" hint="Fortnightly payments from Intercity for your omni buses." />
       <ErrorText message={error} />
         <div className="grid gap-4 md:grid-cols-[1fr_360px]">
-          <Card title="Payments received" action={<span className="font-bold text-money-in">{formatInr(incomeTotal)}</span>}>
+          <Card title="Payments received" action={<span className="font-semibold text-money-in">{formatInr(incomeTotal)}</span>}>
             {loading ? (
               <p className="text-muted">Loading…</p>
             ) : data.intercity.length === 0 ? (
@@ -159,7 +159,7 @@ export function IntercityPage({ organizationId, module }: { organizationId: stri
                 {intercityBuses.map((bus) => {
                   const checked = incomeBuses.includes(bus.id);
                   return (
-                    <label key={bus.id} className="flex min-h-11 items-center gap-3 rounded-lg bg-canvas px-4">
+                    <label key={bus.id} className="flex min-h-11 items-center gap-3 rounded-lg border border-line-strong bg-surface px-4">
                       <input
                         type="checkbox"
                         className="size-5 accent-brand"

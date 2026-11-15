@@ -295,7 +295,7 @@ export function TeamSettings({
           placeholder="Name"
           aria-label="Name"
           autoComplete="off"
-          className="h-12 rounded-lg bg-canvas px-4 text-base font-normal"
+          className="h-12 rounded-lg border border-line-strong bg-surface px-4 text-base font-normal"
         />
         {addMode === "direct" ? (
           <>
@@ -306,7 +306,7 @@ export function TeamSettings({
               aria-label="Email or mobile number"
               autoComplete="off"
               autoCapitalize="none"
-              className="h-12 rounded-lg bg-canvas px-4 text-base font-normal"
+              className="h-12 rounded-lg border border-line-strong bg-surface px-4 text-base font-normal"
             />
             <input
               value={newPassword}
@@ -315,7 +315,7 @@ export function TeamSettings({
               aria-label="Password for this person"
               type="text"
               autoComplete="new-password"
-              className="h-12 rounded-lg bg-canvas px-4 text-base font-normal"
+              className="h-12 rounded-lg border border-line-strong bg-surface px-4 text-base font-normal"
             />
           </>
         ) : (
@@ -326,7 +326,7 @@ export function TeamSettings({
             aria-label="WhatsApp number"
             inputMode="tel"
             autoComplete="off"
-            className="h-12 rounded-lg bg-canvas px-4 text-base font-normal"
+            className="h-12 rounded-lg border border-line-strong bg-surface px-4 text-base font-normal"
           />
         )}
         <label className="flex flex-col gap-1.5 text-sm font-semibold">
@@ -334,7 +334,7 @@ export function TeamSettings({
           <select
             value={newRole}
             onChange={(event) => setNewRole(event.target.value as UserRole)}
-            className="h-11 rounded-lg bg-canvas px-3 text-sm"
+            className="h-11 rounded-lg border border-line-strong bg-surface px-3 text-sm"
           >
             {USER_ROLES.map((option) => (
               <option key={option} value={option}>
@@ -349,7 +349,7 @@ export function TeamSettings({
             <select
               value={newBusId}
               onChange={(event) => setNewBusId(event.target.value)}
-              className="h-11 rounded-lg bg-canvas px-3 text-sm"
+              className="h-11 rounded-lg border border-line-strong bg-surface px-3 text-sm"
             >
               <option value="">
                 {buses.length === 0 ? "No buses yet" : "Pick their bus"}
@@ -365,7 +365,7 @@ export function TeamSettings({
         <button
           type="submit"
           disabled={adding}
-          className="h-12 rounded-lg bg-brand px-4 text-sm font-bold text-white disabled:opacity-60"
+          className="h-12 rounded-lg bg-brand px-4 text-sm font-semibold text-white disabled:opacity-60"
         >
           {adding ? "Saving…" : addMode === "direct" ? "Add person" : "Create invite"}
         </button>
@@ -470,7 +470,7 @@ export function TeamSettings({
                               type="button"
                               disabled={pending}
                               onClick={() => void removeMember(member.userId)}
-                              className="rounded-xl bg-money-out px-3 py-2 text-xs font-bold text-white"
+                              className="rounded-xl bg-money-out px-3 py-2 text-xs font-semibold text-white"
                             >
                               {pending ? "Removing…" : `Remove ${member.displayName}`}
                             </button>
@@ -516,12 +516,12 @@ export function TeamSettings({
                           placeholder="New password"
                           aria-label={`New password for ${member.displayName}`}
                           autoComplete="new-password"
-                          className="h-10 min-w-0 flex-1 rounded-xl bg-canvas px-3 text-sm"
+                          className="h-10 min-w-0 flex-1 rounded-lg border border-line-strong bg-surface px-3 text-sm"
                         />
                         <button
                           type="submit"
                           disabled={pending}
-                          className="h-10 rounded-xl bg-brand px-3 text-xs font-bold text-white disabled:opacity-60"
+                          className="h-10 rounded-xl bg-brand px-3 text-xs font-semibold text-white disabled:opacity-60"
                         >
                           Save
                         </button>
@@ -544,7 +544,7 @@ export function TeamSettings({
                         onChange={(event) =>
                           onRoleChange(member, event.target.value as UserRole)
                         }
-                        className="h-11 rounded-lg bg-canvas px-3 text-sm disabled:opacity-60"
+                        className="h-11 rounded-lg border border-line-strong bg-surface px-3 text-sm disabled:opacity-60"
                       >
                         {USER_ROLES.map((option) => (
                           <option key={option} value={option}>
@@ -560,7 +560,7 @@ export function TeamSettings({
                             onBusChange(member.userId, event.target.value)
                           }
                           aria-label={`Bus for ${member.displayName}`}
-                          className="h-11 rounded-lg bg-canvas px-3 text-sm disabled:opacity-60"
+                          className="h-11 rounded-lg border border-line-strong bg-surface px-3 text-sm disabled:opacity-60"
                         >
                           <option value="">
                             {buses.length === 0 ? "No buses yet" : "Pick their bus"}
@@ -578,7 +578,7 @@ export function TeamSettings({
                           disabled={pending || viewOnly}
                           onChange={(event) => void onModuleChange(member.userId, event.target.value)}
                           aria-label={`Bus types for ${member.displayName}`}
-                          className="h-11 rounded-lg bg-canvas px-3 text-sm disabled:opacity-60"
+                          className="h-11 rounded-lg border border-line-strong bg-surface px-3 text-sm disabled:opacity-60"
                         >
                           <option value="">All bus types</option>
                           {modules.map((item) => (

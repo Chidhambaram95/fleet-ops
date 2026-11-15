@@ -93,7 +93,7 @@ export default async function CompaniesPage() {
                       .join(" · ")}
                   </p>
                 </div>
-                <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${company.deactivatedAt ? "bg-line text-muted" : badge[status.state]}`}>
+                <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${company.deactivatedAt ? "bg-line text-muted" : badge[status.state]}`}>
                   {label}
                 </span>
               </div>
@@ -122,7 +122,7 @@ export default async function CompaniesPage() {
                   />
                 </div>
               ) : null}
-              <span className="text-sm font-bold text-brand">Open company ›</span>
+              <span className="text-sm font-semibold text-brand">Open company ›</span>
             </article>
           );
         })}

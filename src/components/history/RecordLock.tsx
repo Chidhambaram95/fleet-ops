@@ -141,7 +141,7 @@ export function RecordLock({
               type="button"
               disabled={busy}
               onClick={() => void submitClose()}
-              className="min-h-10 rounded-full bg-ink px-4 font-bold text-white disabled:opacity-50"
+              className="min-h-10 rounded-lg bg-ink px-4 font-semibold text-white disabled:opacity-50"
             >
               {busy ? "Closing…" : "Yes, close it"}
             </button>
@@ -153,7 +153,7 @@ export function RecordLock({
           <button
             type="button"
             onClick={() => setStep("close")}
-            className="min-h-10 rounded-full bg-surface px-4 font-bold text-muted"
+            className="min-h-10 rounded-lg bg-surface px-4 font-semibold text-muted"
           >
             Close this day
           </button>
@@ -196,7 +196,7 @@ export function RecordLock({
                 type="button"
                 disabled={busy}
                 onClick={() => void submitOpen()}
-                className="min-h-10 rounded-full bg-brand px-4 font-bold text-white disabled:opacity-50"
+                className="min-h-10 rounded-lg bg-brand px-4 font-semibold text-white disabled:opacity-50"
               >
                 {busy ? "Opening…" : "Open for 30 minutes"}
               </button>
@@ -209,7 +209,7 @@ export function RecordLock({
           <button
             type="button"
             onClick={() => setStep("open")}
-            className="min-h-10 self-start rounded-full bg-surface px-4 font-bold text-ink"
+            className="min-h-10 self-start rounded-lg bg-surface px-4 font-semibold text-ink"
           >
             Change with a comment
           </button>

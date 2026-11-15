@@ -165,7 +165,7 @@ export function BestWorstCard({
         </div>
         <Link
           href={`${moduleHref(module, "reports")}?report=bus_profit`}
-          className="shrink-0 text-sm font-bold text-brand"
+          className="shrink-0 text-sm font-semibold text-brand"
         >
           All buses ›
         </Link>
@@ -214,7 +214,7 @@ function BusTile({
         <div className="shrink-0 text-right">
           <span className={`text-xl font-semibold tabular-nums ${tone}`}>{formatInr(line.profit)}</span>
           {change != null ? (
-            <p className={`text-xs font-bold ${change >= 0 ? "text-money-in" : "text-money-out"}`}>
+            <p className={`text-xs font-semibold ${change >= 0 ? "text-money-in" : "text-money-out"}`}>
               {change >= 0 ? "▲" : "▼"} {formatInr(Math.abs(change))} vs {lastLabel}
             </p>
           ) : null}
@@ -237,7 +237,7 @@ function Figure({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
       <p className="text-xs text-muted">{label}</p>
-      <p className="truncate font-bold tabular-nums">{value}</p>
+      <p className="truncate font-semibold tabular-nums">{value}</p>
     </div>
   );
 }

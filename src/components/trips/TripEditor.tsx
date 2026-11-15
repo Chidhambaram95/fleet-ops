@@ -42,7 +42,7 @@ import {
 } from "./tripForm";
 import { friendlyErrorMessage } from "@domain/platform/errors";
 
-const FIELD = "h-12 w-full min-w-0 rounded-lg bg-canvas px-4 text-base disabled:opacity-70";
+const FIELD = "h-12 w-full min-w-0 rounded-lg border border-line-strong bg-surface px-4 text-base disabled:opacity-70";
 const LABEL = "flex min-w-0 flex-col gap-1.5 text-sm font-semibold";
 
 type Step = "photo" | "reading" | "form";
@@ -339,7 +339,7 @@ export function TripEditor({
             <button
               type="button"
               onClick={() => setStep("form")}
-              className="h-14 rounded-xl border border-line bg-surface text-base font-bold text-brand"
+              className="h-14 rounded-xl border border-line bg-surface text-base font-semibold text-brand"
             >
               Type it in instead
             </button>
@@ -426,7 +426,7 @@ export function TripEditor({
               </span>
             </a>
           ) : !locked ? (
-            <label className="flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-xl border border-line bg-surface px-4 text-sm font-bold text-brand">
+            <label className="flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-xl border border-line bg-surface px-4 text-sm font-semibold text-brand">
               <CameraIcon className="h-5 w-5" />
               Add the trip sheet photo
               <input
@@ -601,7 +601,7 @@ export function TripEditor({
                         onClick={() =>
                           set("diesel", form.diesel.map((item, i) => (i === index ? { ...item, paidBy } : item)))
                         }
-                        className={`h-10 min-h-10 rounded-full px-4 text-sm font-bold ${
+                        className={`h-10 min-h-10 rounded-lg px-4 text-sm font-semibold ${
                           row.paidBy === paidBy ? "bg-surface text-ink shadow-[0_1px_3px_rgba(26,27,46,0.15)]" : "text-muted"
                         }`}
                       >
@@ -711,7 +711,7 @@ export function TripEditor({
 
       {confirmApprove ? (
         <div className="flex flex-col gap-3 rounded-xl bg-warn-bg p-4">
-          <p className="font-bold text-warn-ink">
+          <p className="font-semibold text-warn-ink">
             {checks.length === 1 ? "1 thing needs" : `${checks.length} things need`} checking.
             Approve anyway?
           </p>
@@ -720,14 +720,14 @@ export function TripEditor({
               type="button"
               disabled={saving}
               onClick={() => void save(true)}
-              className="h-12 rounded-lg bg-brand px-5 font-bold text-white disabled:opacity-50"
+              className="h-12 rounded-lg bg-brand px-5 font-semibold text-white disabled:opacity-50"
             >
               Yes, approve
             </button>
             <button
               type="button"
               onClick={() => setConfirmApprove(false)}
-              className="h-12 rounded-lg bg-surface px-5 font-bold text-ink"
+              className="h-12 rounded-lg bg-surface px-5 font-semibold text-ink"
             >
               Go back and check
             </button>
@@ -741,7 +741,7 @@ export function TripEditor({
             type="button"
             disabled={saving}
             onClick={() => void save(true)}
-            className="h-14 flex-1 basis-48 rounded-lg bg-brand px-5 text-base font-bold text-white disabled:opacity-50"
+            className="h-14 flex-1 basis-48 rounded-lg bg-brand px-5 text-base font-semibold text-white disabled:opacity-50"
           >
             {saving ? "Saving…" : "Approve trip sheet"}
           </button>
@@ -751,7 +751,7 @@ export function TripEditor({
             type="button"
             disabled={saving}
             onClick={() => void save(false)}
-            className="h-14 flex-1 basis-40 rounded-lg bg-surface px-5 text-base font-bold text-brand disabled:opacity-50"
+            className="h-14 flex-1 basis-40 rounded-lg bg-surface px-5 text-base font-semibold text-brand disabled:opacity-50"
           >
             {approved ? (saving ? "Saving…" : "Save changes") : "Save as draft"}
           </button>
@@ -759,7 +759,7 @@ export function TripEditor({
         <button
           type="button"
           onClick={sendWhatsApp}
-          className="h-14 flex-1 basis-40 rounded-lg bg-surface px-5 text-base font-bold text-money-in"
+          className="h-14 flex-1 basis-40 rounded-lg bg-surface px-5 text-base font-semibold text-money-in"
         >
           Send on WhatsApp
         </button>
@@ -787,7 +787,7 @@ export function TripEditor({
 
 function BackLink({ href }: { href: string }) {
   return (
-    <Link href={href} className="self-start text-sm font-bold text-brand">
+    <Link href={href} className="self-start text-sm font-semibold text-brand">
       ‹ All trip sheets
     </Link>
   );
@@ -795,11 +795,11 @@ function BackLink({ href }: { href: string }) {
 
 export function StatusBadge({ approved }: { approved: boolean }) {
   return approved ? (
-    <span className="inline-flex min-h-8 shrink-0 items-center whitespace-nowrap rounded-full bg-success-bg px-3 text-xs font-bold text-money-in">
+    <span className="inline-flex min-h-8 shrink-0 items-center whitespace-nowrap rounded-full bg-success-bg px-3 text-xs font-semibold text-money-in">
       Approved
     </span>
   ) : (
-    <span className="inline-flex min-h-8 shrink-0 items-center whitespace-nowrap rounded-full bg-warn-bg px-3 text-xs font-bold text-warn-ink">
+    <span className="inline-flex min-h-8 shrink-0 items-center whitespace-nowrap rounded-full bg-warn-bg px-3 text-xs font-semibold text-warn-ink">
       Waiting for approval
     </span>
   );
@@ -834,7 +834,7 @@ function Figure({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg bg-brand-mid px-3 py-2.5">
       <div className="text-xs text-brand-pale">{label}</div>
-      <div className="font-bold">{value}</div>
+      <div className="font-semibold">{value}</div>
     </div>
   );
 }
@@ -853,7 +853,7 @@ function AddButton({ onClick, children }: { onClick: () => void; children: React
     <button
       type="button"
       onClick={onClick}
-      className="flex h-12 items-center justify-center gap-2 rounded-lg border-2 border-dashed border-brand-pale text-sm font-bold text-brand"
+      className="flex h-12 items-center justify-center gap-2 rounded-lg border-2 border-dashed border-brand-pale text-sm font-semibold text-brand"
     >
       + {children}
     </button>

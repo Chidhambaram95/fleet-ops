@@ -101,7 +101,7 @@ function AppliesToPicker({
     onChange(busIds.length ? { appliesTo: "buses", appliesType: null, busIds } : { appliesTo: "all", appliesType: null, busIds: [] });
   };
   const option = (selected: boolean) =>
-    `flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left ${selected ? "bg-brand-soft font-bold text-brand" : ""}`;
+    `flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left ${selected ? "bg-brand-soft font-semibold text-brand" : ""}`;
   const radio = (selected: boolean) => (
     <span
       aria-hidden="true"
@@ -163,7 +163,7 @@ function AppliesToPicker({
           </button>
           {types.length > 1 ? (
             <>
-              <span className="px-3 pt-2 pb-1 text-xs font-bold uppercase text-muted">By bus type</span>
+              <span className="px-3 pt-2 pb-1 text-xs font-semibold uppercase text-muted">By bus type</span>
               {types.map((type) => {
                 const selected = value.appliesTo === "type" && value.appliesType === type;
                 return (
@@ -186,7 +186,7 @@ function AppliesToPicker({
               })}
             </>
           ) : null}
-          <span className="px-3 pt-2 pb-1 text-xs font-bold uppercase text-muted">Pick buses (tick one or more)</span>
+          <span className="px-3 pt-2 pb-1 text-xs font-semibold uppercase text-muted">Pick buses (tick one or more)</span>
           {buses.map((bus) => (
             <label key={bus.id} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3">
               <input
@@ -202,7 +202,7 @@ function AppliesToPicker({
           <div className="sticky bottom-0 -mx-3 mt-1 bg-surface px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:-mx-2 md:px-2 md:pb-2">
             <button
               type="button"
-              className="h-11 w-full rounded-full bg-brand text-sm font-bold text-white md:h-10 md:bg-canvas md:text-brand"
+              className="h-11 w-full rounded-full bg-brand text-sm font-semibold text-white md:h-10 md:bg-canvas md:text-brand"
               onClick={() => setOpen(false)}
             >
               Done
@@ -407,7 +407,7 @@ export function CompanyCostsPage({
       ) : null}
 
       <div className="grid gap-4 md:grid-cols-[1fr_360px]">
-        <Card title="Costs" action={<span className="font-bold text-money-out">{formatInr(costTotal)}</span>}>
+        <Card title="Costs" action={<span className="font-semibold text-money-out">{formatInr(costTotal)}</span>}>
           {loading ? (
             <p className="text-muted">Loading…</p>
           ) : data.expenses.length === 0 ? (
@@ -425,17 +425,17 @@ export function CompanyCostsPage({
                     {[shortDay(item.spentOn), item.paidVia.toUpperCase(), item.note].filter(Boolean).join(" · ")}
                     <span className="mt-1.5 flex flex-wrap gap-1.5">
                       <span
-                        className={`block w-fit max-w-full truncate rounded-full px-2.5 py-0.5 text-xs font-bold ${CHIP[item.appliesTo]}`}
+                        className={`block w-fit max-w-full truncate rounded-full px-2.5 py-0.5 text-xs font-semibold ${CHIP[item.appliesTo]}`}
                       >
                         {appliesLabel(item, data.buses)}
                       </span>
                       {item.spreadMonths > 1 ? (
-                        <span className="rounded-full bg-canvas px-2.5 py-0.5 text-xs font-bold text-muted">
+                        <span className="rounded-full bg-canvas px-2.5 py-0.5 text-xs font-semibold text-muted">
                           Spread over {item.spreadMonths} months
                         </span>
                       ) : null}
                       {item.repeatMonthly ? (
-                        <span className="rounded-full bg-canvas px-2.5 py-0.5 text-xs font-bold text-muted">Repeats monthly</span>
+                        <span className="rounded-full bg-canvas px-2.5 py-0.5 text-xs font-semibold text-muted">Repeats monthly</span>
                       ) : null}
                     </span>
                   </>
@@ -517,7 +517,7 @@ export function CompanyCostsPage({
                   type="button"
                   aria-pressed={paidVia === item.id}
                   onClick={() => setPaidVia(item.id)}
-                  className={`h-11 rounded-full text-sm font-bold ${
+                  className={`h-11 rounded-full text-sm font-semibold ${
                     paidVia === item.id ? "bg-brand text-white" : "bg-canvas text-muted"
                   }`}
                 >
@@ -534,7 +534,7 @@ export function CompanyCostsPage({
               {saving ? "Saving…" : editingId ? "Save changes" : "Save cost"}
             </button>
             {editingId ? (
-              <button type="button" className="text-sm font-bold text-brand" onClick={resetForm}>
+              <button type="button" className="text-sm font-semibold text-brand" onClick={resetForm}>
                 Cancel
               </button>
             ) : null}

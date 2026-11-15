@@ -110,7 +110,7 @@ export function ScrapSaleForm({
               type="button"
               aria-pressed={via === id}
               onClick={() => setVia(id)}
-              className={`min-h-12 rounded-lg px-2 text-sm font-bold ${via === id ? "bg-brand text-white" : "bg-canvas text-ink"}`}
+              className={`min-h-12 rounded-lg px-2 text-sm font-semibold ${via === id ? "bg-brand text-white" : "bg-canvas text-ink"}`}
             >
               {RECEIVED_VIA_LABELS[id]}
             </button>
@@ -193,7 +193,7 @@ export function ScrapSection({
         title={`Scrap pile${pile.length ? ` · ${pile.length} ${pile.length === 1 ? "tyre" : "tyres"}` : ""}`}
         action={
           !readOnly && pile.length ? (
-            <button type="button" className="h-10 rounded-lg bg-brand px-4 text-sm font-bold text-white" onClick={onSell}>
+            <button type="button" className="h-10 rounded-lg bg-brand px-4 text-sm font-semibold text-white" onClick={onSell}>
               Sell scrap
             </button>
           ) : null
@@ -259,7 +259,7 @@ export function ScrapSection({
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
-                  <span className="font-bold text-money-in">{formatInr(sale.amountInr)}</span>
+                  <span className="font-semibold text-money-in">{formatInr(sale.amountInr)}</span>
                   {admin && !readOnly ? <SmallButton onClick={() => void undo(sale)}>Undo</SmallButton> : null}
                 </div>
               </div>

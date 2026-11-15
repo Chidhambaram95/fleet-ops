@@ -133,7 +133,7 @@ export function TyreDetail({
   if (!tyre) {
     return (
       <div className="flex flex-col gap-4">
-        <Link href={listHref} className="text-sm font-bold text-brand">
+        <Link href={listHref} className="text-sm font-semibold text-brand">
           ← Tyres
         </Link>
         <ErrorText message={error} />
@@ -264,7 +264,7 @@ export function TyreDetail({
 
   return (
     <div className="flex flex-col gap-4">
-      <Link href={listHref} className="text-sm font-bold text-brand">
+      <Link href={listHref} className="text-sm font-semibold text-brand">
         ← Tyres
       </Link>
 
@@ -317,7 +317,7 @@ export function TyreDetail({
       {!org.viewOnly && (actions.length || canClaim) ? (
         <div className={`grid grid-cols-2 gap-2 ${actions.length > 2 ? "sm:grid-cols-6" : "sm:grid-cols-4"}`}>
           {canClaim ? (
-            <button type="button" onClick={() => setPanel("claim")} className="h-12 rounded-lg bg-surface px-5 text-sm font-bold text-brand">
+            <button type="button" onClick={() => setPanel("claim")} className="h-12 rounded-lg bg-surface px-5 text-sm font-semibold text-brand">
               Warranty claim
             </button>
           ) : null}
@@ -325,7 +325,7 @@ export function TyreDetail({
             <button
               type="button"
               onClick={() => void togglePile()}
-              className={onPile ? PRIMARY : "h-12 rounded-lg bg-surface px-5 text-sm font-bold text-brand"}
+              className={onPile ? PRIMARY : "h-12 rounded-lg bg-surface px-5 text-sm font-semibold text-brand"}
             >
               {onPile ? "Take off scrap pile" : "Put in scrap pile"}
             </button>
@@ -335,7 +335,7 @@ export function TyreDetail({
               key={action.mode}
               type="button"
               onClick={() => setPanel(action.mode)}
-              className={index === 0 && !onPile ? PRIMARY : "h-12 rounded-lg bg-surface px-5 text-sm font-bold text-brand"}
+              className={index === 0 && !onPile ? PRIMARY : "h-12 rounded-lg bg-surface px-5 text-sm font-semibold text-brand"}
             >
               {action.label}
             </button>
@@ -422,11 +422,11 @@ export function TyreDetail({
                     </div>
                     <div className="shrink-0 text-right text-sm">
                       {event.kmRun != null && (event.kind === "removed" || event.kind === "rotated") ? (
-                        <p className="font-bold">{kmText(event.kmRun)}</p>
+                        <p className="font-semibold">{kmText(event.kmRun)}</p>
                       ) : null}
                       {event.costInr ? <p className="text-muted">Bill {formatInr(event.costInr)}</p> : null}
                       {event.chargeInr ? (
-                        <p className="font-bold text-money-out">
+                        <p className="font-semibold text-money-out">
                           {formatInr(event.chargeInr)} to {event.busLabel}
                         </p>
                       ) : null}

@@ -84,7 +84,7 @@ export function HistoryBoard({
       </div>
 
       <section className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
-        <h2 className="font-bold">Open a closed day</h2>
+        <h2 className="font-semibold">Open a closed day</h2>
         <label className="flex flex-col gap-1.5 text-sm font-semibold">
           Day
           <input
@@ -92,7 +92,7 @@ export function HistoryBoard({
             value={openDay}
             max={todayInIst()}
             onChange={(event) => setOpenDay(event.target.value)}
-            className="h-11 rounded-lg bg-canvas px-3 text-base font-normal sm:w-56"
+            className="h-11 rounded-lg border border-line-strong bg-surface px-3 text-base font-normal sm:w-56"
           />
         </label>
         {openDay ? (
@@ -165,7 +165,7 @@ export function HistoryBoard({
         <button
           type="button"
           onClick={() => void load(rows[rows.length - 1]?.id)}
-          className="min-h-11 self-center rounded-full bg-surface px-5 text-sm font-bold text-brand"
+          className="min-h-11 self-center rounded-lg bg-surface px-5 text-sm font-semibold text-brand"
         >
           Show older changes
         </button>

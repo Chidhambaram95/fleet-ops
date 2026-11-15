@@ -11,7 +11,7 @@ export default function AppError({ error, reset }: { error: Error & { digest?: s
       <button
         type="button"
         onClick={reset}
-        className="h-12 self-start rounded-lg bg-brand px-5 text-sm font-bold text-white"
+        className="h-12 self-start rounded-lg bg-brand px-5 text-sm font-semibold text-white"
       >
         Try again
       </button>

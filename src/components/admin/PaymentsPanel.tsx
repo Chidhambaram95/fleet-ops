@@ -15,8 +15,8 @@ import {
 } from "@domain/billing/subscription";
 
 const field =
-  "rounded-lg border border-brand-pale bg-canvas px-3.5 text-base font-normal";
-const primary = "rounded-lg bg-brand px-5 text-sm font-bold text-white disabled:opacity-60";
+  "rounded-lg border border-line-strong bg-surface px-3.5 text-base font-normal";
+const primary = "rounded-lg bg-brand px-5 text-sm font-semibold text-white disabled:opacity-60";
 
 function periodEnd(from: string, period: Subscription["billingPeriod"]) {
   const days = period === "year" ? 365 : period === "quarter" ? 91 : 30;
@@ -68,14 +68,14 @@ export function CompanyBilling({
       <div className="flex flex-wrap gap-2">
         {/* The trial only matters until the first payment. */}
         {!subscription.nextDueOn ? (
-          <button type="button" onClick={() => setPanel(panel === "trial" ? "" : "trial")} className="h-[46px] rounded-lg bg-canvas px-4 text-sm font-bold">
+          <button type="button" onClick={() => setPanel(panel === "trial" ? "" : "trial")} className="h-[46px] rounded-lg bg-canvas px-4 text-sm font-semibold">
             Extend trial
           </button>
         ) : null}
-        <button type="button" onClick={() => setPanel(panel === "plan" ? "" : "plan")} className="h-[46px] rounded-lg bg-canvas px-4 text-sm font-bold">
+        <button type="button" onClick={() => setPanel(panel === "plan" ? "" : "plan")} className="h-[46px] rounded-lg bg-canvas px-4 text-sm font-semibold">
           Edit plan amount
         </button>
-        <button type="button" onClick={() => setPanel(panel === "paid" ? "" : "paid")} className="h-[46px] rounded-lg bg-brand px-4 text-sm font-bold text-white">
+        <button type="button" onClick={() => setPanel(panel === "paid" ? "" : "paid")} className="h-[46px] rounded-lg bg-brand px-4 text-sm font-semibold text-white">
           Mark as received
         </button>
       </div>

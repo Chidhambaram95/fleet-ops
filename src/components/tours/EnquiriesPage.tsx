@@ -182,7 +182,7 @@ export function EnquiriesPage({ organizationId }: { organizationId: string }) {
         hint="Note an enquiry, send a quote, and confirm the booking when the advance comes in."
         action={
           !org.viewOnly ? (
-            <button type="button" onClick={startNew} className="flex min-h-12 items-center gap-2 rounded-lg bg-brand px-5 text-sm font-bold text-white">
+            <button type="button" onClick={startNew} className="flex min-h-12 items-center gap-2 rounded-lg bg-brand px-5 text-sm font-semibold text-white">
               <span aria-hidden="true" className="text-xl leading-none">+</span>
               New enquiry
             </button>
@@ -236,7 +236,7 @@ export function EnquiriesPage({ organizationId }: { organizationId: string }) {
               </div>
               {booking.hireAmountInr > 0 ? (
                 <p className="text-sm">
-                  <span className="font-bold">
+                  <span className="font-semibold">
                     {quoteNumber(booking)} · {formatInr(booking.hireAmountInr)}
                   </span>
                   <span className="text-muted">
@@ -477,7 +477,7 @@ function QuoteForm({
       <label className={LABEL}>
         Price includes (one per line)
         <textarea
-          className="min-h-24 w-full rounded-lg bg-canvas px-4 py-3 text-base"
+          className="min-h-24 w-full rounded-lg border border-line-strong bg-surface px-4 py-3 text-base"
           value={includes}
           onChange={(event) => setIncludes(event.target.value)}
           placeholder={"Diesel\nToll and parking\nDriver bata"}
@@ -665,7 +665,7 @@ export function ConfirmSheet({
       ) : null}
       {mode === "confirm" ? (
         <>
-          <p className="text-sm font-bold">
+          <p className="text-sm font-semibold">
             Price {formatInr(booking.hireAmountInr)}
             {booking.advanceRequiredInr ? ` · advance asked ${formatInr(booking.advanceRequiredInr)}` : ""}
           </p>

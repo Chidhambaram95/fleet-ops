@@ -23,7 +23,7 @@ export default async function AdminLayout({
   }
 
   const link =
-    "flex min-h-10 items-center rounded-full px-3.5 text-sm font-medium text-brand-soft hover:bg-surface/10";
+    "flex min-h-10 items-center rounded-lg px-3.5 text-sm font-medium text-brand-soft hover:bg-surface/10";
   return (
     <div className="min-h-dvh bg-canvas text-ink">
       <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 bg-ink px-4 py-3 text-white sm:px-8">

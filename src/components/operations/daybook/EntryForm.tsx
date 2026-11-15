@@ -55,7 +55,7 @@ export function EntryForm({ book, form, place }: { book: DayBook; form: EntryFor
       </div>
 
       {kind === "expense" ? (
-        <label className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-brand-pale px-3 text-sm font-bold text-brand active:bg-brand-soft">
+        <label className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-brand-pale px-3 text-sm font-semibold text-brand active:bg-brand-soft">
           <CameraIcon />
           {scanning ? "Reading the bill…" : "Scan a bill instead"}
           <ScanInput book={book} form={form} />
@@ -118,7 +118,7 @@ export function EntryForm({ book, form, place }: { book: DayBook; form: EntryFor
           value={amount}
           onChange={(event) => setAmount(event.target.value)}
           placeholder="0"
-          className="h-14 rounded-lg bg-canvas px-4 text-2xl font-bold"
+          className="h-14 rounded-lg border border-line-strong bg-surface px-4 text-2xl font-semibold"
         />
       </label>
 
@@ -180,7 +180,7 @@ export function EntryForm({ book, form, place }: { book: DayBook; form: EntryFor
       <button
         type="submit"
         disabled={saving || loading || !busId || !canWrite}
-        className="h-14 rounded-lg bg-brand px-4 text-base font-bold text-white disabled:opacity-50"
+        className="h-14 rounded-lg bg-brand px-4 text-base font-semibold text-white disabled:opacity-50"
       >
         {org.viewOnly
           ? "View only until payment is received"
@@ -210,7 +210,7 @@ function KindButton({
       type="button"
       aria-pressed={active}
       onClick={onClick}
-      className={`h-11 rounded-full text-sm font-bold ${
+      className={`h-11 rounded-full text-sm font-semibold ${
         active
           ? "bg-surface text-ink shadow-[0_1px_3px_rgba(26,27,46,0.15)]"
           : "text-muted"

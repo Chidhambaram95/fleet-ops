@@ -142,7 +142,7 @@ export default async function AppShellLayout({
             href={contactUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex h-12 items-center justify-center rounded-lg bg-whatsapp px-5 text-sm font-bold text-white"
+            className="flex h-12 items-center justify-center rounded-lg bg-whatsapp px-5 text-sm font-semibold text-white"
           >
             Contact Fleet Ops on WhatsApp
           </a>

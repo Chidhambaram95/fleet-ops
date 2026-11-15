@@ -10,7 +10,7 @@ import { TyreLifeSettings } from "@/components/tyres/TyreLifeSettings";
 import { MODULE_TITLES } from "@domain/modules/modules";
 import { todayInIst } from "@domain/operations/totals";
 
-const field = "h-12 rounded-lg bg-canvas px-4 text-base font-normal";
+const field = "h-12 rounded-lg border border-line-strong bg-surface px-4 text-base font-normal";
 
 export function CompanySettings({ profile, organizationId }: { profile: CompanyProfile; organizationId: string }) {
   const router = useRouter();
@@ -120,7 +120,7 @@ export function CompanySettings({ profile, organizationId }: { profile: CompanyP
           <button
             type="submit"
             disabled={busy}
-            className="h-12 rounded-lg bg-brand px-4 text-sm font-bold text-white disabled:opacity-60"
+            className="h-12 rounded-lg bg-brand px-4 text-sm font-semibold text-white disabled:opacity-60"
           >
             {busy ? "Saving…" : "Save"}
           </button>

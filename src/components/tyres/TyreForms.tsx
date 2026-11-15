@@ -243,7 +243,7 @@ export function MoveForm({
                     position === id ? "bg-brand text-white" : "bg-canvas"
                   }`}
                 >
-                  <span className="block font-bold">{positionLabel(id)}</span>
+                  <span className="block font-semibold">{positionLabel(id)}</span>
                   <span className={`block text-xs ${position === id ? "text-brand-pale" : "text-muted"}`}>
                     {current ? "Here now" : there ? (mode === "rotate" ? `Swap with ${there.tyreNumber}` : there.tyreNumber) : "Empty"}
                   </span>
@@ -349,7 +349,7 @@ export function MoveForm({
                   type="button"
                   aria-pressed={after === id}
                   onClick={() => setAfter(id)}
-                  className={`min-h-12 rounded-lg px-2 text-sm font-bold ${after === id ? "bg-brand text-white" : "bg-canvas text-ink"}`}
+                  className={`min-h-12 rounded-lg px-2 text-sm font-semibold ${after === id ? "bg-brand text-white" : "bg-canvas text-ink"}`}
                 >
                   {label}
                 </button>
@@ -630,7 +630,7 @@ export function TyreForm({
         <input
           type="file"
           accept="image/*"
-          className="h-12 w-full min-w-0 rounded-lg bg-canvas px-3 py-3 text-sm"
+          className="h-12 w-full min-w-0 rounded-lg border border-line-strong bg-surface px-3 py-3 text-sm"
           onChange={(event) => set({ photo: event.target.files?.[0] ?? null })}
         />
       </label>

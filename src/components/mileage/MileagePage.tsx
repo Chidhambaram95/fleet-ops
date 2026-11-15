@@ -15,6 +15,7 @@ import { moduleHref, type ModuleId } from "@domain/modules/modules";
 import { formatInr } from "@domain/operations/totals";
 import { useOrg } from "@/components/billing/OrgContext";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
+import { HealthTabs } from "@/components/health/HealthTabs";
 import { ErrorText, FIELD, PageHeader, messageFromUnknown, useLoaded } from "@/components/ui/kit";
 import { KmplRing, STATUS_COLOURS, STATUS_LABELS, STATUS_PILLS, StatusDonut, TripChart } from "./MileageCharts";
 import { whatsAppChatUrl } from "@domain/platform/whatsapp";
@@ -111,7 +112,7 @@ export function MileageScreen({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
+    <div className="flex w-full max-w-5xl flex-col gap-4 lg:gap-6">
       <PageHeader
         title="Mileage"
         hint={module === "town" ? "Km per litre from full-tank diesel entries." : "Km per litre from approved trip sheets."}
@@ -132,6 +133,7 @@ export function MileageScreen({
           </label>
         }
       />
+      <HealthTabs module={module} />
       <ErrorText message={error || actionError} />
 
       {loading ? (
@@ -200,7 +202,7 @@ export function MileageScreen({
                         <span className="text-xs text-muted">Usual {view.usual.toFixed(1)} km/L</span>
                       ) : null}
                     </span>
-                    <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${STATUS_PILLS[view.status]}`}>
+                    <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${STATUS_PILLS[view.status]}`}>
                       {STATUS_LABELS[view.status]}
                     </span>
                   </button>
@@ -235,21 +237,21 @@ export function MileageScreen({
                             type="button"
                             disabled={saving === view.bus.id}
                             onClick={() => void markChecked(view)}
-                            className="h-11 grow rounded-lg bg-brand px-4 text-sm font-bold text-white disabled:opacity-50 md:grow-0"
+                            className="h-11 grow rounded-lg bg-brand px-4 text-sm font-semibold text-white disabled:opacity-50 md:grow-0"
                           >
                             {saving === view.bus.id ? "Saving…" : "Mark checked"}
                           </button>
                           <button
                             type="button"
                             onClick={() => sendWhatsApp(view)}
-                            className="h-11 grow rounded-lg bg-canvas px-4 text-sm font-bold text-money-in md:grow-0"
+                            className="h-11 grow rounded-lg bg-canvas px-4 text-sm font-semibold text-money-in md:grow-0"
                           >
                             Send on WhatsApp
                           </button>
                           {view.alerts[0]?.tripId ? (
                             <Link
                               href={`${moduleHref(module, "trips")}/${view.alerts[0].tripId}`}
-                              className="flex h-11 grow items-center justify-center rounded-lg bg-canvas px-4 text-sm font-bold text-brand md:grow-0"
+                              className="flex h-11 grow items-center justify-center rounded-lg bg-canvas px-4 text-sm font-semibold text-brand md:grow-0"
                             >
                               Open trip sheet
                             </Link>
@@ -350,11 +352,11 @@ function BusTargets({
           type="button"
           disabled={saving}
           onClick={() => void save()}
-          className="h-11 rounded-xl bg-brand px-4 text-sm font-bold text-white disabled:opacity-50"
+          className="h-11 rounded-xl bg-brand px-4 text-sm font-semibold text-white disabled:opacity-50"
         >
           {saving ? "Saving…" : "Save"}
         </button>
-        <button type="button" onClick={() => setOpen(false)} className="h-11 rounded-xl px-4 text-sm font-bold text-muted">
+        <button type="button" onClick={() => setOpen(false)} className="h-11 rounded-xl px-4 text-sm font-semibold text-muted">
           Cancel
         </button>
       </div>

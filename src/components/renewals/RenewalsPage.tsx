@@ -30,6 +30,7 @@ import type { Bus } from "@domain/operations/types";
 import { useOrg } from "@/components/billing/OrgContext";
 import { compressReceipt } from "@/lib/compressReceipt";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
+import { HealthTabs } from "@/components/health/HealthTabs";
 import { LoansPanel } from "@/components/renewals/LoansPanel";
 import {
   Card,
@@ -316,7 +317,7 @@ export function RenewalsPage({
           <input
             type="file"
             accept="image/*"
-            className="h-12 w-full min-w-0 rounded-lg bg-canvas px-3 py-3 text-sm"
+            className="h-12 w-full min-w-0 rounded-lg border border-line-strong bg-surface px-3 py-3 text-sm"
             onChange={(event) => setDraft({ ...draft, photo: event.target.files?.[0] ?? null })}
           />
         </label>
@@ -355,6 +356,7 @@ export function RenewalsPage({
           ) : null
         }
       />
+      <HealthTabs module={module} />
       <ErrorText message={error} />
 
       <section className="flex flex-col gap-3 rounded-xl bg-brand p-4 text-white md:p-5">
@@ -376,7 +378,7 @@ export function RenewalsPage({
           <button
             type="button"
             onClick={sendReminder}
-            className="h-12 rounded-lg bg-surface text-sm font-bold text-brand"
+            className="h-12 rounded-lg bg-surface text-sm font-semibold text-brand"
           >
             Send reminder on WhatsApp
           </button>

@@ -42,7 +42,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="flex flex-col gap-5">
-      <Link href="/admin/companies" className="self-start text-sm font-bold text-brand">
+      <Link href="/admin/companies" className="self-start text-sm font-semibold text-brand">
         ‹ All companies
       </Link>
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -56,7 +56,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
         </div>
         <Link
           href={`/admin/payments?org=${company.organizationId}`}
-          className="flex min-h-11 items-center rounded-lg bg-surface px-4 text-sm font-bold text-brand"
+          className="flex min-h-11 items-center rounded-lg bg-surface px-4 text-sm font-semibold text-brand"
         >
           Payments ›
         </Link>

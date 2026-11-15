@@ -73,7 +73,7 @@ export function StatusPill({
   const pile = !claim && onPile && status === "in_stock";
   const tone = claim ? "bg-warn-bg text-warn-ink" : pile ? "bg-danger-bg text-money-out" : STATUS_CLASS[status];
   return (
-    <span className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ${tone}`}>
+    <span className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${tone}`}>
       {claim ? "Claim pending" : pile ? "Scrap pile" : STATUS_LABELS[status]}
     </span>
   );
@@ -383,14 +383,14 @@ export function TyresPage({
     chassisMode === "rotate" ? (
       <div className="flex flex-col gap-2 rounded-lg bg-ink px-4 py-3 text-sm text-white">
         {!pickedTyre ? (
-          <p className="font-bold">Tap the tyre you want to move.</p>
+          <p className="font-semibold">Tap the tyre you want to move.</p>
         ) : !swapTarget ? (
-          <p className="font-bold">
+          <p className="font-semibold">
             Moving {shortOf(picked)} {pickedTyre.tyreNumber}. Tap the tyre to swap with, or an empty spot.
           </p>
         ) : (
           <>
-            <p className="font-bold">
+            <p className="font-semibold">
               {shortOf(picked)} {pickedTyre.tyreNumber} {targetTyre ? "⇄" : "→"} {shortOf(swapTarget)}
               {targetTyre ? ` ${targetTyre.tyreNumber}` : " (empty)"}
             </p>
@@ -525,7 +525,7 @@ export function TyresPage({
                       role="tab"
                       aria-selected={item.id === bus.id}
                       onClick={() => chooseBus(item.id)}
-                      className={`shrink-0 rounded-lg px-4 py-2 text-left text-sm font-bold ${
+                      className={`shrink-0 rounded-lg px-4 py-2 text-left text-sm font-semibold ${
                         item.id === bus.id ? "bg-brand text-white" : "bg-surface text-ink"
                       }`}
                     >
@@ -554,7 +554,7 @@ export function TyresPage({
                               type="button"
                               aria-pressed={chassisMode === item}
                               onClick={() => chooseMode(item)}
-                              className={`rounded-xl px-3 py-1.5 text-sm font-bold ${
+                              className={`rounded-xl px-3 py-1.5 text-sm font-semibold ${
                                 chassisMode === item ? "bg-surface text-brand shadow-sm" : "text-muted"
                               }`}
                             >
@@ -672,7 +672,7 @@ export function TyresPage({
                         index,
                         <>
                           {tyre.unchargedInr ? (
-                            <span className="text-xs font-bold text-muted">{formatInr(tyre.unchargedInr)} to next bus</span>
+                            <span className="text-xs font-semibold text-muted">{formatInr(tyre.unchargedInr)} to next bus</span>
                           ) : null}
                           {!org.viewOnly ? (
                             <SmallButton tone="brand" onClick={() => open({ kind: "move", mode: "fit", tyre })}>

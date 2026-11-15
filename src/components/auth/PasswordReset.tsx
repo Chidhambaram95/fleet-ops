@@ -7,8 +7,8 @@ import { sendPasswordReset, setNewPassword } from "@data/auth/email";
 import { MIN_PASSWORD_LENGTH, parseLoginId, passwordProblem } from "@domain/auth/loginId";
 import { createBrowserSupabaseClient } from "@/lib/supabase/browser";
 
-const INPUT = "h-12 rounded-lg bg-canvas px-4 text-base font-normal";
-const BUTTON = "h-12 rounded-lg bg-brand px-4 text-base font-bold text-white disabled:opacity-60";
+const INPUT = "h-12 rounded-lg border border-line-strong bg-surface px-4 text-base font-normal";
+const BUTTON = "h-12 rounded-lg bg-brand px-4 text-base font-semibold text-white disabled:opacity-60";
 
 function messageFromUnknown(error: unknown) {
   return error instanceof Error ? error.message : "Something went wrong.";

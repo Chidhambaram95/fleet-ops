@@ -73,7 +73,7 @@ export default async function PaymentsPage({
                 className={`flex items-center justify-between gap-2 rounded-lg p-3 ${active ? "bg-brand-soft" : ""}`}
               >
                 <span className="flex min-w-0 flex-col">
-                  <span className="truncate font-bold">{company.name}</span>
+                  <span className="truncate font-semibold">{company.name}</span>
                   <span className="text-xs text-muted">
                     {company.deactivatedAt
                       ? "Deactivated"
@@ -83,9 +83,9 @@ export default async function PaymentsPage({
                   </span>
                 </span>
                 {s.state === "overdue" || s.state === "view_only" ? (
-                  <span className="rounded-full bg-danger-bg px-2.5 py-1 text-xs font-bold text-money-out">Overdue</span>
+                  <span className="rounded-full bg-danger-bg px-2.5 py-1 text-xs font-semibold text-money-out">Overdue</span>
                 ) : s.state === "due_soon" ? (
-                  <span className="rounded-full bg-warn-bg px-2.5 py-1 text-xs font-bold text-warn-ink">Due soon</span>
+                  <span className="rounded-full bg-warn-bg px-2.5 py-1 text-xs font-semibold text-warn-ink">Due soon</span>
                 ) : null}
               </Link>
             );
@@ -165,7 +165,7 @@ export default async function PaymentsPage({
                       <td className="py-3 pr-2">{p.paidUntil}</td>
                       <td className="py-3 pr-2">{MODE_LABELS[p.mode] ?? p.mode}</td>
                       <td className="py-3 pr-2 text-muted">{p.reference || "—"}</td>
-                      <td className="py-3 text-right font-bold">₹{p.amountInr.toLocaleString("en-IN")}</td>
+                      <td className="py-3 text-right font-semibold">₹{p.amountInr.toLocaleString("en-IN")}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -199,7 +199,7 @@ export default async function PaymentsPage({
                     <td className="py-3 pr-2">{p.paidOn}</td>
                     <td className="py-3 pr-2">{companyName(p.organizationId)}</td>
                     <td className="py-3 pr-2">{MODE_LABELS[p.mode] ?? p.mode}</td>
-                    <td className="py-3 text-right font-bold">₹{p.amountInr.toLocaleString("en-IN")}</td>
+                    <td className="py-3 text-right font-semibold">₹{p.amountInr.toLocaleString("en-IN")}</td>
                   </tr>
                 ))}
               </tbody>

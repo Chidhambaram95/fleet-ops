@@ -162,7 +162,7 @@ export function FuelPage({ organizationId, module }: { organizationId: string; m
                   className={`flex flex-col gap-1 py-3 ${index ? "border-t border-line" : ""}`}
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <p className="truncate font-bold">{item.pump}</p>
+                    <p className="truncate font-semibold">{item.pump}</p>
                     <p className="shrink-0 text-lg font-semibold text-money-out">
                       {formatInr(item.expectedInr)}
                     </p>
@@ -287,7 +287,7 @@ export function FuelPage({ organizationId, module }: { organizationId: string; m
       </div>
       {!loading && data.trips.length === 0 ? (
         <Empty>
-          Approve trip sheets on the <Link className="font-bold text-brand" href={moduleHref(module, "trips")}>Trips</Link> page to see fuel figures here.
+          Approve trip sheets on the <Link className="font-semibold text-brand" href={moduleHref(module, "trips")}>Trips</Link> page to see fuel figures here.
         </Empty>
       ) : null}
     </div>

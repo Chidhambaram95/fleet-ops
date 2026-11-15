@@ -209,7 +209,7 @@ export function CloseClaimForm({
   }
 
   const choice = (active: boolean) =>
-    `min-h-12 rounded-lg px-2 text-sm font-bold ${active ? "bg-brand text-white" : "bg-canvas text-ink"}`;
+    `min-h-12 rounded-lg px-2 text-sm font-semibold ${active ? "bg-brand text-white" : "bg-canvas text-ink"}`;
 
   return (
     <Card title={`Dealer's answer · ${tyre?.tyreNumber ?? "Tyre"}`}>
@@ -373,7 +373,7 @@ export function ClaimsCard({
         )}
         {settled.length ? (
           <div className="mt-2 border-t border-line pt-2">
-            <p className="text-xs font-bold uppercase tracking-wide text-muted">Settled</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted">Settled</p>
             <div>{settled.map(row)}</div>
           </div>
         ) : null}

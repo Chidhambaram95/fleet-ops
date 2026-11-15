@@ -76,7 +76,7 @@ export function BusProfitCards({
           <button
             type="button"
             onClick={() => onOpen(rowIndex!)}
-            className="self-start text-sm font-bold text-brand"
+            className="self-start text-sm font-semibold text-brand"
           >
             See breakdown ›
           </button>
@@ -118,7 +118,7 @@ export function BusDetailPanel({ detail, onClose }: { detail: BusDetail; onClose
             </p>
           ) : null}
         </div>
-        <button type="button" onClick={onClose} className="text-sm font-bold text-brand">
+        <button type="button" onClick={onClose} className="text-sm font-semibold text-brand">
           Close ✕
         </button>
       </div>
@@ -134,7 +134,7 @@ export function BusDetailPanel({ detail, onClose }: { detail: BusDetail; onClose
       </div>
       {items.length ? (
         <div className="flex flex-col gap-1">
-          <p className="text-xs font-bold uppercase text-muted">Shared costs this bus carries</p>
+          <p className="text-xs font-semibold uppercase text-muted">Shared costs this bus carries</p>
           {items.map((item, index) => (
             <div key={`${item.id}-${index}`} className="flex items-center justify-between gap-3 text-sm">
               <span className="min-w-0 truncate">

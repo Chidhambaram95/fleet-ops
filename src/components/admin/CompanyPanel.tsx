@@ -24,11 +24,11 @@ import {
 } from "@domain/companies/types";
 
 const input =
-  "h-12 w-full min-w-0 rounded-lg border border-brand-pale bg-canvas px-3.5 text-base font-normal";
+  "h-12 w-full min-w-0 rounded-lg border border-line-strong bg-surface px-3.5 text-base font-normal";
 const label = "flex min-w-0 flex-col gap-1.5 text-sm font-semibold";
 const card = "flex flex-col gap-4 rounded-xl border border-line bg-surface p-5";
 const primary =
-  "h-12 rounded-lg bg-brand px-5 text-sm font-bold text-white disabled:opacity-50";
+  "h-12 rounded-lg bg-brand px-5 text-sm font-semibold text-white disabled:opacity-50";
 
 const ROLE_LABELS: Record<string, string> = {
   owner: "Admin",
@@ -122,7 +122,7 @@ export function CompanyEditForm({ company }: { company: Company }) {
                   onClick={() =>
                     setBusTypes((list) => (on ? list.filter((item) => item !== type) : [...list, type]))
                   }
-                  className={`h-11 rounded-full px-4 text-sm font-bold ${
+                  className={`h-11 rounded-lg px-4 text-sm font-semibold ${
                     on ? "bg-brand text-white" : "bg-canvas text-muted"
                   }`}
                 >
@@ -249,7 +249,7 @@ export function CompanyPeople({
               className={`flex flex-wrap items-center justify-between gap-3 py-3 ${index ? "border-t border-line" : ""}`}
             >
               <div className="min-w-0">
-                <p className="truncate font-bold">{member.displayName || loginLabel(member.email) || "Unnamed"}</p>
+                <p className="truncate font-semibold">{member.displayName || loginLabel(member.email) || "Unnamed"}</p>
                 {member.displayName && member.email ? (
                   <p className="truncate text-xs text-muted">{loginLabel(member.email)}</p>
                 ) : null}
@@ -265,7 +265,7 @@ export function CompanyPeople({
                     />
                     <button
                       type="button"
-                      className="h-11 rounded-lg bg-brand px-3 text-sm font-bold text-white"
+                      className="h-11 rounded-lg bg-brand px-3 text-sm font-semibold text-white"
                       disabled={busy !== ""}
                       onClick={() => void savePassword(member.userId)}
                     >
@@ -296,7 +296,7 @@ export function CompanyPeople({
               <div className="flex items-center gap-2">
                 <select
                   aria-label={`Access for ${member.displayName || member.email}`}
-                  className="h-11 rounded-lg bg-canvas px-3 text-sm font-semibold"
+                  className="h-11 rounded-lg border border-line-strong bg-surface px-3 text-sm font-semibold"
                   value={ROLE_LABELS[member.role] === "Admin" ? "admin" : ROLE_LABELS[member.role] === "Manager" ? "manager" : "crew"}
                   disabled={busy !== ""}
                   onChange={(e) =>
@@ -313,7 +313,7 @@ export function CompanyPeople({
                   <>
                     <button
                       type="button"
-                      className="h-11 rounded-lg bg-money-out px-3 text-sm font-bold text-white"
+                      className="h-11 rounded-lg bg-money-out px-3 text-sm font-semibold text-white"
                       disabled={busy !== ""}
                       onClick={() =>
                         void run(member.userId, () => removeMemberAction(company.organizationId, member.userId)).then(
@@ -364,7 +364,7 @@ export function CompanyPeople({
               key={mode}
               type="button"
               aria-pressed={addMode === mode}
-              className={`h-9 rounded-full px-4 text-sm font-bold ${addMode === mode ? "bg-surface text-brand" : "text-muted"}`}
+              className={`h-9 rounded-lg px-4 text-sm font-semibold ${addMode === mode ? "bg-surface text-brand" : "text-muted"}`}
               onClick={() => setAddMode(mode)}
             >
               {mode === "password" ? "With a password" : "WhatsApp invite"}
@@ -486,7 +486,7 @@ export function CompanyDanger({
               <button
                 type="button"
                 disabled={busy}
-                className="h-12 rounded-lg bg-money-out px-5 text-sm font-bold text-white disabled:opacity-50"
+                className="h-12 rounded-lg bg-money-out px-5 text-sm font-semibold text-white disabled:opacity-50"
                 onClick={() =>
                   run(() => setCompanyActiveAction(company.organizationId, false), () => {
                     setStep("");
@@ -503,7 +503,7 @@ export function CompanyDanger({
           ) : (
             <button
               type="button"
-              className="h-12 self-start rounded-lg bg-danger-bg px-5 text-sm font-bold text-money-out"
+              className="h-12 self-start rounded-lg bg-danger-bg px-5 text-sm font-semibold text-money-out"
               onClick={() => setStep("deactivate")}
             >
               Deactivate
@@ -529,7 +529,7 @@ export function CompanyDanger({
               type="button"
               disabled={!canDeleteNow || busy}
               title={canDeleteNow ? undefined : `Available on ${deletableOn}`}
-              className="h-12 rounded-lg bg-danger-bg px-5 text-sm font-bold text-money-out disabled:opacity-50"
+              className="h-12 rounded-lg bg-danger-bg px-5 text-sm font-semibold text-money-out disabled:opacity-50"
               onClick={() => setStep("delete")}
             >
               {canDeleteNow ? "Delete all data" : `Delete (from ${deletableOn})`}
@@ -549,7 +549,7 @@ export function CompanyDanger({
                 <button
                   type="button"
                   disabled={busy || typed.trim() !== company.name.trim()}
-                  className="h-12 rounded-lg bg-money-out px-5 text-sm font-bold text-white disabled:opacity-50"
+                  className="h-12 rounded-lg bg-money-out px-5 text-sm font-semibold text-white disabled:opacity-50"
                   onClick={() =>
                     run(() => deleteCompanyAction(company.organizationId, typed), () => router.replace("/admin/companies"))
                   }

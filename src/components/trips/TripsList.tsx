@@ -69,7 +69,7 @@ export function TripsList({ organizationId, module }: { organizationId: string; 
         {!org.viewOnly ? (
           <Link
             href={`${moduleHref(module, "trips")}/new`}
-            className="flex min-h-12 items-center gap-2 rounded-lg bg-brand px-5 text-sm font-bold text-white"
+            className="flex min-h-12 items-center gap-2 rounded-lg bg-brand px-5 text-sm font-semibold text-white"
           >
             <span aria-hidden="true" className="text-xl leading-none">+</span>
             New trip sheet
@@ -84,7 +84,7 @@ export function TripsList({ organizationId, module }: { organizationId: string; 
             type="button"
             aria-pressed={filter === value}
             onClick={() => setFilter(value)}
-            className={`h-11 rounded-full text-sm font-bold ${
+            className={`h-11 rounded-full text-sm font-semibold ${
               filter === value ? "bg-brand text-white" : "text-muted"
             }`}
           >
@@ -138,7 +138,7 @@ export function TripsList({ organizationId, module }: { organizationId: string; 
                 ) : null}
                 <span>Spent {formatInr(trip.cashSpentInr)}</span>
               </div>
-              <p className="text-sm font-bold text-brand">
+              <p className="text-sm font-semibold text-brand">
                 {settlementText(trip.cashSpentInr - trip.advanceInr)}
               </p>
             </Link>

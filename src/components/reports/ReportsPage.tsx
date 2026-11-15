@@ -390,7 +390,7 @@ export function ReportsPage({
                           key={index}
                           className={`px-2 py-2.5 ${typeof cell === "number" ? "text-right tabular-nums" : ""} ${index === 0 ? "font-semibold" : ""} ${
                             table.toneColumns?.includes(index)
-                              ? `font-bold ${toneClass(cell)}`
+                              ? `font-semibold ${toneClass(cell)}`
                               : table.moneyColumns.includes(index) && typeof cell === "number" && cell < 0
                                 ? "text-money-out"
                                 : ""
@@ -432,7 +432,7 @@ export function ReportsPage({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 print:hidden">
         <button
           type="button"
-          className="h-12 rounded-lg bg-whatsapp px-5 text-sm font-bold text-white"
+          className="h-12 rounded-lg bg-whatsapp px-5 text-sm font-semibold text-white"
           onClick={() =>
             window.open(whatsAppChatUrl("", whatsappText(table, filters, scope)), "_blank", "noopener")
           }

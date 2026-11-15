@@ -15,7 +15,7 @@ import type { Bus } from "@domain/operations/types";
 import { friendlyErrorMessage } from "@domain/platform/errors";
 import { shortDay } from "@/components/ui/kit";
 
-const inputClass = "h-12 rounded-lg bg-canvas px-4 text-base font-normal";
+const inputClass = "h-12 rounded-lg border border-line-strong bg-surface px-4 text-base font-normal";
 const REASON_LABELS = new Map(OFF_ROAD_REASONS.map((item) => [item.id, item.label]));
 
 /**
@@ -101,7 +101,7 @@ export function OffRoadDays({
   return (
     <section className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 md:p-5">
       <div>
-        <h2 className="font-bold">Days off the road</h2>
+        <h2 className="font-semibold">Days off the road</h2>
         <p className="text-sm text-muted">
           Mark days a bus stood for a breakdown, FC or no crew. Reports show them as days not run, even if a bill
           was entered that day.
@@ -171,7 +171,7 @@ export function OffRoadDays({
           <button
             type="submit"
             disabled={saving || !from}
-            className="h-12 rounded-lg bg-brand px-4 text-sm font-bold text-white disabled:opacity-60"
+            className="h-12 rounded-lg bg-brand px-4 text-sm font-semibold text-white disabled:opacity-60"
           >
             {saving ? "Saving…" : "Mark off road"}
           </button>
@@ -190,7 +190,7 @@ export function OffRoadDays({
                 <button
                   type="button"
                   onClick={() => void remove(day.id)}
-                  className="shrink-0 text-sm font-bold text-brand"
+                  className="shrink-0 text-sm font-semibold text-brand"
                   aria-label={`Remove ${names.get(day.busId)} ${day.date}`}
                 >
                   Remove

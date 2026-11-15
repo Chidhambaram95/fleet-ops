@@ -26,7 +26,7 @@ const HEALTH_PILL: Record<TyreHealth, string> = {
 
 export function HealthPill({ health }: { health: TyreHealth }) {
   return (
-    <span className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ${HEALTH_PILL[health]}`}>
+    <span className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${HEALTH_PILL[health]}`}>
       {HEALTH_LABELS[health]}
     </span>
   );
@@ -106,7 +106,7 @@ export function TyreSheet({
   const short = ROAD_POSITIONS.find((item) => item.id === tyre.currentPosition)?.short;
   const warranty = warrantyText(tyre, today, km);
   const stint = currentStintKm(tyre, odometer);
-  const act = "flex min-h-12 items-center justify-center rounded-lg px-2 text-sm font-bold";
+  const act = "flex min-h-12 items-center justify-center rounded-lg px-2 text-sm font-semibold";
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-start justify-between gap-3">
@@ -123,7 +123,7 @@ export function TyreSheet({
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <HealthPill health={health} />
-          <button type="button" aria-label="Close" onClick={onClose} className="h-8 w-8 rounded-full bg-canvas text-lg font-bold text-muted">
+          <button type="button" aria-label="Close" onClick={onClose} className="h-8 w-8 rounded-full bg-canvas text-lg font-semibold text-muted">
             ×
           </button>
         </div>

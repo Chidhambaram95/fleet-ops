@@ -18,7 +18,7 @@ import {
 } from "@data/roadTax/repository";
 
 const inputClass =
-  "h-12 rounded-lg bg-canvas px-4 text-base font-normal";
+  "h-12 rounded-lg border border-line-strong bg-surface px-4 text-base font-normal";
 
 type BusForm = {
   registrationNumber: string;
@@ -354,12 +354,12 @@ export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; m
             void addBus();
           }}
         >
-          <p className="font-bold">Add a bus</p>
+          <p className="font-semibold">Add a bus</p>
           <BusFields form={form} onChange={setForm} showVahan={vahanReady} />
           <button
             type="submit"
             disabled={saving || loading || !isComplete(form)}
-            className="h-12 rounded-lg bg-brand px-4 text-sm font-bold text-white disabled:opacity-60"
+            className="h-12 rounded-lg bg-brand px-4 text-sm font-semibold text-white disabled:opacity-60"
           >
             Add bus
           </button>
@@ -386,13 +386,13 @@ export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; m
                   <button
                     type="submit"
                     disabled={saving || !isComplete(editForm)}
-                    className="rounded-lg bg-brand px-4 text-sm font-bold text-white disabled:opacity-60"
+                    className="rounded-lg bg-brand px-4 text-sm font-semibold text-white disabled:opacity-60"
                   >
                     Save
                   </button>
                   <button
                     type="button"
-                    className="rounded-full bg-canvas px-4 text-sm font-semibold text-ink"
+                    className="rounded-lg bg-canvas px-4 text-sm font-semibold text-ink"
                     onClick={() => setEditingId("")}
                   >
                     Cancel
@@ -438,14 +438,14 @@ export function FleetManager({ canEdit: isAdmin, module }: { canEdit: boolean; m
                   <div className="flex shrink-0 gap-2">
                     <button
                       type="button"
-                      className="rounded-full bg-canvas px-4 text-sm font-semibold text-ink"
+                      className="rounded-lg bg-canvas px-4 text-sm font-semibold text-ink"
                       onClick={() => startEdit(bus)}
                     >
                       Edit
                     </button>
                     <button
                       type="button"
-                      className="rounded-full bg-canvas px-4 text-sm font-semibold text-ink"
+                      className="rounded-lg bg-canvas px-4 text-sm font-semibold text-ink"
                       onClick={() => void deleteBus(bus.id, bus.registrationNumber)}
                     >
                       Delete

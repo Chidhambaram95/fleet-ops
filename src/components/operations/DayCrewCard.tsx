@@ -18,7 +18,7 @@ import { shiftDate } from "@domain/operations/totals";
 import type { Bus } from "@domain/operations/types";
 import { Card, ErrorText, messageFromUnknown, useLoaded } from "@/components/ui/kit";
 
-const SELECT = "h-11 w-full min-w-0 rounded-lg bg-canvas px-3 text-sm disabled:opacity-70";
+const SELECT = "h-11 w-full min-w-0 rounded-lg border border-line-strong bg-surface px-3 text-sm disabled:opacity-70";
 
 /**
  * Who drove each Town bus that day, and who was conductor and cleaner.
@@ -91,7 +91,7 @@ export function DayCrewCard({
                 }
               })
             }
-            className="min-h-10 rounded-full bg-brand-soft px-4 text-sm font-bold text-brand-dark disabled:opacity-50"
+            className="min-h-10 rounded-lg bg-brand-soft px-4 text-sm font-semibold text-brand-dark disabled:opacity-50"
           >
             {saving === "copy" ? "Copying…" : "Same crew as yesterday"}
           </button>
@@ -109,7 +109,7 @@ export function DayCrewCard({
       {!loading && data.people.length === 0 ? (
         <p className="text-sm text-muted">
           Add your drivers and conductors under{" "}
-          <Link href="/town/crew" className="font-bold text-brand underline-offset-2 hover:underline">
+          <Link href="/town/crew" className="font-semibold text-brand underline-offset-2 hover:underline">
             Crew → People
           </Link>{" "}
           first.
@@ -122,9 +122,9 @@ export function DayCrewCard({
           return (
             <div key={bus.id} className={`flex flex-col gap-2 py-3 ${index > 0 ? "border-t border-line" : ""}`}>
               <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-                <span className="font-bold">{bus.registrationNumber}</span>
+                <span className="font-semibold">{bus.registrationNumber}</span>
                 {missing.length ? (
-                  <span className="text-xs font-bold text-money-out">
+                  <span className="text-xs font-semibold text-money-out">
                     {missing.length === 2 ? "Driver and conductor needed" : `${JOB_LABELS[missing[0]]} needed`}
                   </span>
                 ) : (

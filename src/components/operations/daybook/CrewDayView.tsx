@@ -62,7 +62,7 @@ export function CrewDayView({ book, form, odo }: { book: DayBook; form: EntryFor
               void saveOdometer();
             }}
           >
-            <h2 className="font-bold">Odometer</h2>
+            <h2 className="font-semibold">Odometer</h2>
             <label className="flex flex-col gap-1.5 text-sm font-semibold">
               Odometer reading (km)
               <input
@@ -80,7 +80,7 @@ export function CrewDayView({ book, form, odo }: { book: DayBook; form: EntryFor
             <button
               type="submit"
               disabled={odometerSaving || org.viewOnly}
-              className="h-12 rounded-lg bg-brand px-4 text-base font-bold text-white disabled:opacity-50"
+              className="h-12 rounded-lg bg-brand px-4 text-base font-semibold text-white disabled:opacity-50"
             >
               {org.viewOnly
                 ? "View only until payment is received"

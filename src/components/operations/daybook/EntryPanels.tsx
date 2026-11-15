@@ -11,7 +11,7 @@ export function ActionButtons({ book, form }: { book: DayBook; form: EntryFormSt
   const { scanning, openSheet } = form;
   return canWrite ? (
     <div className="flex flex-col gap-2.5 lg:hidden">
-      <label className="flex min-h-16 cursor-pointer items-center justify-center gap-3 rounded-xl border border-line bg-surface px-4 text-base font-bold text-brand shadow-[0_1px_0_rgba(26,27,46,0.04)] active:bg-brand-soft">
+      <label className="flex min-h-16 cursor-pointer items-center justify-center gap-3 rounded-xl border border-line bg-surface px-4 text-base font-semibold text-brand shadow-[0_1px_0_rgba(26,27,46,0.04)] active:bg-brand-soft">
         <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-soft">
           <CameraIcon />
         </span>
@@ -22,7 +22,7 @@ export function ActionButtons({ book, form }: { book: DayBook; form: EntryFormSt
         <button
           type="button"
           onClick={() => openSheet("income")}
-          className="flex min-h-14 items-center justify-center gap-2 rounded-xl border border-line bg-surface text-sm font-bold text-money-in"
+          className="flex min-h-14 items-center justify-center gap-2 rounded-xl border border-line bg-surface text-sm font-semibold text-money-in"
         >
           <ArrowIcon direction="in" />
           Money in
@@ -30,7 +30,7 @@ export function ActionButtons({ book, form }: { book: DayBook; form: EntryFormSt
         <button
           type="button"
           onClick={() => openSheet("expense")}
-          className="flex min-h-14 items-center justify-center gap-2 rounded-xl border border-line bg-surface text-sm font-bold text-money-out"
+          className="flex min-h-14 items-center justify-center gap-2 rounded-xl border border-line bg-surface text-sm font-semibold text-money-out"
         >
           <ArrowIcon direction="out" />
           Money out
@@ -68,7 +68,7 @@ export function EntryPanels({ book, form }: { book: DayBook; form: EntryFormStat
               <h2 className="text-base font-semibold text-ink">Add cash entry</h2>
               <button
                 type="button"
-                className="px-2 text-sm font-bold text-brand"
+                className="px-2 text-sm font-semibold text-brand"
                 onClick={() => setSheetOpen(false)}
               >
                 Cancel

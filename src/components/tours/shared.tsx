@@ -79,7 +79,7 @@ const STATUS_CLASS: Record<TourStatus, string> = {
 
 export function StatusPill({ status, children }: { status: TourStatus; children?: ReactNode }) {
   return (
-    <span className={`inline-flex min-h-7 items-center whitespace-nowrap rounded-full px-3 text-xs font-bold ${STATUS_CLASS[status]}`}>
+    <span className={`inline-flex min-h-7 items-center whitespace-nowrap rounded-full px-3 text-xs font-semibold ${STATUS_CLASS[status]}`}>
       {children ?? STATUS_LABEL[status]}
     </span>
   );
@@ -88,7 +88,7 @@ export function StatusPill({ status, children }: { status: TourStatus; children?
 export function Chip({ children, tone = "plain" }: { children: ReactNode; tone?: "plain" | "warn" | "bad" }) {
   const cls =
     tone === "warn" ? "bg-warn-bg text-warn-ink" : tone === "bad" ? "bg-money-out text-white" : "bg-canvas text-muted";
-  return <span className={`inline-flex min-h-7 items-center rounded-full px-3 text-xs font-bold ${cls}`}>{children}</span>;
+  return <span className={`inline-flex min-h-7 items-center rounded-full px-3 text-xs font-semibold ${cls}`}>{children}</span>;
 }
 
 /** A bottom sheet on the phone and a centred card on the laptop. */
@@ -110,7 +110,7 @@ export function Sheet({ title, onClose, children }: { title: string; onClose: ()
       >
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-lg font-semibold">{title}</h2>
-          <button type="button" onClick={onClose} className="h-10 rounded-full bg-canvas px-4 text-sm font-bold text-muted">
+          <button type="button" onClick={onClose} className="h-10 rounded-lg bg-canvas px-4 text-sm font-semibold text-muted">
             Close
           </button>
         </div>
